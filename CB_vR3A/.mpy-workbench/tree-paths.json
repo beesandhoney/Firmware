@@ -1,0 +1,56 @@
+[
+  {
+    "fullPath": "/app",
+    "name": "app",
+    "isDir": true,
+    "depth": 0
+  },
+  {
+    "fullPath": "/app/.micropico",
+    "name": ".micropico",
+    "isDir": true,
+    "depth": 1
+  },
+  {
+    "fullPath": "/app/level_indicator.py",
+    "name": "level_indicator.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/app/water_level.py",
+    "name": "water_level.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/boot.py",
+    "name": "boot.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/tests",
+    "name": "tests",
+    "isDir": true,
+    "depth": 0
+  },
+  {
+    "fullPath": "/tests/Harware_test.py",
+    "name": "Harware_test.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_level_indicator.py",
+    "name": "test_level_indicator.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/water_level_test.py",
+    "name": "water_level_test.py",
+    "isDir": false,
+    "depth": 1
+  }
+]

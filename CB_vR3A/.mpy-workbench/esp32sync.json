@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "syncId": "008f3969-f327-47b2-8b3d-538dfe6836df",
+  "root": "/Users/jonasolsson/Documents/GIT/Firmware/CB_vR3A",
+  "generatedAt": 1777708034401,
+  "files": {
+    "app/.micropico": {
+      "size": 70,
+      "mtime": 1766161558529
+    },
+    "app/level_indicator.py": {
+      "size": 1797,
+      "mtime": 1777492069614
+    },
+    "app/water_level.py": {
+      "size": 1227,
+      "mtime": 1777490833988
+    },
+    "boot.py": {
+      "size": 139,
+      "mtime": 1777491201906
+    },
+    "tests/Harware_test.py": {
+      "size": 4274,
+      "mtime": 1777707766059
+    },
+    "tests/test_level_indicator.py": {
+      "size": 641,
+      "mtime": 1777492285370
+    },
+    "tests/water_level_test.py": {
+      "size": 377,
+      "mtime": 1777490833988
+    }
+  }
+}
