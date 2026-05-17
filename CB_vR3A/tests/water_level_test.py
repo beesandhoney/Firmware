@@ -2,7 +2,7 @@
 
 import utime
 import gc
-from app.water_level import WaterLevelSensor
+from water_level import WaterLevelSensor
 
 sensor = WaterLevelSensor(pin=27)
 

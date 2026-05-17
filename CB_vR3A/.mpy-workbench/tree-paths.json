@@ -1,31 +1,133 @@
 [
   {
-    "fullPath": "/app",
-    "name": "app",
+    "fullPath": "/CONTRIBUTORS",
+    "name": "CONTRIBUTORS",
     "isDir": true,
     "depth": 0
   },
   {
-    "fullPath": "/app/.micropico",
-    "name": ".micropico",
-    "isDir": true,
-    "depth": 1
+    "fullPath": "/LICENSE",
+    "name": "LICENSE",
+    "isDir": false,
+    "depth": 0
   },
   {
-    "fullPath": "/app/level_indicator.py",
-    "name": "level_indicator.py",
+    "fullPath": "/README.md",
+    "name": "README.md",
     "isDir": false,
-    "depth": 1
-  },
-  {
-    "fullPath": "/app/water_level.py",
-    "name": "water_level.py",
-    "isDir": false,
-    "depth": 1
+    "depth": 0
   },
   {
     "fullPath": "/boot.py",
     "name": "boot.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/captive_dns.py",
+    "name": "captive_dns.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/captive_http.py",
+    "name": "captive_http.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/captive_portal.py",
+    "name": "captive_portal.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/config.json",
+    "name": "config.json",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/connected.html",
+    "name": "connected.html",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/credentials.py",
+    "name": "credentials.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/ec_meter_test.py",
+    "name": "ec_meter_test.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/gpio.py",
+    "name": "gpio.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/index.html",
+    "name": "index.html",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/level_indicator.py",
+    "name": "level_indicator.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/main.py",
+    "name": "main.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/microdot.py",
+    "name": "microdot.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/rotary.py",
+    "name": "rotary.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/rotary_irq_esp.py",
+    "name": "rotary_irq_esp.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/server.py",
+    "name": "server.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/settings.html",
+    "name": "settings.html",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/settings.json",
+    "name": "settings.json",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/shared_settings.py",
+    "name": "shared_settings.py",
     "isDir": false,
     "depth": 0
   },
@@ -52,5 +154,35 @@
     "name": "water_level_test.py",
     "isDir": false,
     "depth": 1
+  },
+  {
+    "fullPath": "/traceback.py",
+    "name": "traceback.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/water_level.py",
+    "name": "water_level.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/web_server.py",
+    "name": "web_server.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/webserver.py",
+    "name": "webserver.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/wifi.creds",
+    "name": "wifi.creds",
+    "isDir": false,
+    "depth": 0
   }
 ]

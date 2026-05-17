@@ -1,5 +1,5 @@
 import utime
-from app.level_indicator import LevelIndicator
+from level_indicator import LevelIndicator
 
 leds = LevelIndicator(
     data_pin=4,

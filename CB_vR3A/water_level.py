@@ -5,16 +5,11 @@ class WaterLevelSensor:
     def __init__(self, pin=27, lookup_table=None):
         self.touch = TouchPad(Pin(pin))
         self.lookup_table = lookup_table or [
-            (100, 1),
-            (80, 10),
-            (59, 20),
-            (55, 25),
-            (42, 40),
-            (36, 50),
-            (29, 62),
-            (25, 75),
-            (18, 100),
-            (14, 125),
+            (100, 0),
+            (80, 25),
+            (59, 50),
+            (55, 100),
+            (42, 250),
         ]
 
     def read_raw(self, samples=8, delay_ms=10):

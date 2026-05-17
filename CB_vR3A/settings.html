@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Grow Light Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f4f5f7;
+            margin: 0;
+        }
+
+        .page {
+            max-width: 480px;
+            margin: 24px auto 40px;
+            padding: 0 12px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px 18px 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        h1,
+        h2 {
+            margin: 0 0 12px;
+        }
+
+        h1 {
+            font-size: 22px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-top: 18px;
+        }
+
+        .help {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+        }
+
+        label {
+            margin-bottom: 3px;
+        }
+
+        input {
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .intensity-row {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .btn {
+            margin-top: 14px;
+            width: 100%;
+            padding: 8px 0;
+            border: none;
+            border-radius: 5px;
+            background: #0077ff;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .ec-card {
+            margin-top: 16px;
+            text-align: left;
+        }
+
+        .ec-value,
+        .water-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .ec-unit,
+        .water-unit {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .status {
+            margin-top: 6px;
+            color: #555;
+            font-size: 12px;
+        }
+
+        .btn-secondary {
+            background: #f0f1f3;
+            color: #222;
+            border: 1px solid #d0d3d8;
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 12px;
+            margin-top: 8px;
+        }
+
+        .cal-row-label {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .status-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 10px;
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .guidance {
+            background: #f8fafc;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .guidance h3 {
+            margin: 0 0 6px;
+            font-size: 15px;
+        }
+
+        .guidance ul {
+            margin: 6px 0 0;
+            padding-left: 18px;
+        }
+
+        .guidance li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- Light settings form -->
+        <form action="/update_lights" method="GET">
+            <div class="card">
+                <h1>Light Settings</h1>
+
+                <h2>Schedule</h2>
+                <div class="help">
+                    Morning → Daylight → Evening are used in order.
+                    “Lights off” is when all lights go to the Off / Night intensity.
+                </div>
+
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="t_morning_start">Morning starts at</label>
+                        <input id="t_morning_start" name="t_morning_start" type="time">
+                    </div>
+
+                    <div class="field">
+                        <label for="t_day_start">Daylight starts at</label>
+                        <input id="t_day_start" name="t_day_start" type="time">
+                    </div>
+
+                    <div class="field">
+                        <label for="t_evening_start">Evening starts at</label>
+                        <input id="t_evening_start" name="t_evening_start" type="time">
+                    </div>
+
+                    <div class="field">
+                        <label for="t_lights_off">Lights off at</label>
+                        <input id="t_lights_off" name="t_lights_off" type="time">
+                    </div>
+                </div>
+
+                <h2>Intensity (%)</h2>
+                <div class="intensity-row">
+                    <label for="morning">Morning</label>
+                    <input id="morning" name="morning" type="number" min="0" max="100" step="1">
+                </div>
+                <div class="intensity-row">
+                    <label for="daylight">Daylight</label>
+                    <input id="daylight" name="daylight" type="number" min="0" max="100" step="1">
+                </div>
+                <div class="intensity-row">
+                    <label for="evening">Evening</label>
+                    <input id="evening" name="evening" type="number" min="0" max="100" step="1">
+                </div>
+                <div class="intensity-row">
+                    <label for="off">Off / Night</label>
+                    <input id="off" name="off" type="number" min="0" max="100" step="1">
+                </div>
+
+                <h2>EC alarms (µS/cm)</h2>
+                <div class="help">
+                    Select plant + stage to pre-fill recommended limits. You can still adjust manually.
+                </div>
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="plant_category">Plant category</label>
+                        <select id="plant_category" name="plant_category"></select>
+                    </div>
+                    <div class="field">
+                        <label for="plant_stage">Growth stage</label>
+                        <select id="plant_stage" name="plant_stage"></select>
+                    </div>
+                    <div class="field">
+                        <label for="ec_low_alarm_us">Low alarm (µS/cm)</label>
+                        <input id="ec_low_alarm_us" name="ec_low_alarm_us" type="number" min="0" max="10000" step="10">
+                    </div>
+                    <div class="field">
+                        <label for="ec_high_alarm_us">High alarm (µS/cm)</label>
+                        <input id="ec_high_alarm_us" name="ec_high_alarm_us" type="number" min="0" max="10000" step="10">
+                    </div>
+                </div>
+
+                <div class="guidance">
+                    <h3>EC guidance (µS/cm)</h3>
+                    <div>(Approximate values at ~25 °C. Start low and increase gradually.)</div>
+                    <ul>
+                        <li>Seedlings / clones: 300–700</li>
+                        <li>Herbs (basil, parsley): 800–1400</li>
+                        <li>Leafy greens (lettuce, spinach): 900–1600</li>
+                        <li>Chili / pepper — Vegetative: 1000–1500; Flowering/Fruiting: 1500–2200</li>
+                        <li>Fruiting plants (tomato, cucumber) — Vegetative: 1500–2200; Flowering/Fruiting: 2200–3500</li>
+                        <li>Strawberry — Vegetative: 900–1400; Flowering/Fruiting: 1200–1800</li>
+                        <li>Ornamental flowering plants — Vegetative: 1000–1500; Flowering: 1400–2000</li>
+                    </ul>
+                    <div style="margin-top:6px;">Tip: Leaf burn → EC too high. Pale growth → EC too low.</div>
+                </div>
+
+                <h2>Ambient light control</h2>
+                <div class="help">
+                    Phototransistor on GPIO34 dims or turns lights off when ambient light is high.
+                </div>
+
+                <div class="grid-2">
+                    <div class="field">
+                        <label for="als_enabled">Ambient control</label>
+                        <select id="als_enabled" name="als_enabled">
+                            <option value="1">Enabled</option>
+                            <option value="0">Disabled</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="als_control_mode">Control mode</label>
+                        <select id="als_control_mode" name="als_control_mode">
+                            <option value="DIM">Dim</option>
+                            <option value="OFF">Off</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="als_threshold_on">T_ON (ADC)</label>
+                        <input id="als_threshold_on" name="als_threshold_on" type="number" min="0" max="4095" step="1">
+                    </div>
+
+                    <div class="field">
+                        <label for="als_threshold_dim">T_DIM/OFF (ADC)</label>
+                        <input id="als_threshold_dim" name="als_threshold_dim" type="number" min="0" max="4095" step="1">
+                    </div>
+
+                    <div class="field">
+                        <label for="als_filter_window">Filter window (samples)</label>
+                        <input id="als_filter_window" name="als_filter_window" type="number" min="1" max="20" step="1">
+                    </div>
+
+                    <div class="field">
+                        <label for="als_sample_interval_ms">Sample interval (ms)</label>
+                        <input id="als_sample_interval_ms" name="als_sample_interval_ms" type="number" min="100" max="10000" step="50">
+                    </div>
+
+                    <div class="field">
+                        <label for="als_dim_level">LED dim level (PWM)</label>
+                        <input id="als_dim_level" name="als_dim_level" type="number" min="0" max="1023" step="1">
+                    </div>
+
+                    <div class="field">
+                        <label for="als_ramp_rate_ms">Ramp rate (ms)</label>
+                        <input id="als_ramp_rate_ms" name="als_ramp_rate_ms" type="number" min="50" max="2000" step="50">
+                    </div>
+
+                    <div class="field">
+                        <label for="als_fault_action">Sensor fault action</label>
+                        <select id="als_fault_action" name="als_fault_action">
+                            <option value="normal">Keep requested brightness</option>
+                            <option value="dim">Force dim level</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn" type="submit">Update light settings</button>
+                <div id="settings-status" class="status"></div>
+            </div>
+        </form>
+        <button class="btn btn-secondary" onclick="exitSettings()">Exit Settings</button>
+
+        <!-- Calibration forms -->
+        <div class="card ec-card">
+            <h2>Water calibration</h2>
+            <div class="help">
+                Save each point separately: depth in mm and corresponding liters.
+            </div>
+            <div class="cal-grid" id="calibration-grid">
+                <!-- Rows injected by JS for point 1-5 -->
+            </div>
+        </div>
+
+        <div class="card ec-card">
+            <h2>EC value</h2>
+            <span class="ec-value" id="ec-value">--</span>
+            <span class="ec-unit">EC</span>
+            <div id="ec-status" class="status"></div>
+        </div>
+
+        <div class="card ec-card">
+            <h2>Water level</h2>
+            <span class="water-value" id="water-level">--</span>
+            <span class="water-unit">mm</span>
+            <div class="cal-row-label">
+                <span class="water-value" id="water-liters">--</span>
+                <span class="water-unit">L</span>
+            </div>
+            <div id="water-status" class="status"></div>
+        </div>
+
+        <div class="card ec-card">
+            <h2>Ambient light</h2>
+            <div class="status-row">
+                <div>Raw ADC: <span id="als-raw">--</span></div>
+                <div>Filtered: <span id="als-filtered">--</span></div>
+            </div>
+            <div class="status-row">
+                <div>Mode: <span id="als-mode">--</span></div>
+                <div>Fault: <span id="als-fault">--</span></div>
+            </div>
+            <div id="als-status" class="status"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const DEPTH_POINTS = [0, 25, 50, 100, 250];
+        const PLANT_GUIDANCE = {
+            seedlings: { stages: ['default'], ranges: { default: [300, 700] } },
+            herbs: { stages: ['default'], ranges: { default: [800, 1400] } },
+            leafy: { stages: ['default'], ranges: { default: [900, 1600] } },
+            chili: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [1000, 1500], flowering: [1500, 2200] } },
+            fruiting: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [1500, 2200], flowering: [2200, 3500] } },
+            strawberry: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [900, 1400], flowering: [1200, 1800] } },
+            ornamental: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [1000, 1500], flowering: [1400, 2000] } },
+        };
+        const PLANT_LABELS = {
+            seedlings: 'Seedlings / clones',
+            herbs: 'Herbs',
+            leafy: 'Leafy greens',
+            chili: 'Chili / pepper',
+            fruiting: 'Fruiting plants',
+            strawberry: 'Strawberry',
+            ornamental: 'Ornamental flowering plants'
+        };
+        const STAGE_LABELS = {
+            default: 'General',
+            vegetative: 'Vegetative',
+            flowering: 'Flowering / Fruiting'
+        };
+
+        function renderCalibration(points) {
+            const grid = document.getElementById('calibration-grid');
+            grid.innerHTML = '';
+            const pts = Array.isArray(points) ? points.slice(0, 5) : [];
+            for (let i = 0; i < 5; i++) {
+                const pointNum = i + 1;
+                const point = pts[i] || {};
+                const depthVal = DEPTH_POINTS[i];
+                const litersVal = point.liters !== undefined ? point.liters : '';
+                const rawVal = point.raw_depth_mm !== undefined && point.raw_depth_mm !== null ? point.raw_depth_mm : '';
+
+                const form = document.createElement('form');
+                form.action = '/update_cal_point';
+                form.method = 'GET';
+                form.className = 'field';
+
+                const depthWrap = document.createElement('div');
+                depthWrap.className = 'field';
+                const depthLabel = document.createElement('label');
+                depthLabel.textContent = 'Depth ' + pointNum + ' (mm, fixed)';
+                depthLabel.setAttribute('for', 'cal_depth_' + pointNum);
+                const depthInput = document.createElement('input');
+                depthInput.type = 'text';
+                depthInput.readOnly = true;
+                depthInput.id = 'cal_depth_' + pointNum;
+                depthInput.value = depthVal;
+
+                depthWrap.appendChild(depthLabel);
+                depthWrap.appendChild(depthInput);
+
+                const literWrap = document.createElement('div');
+                literWrap.className = 'field';
+                const literLabel = document.createElement('label');
+                literLabel.textContent = 'Liters ' + pointNum;
+                literLabel.setAttribute('for', 'cal_liters_' + pointNum);
+                const literInput = document.createElement('input');
+                literInput.type = 'number';
+                literInput.step = '0.1';
+                literInput.id = 'cal_liters_' + pointNum;
+                literInput.name = 'liters';
+                literInput.value = litersVal;
+
+                literWrap.appendChild(literLabel);
+                literWrap.appendChild(literInput);
+
+                const rawInfo = document.createElement('div');
+                rawInfo.className = 'help';
+                rawInfo.textContent = rawVal !== '' ? ('Last raw touch: ' + rawVal) : 'No raw reading saved yet';
+
+                const hiddenIdx = document.createElement('input');
+                hiddenIdx.type = 'hidden';
+                hiddenIdx.name = 'point';
+                hiddenIdx.value = pointNum;
+
+                const btn = document.createElement('button');
+                btn.type = 'submit';
+                btn.className = 'btn';
+                btn.textContent = 'Save point ' + pointNum;
+
+                form.appendChild(depthWrap);
+                form.appendChild(literWrap);
+                form.appendChild(rawInfo);
+                form.appendChild(hiddenIdx);
+                form.appendChild(btn);
+
+                grid.appendChild(form);
+            }
+        }
+
+        function populateSettingsForm(settings) {
+            const mapping = [
+                't_morning_start',
+                't_day_start',
+                't_evening_start',
+                't_lights_off',
+                'morning',
+                'daylight',
+                'evening',
+                'off'
+            ];
+
+            mapping.forEach((key) => {
+                const input = document.getElementById(key);
+                if (input && settings[key] !== undefined) {
+                    input.value = settings[key];
+                }
+            });
+
+            renderCalibration(settings.water_calibration);
+        }
+
+        function initPlantSelectors() {
+            const catSelect = document.getElementById('plant_category');
+            const stageSelect = document.getElementById('plant_stage');
+            catSelect.innerHTML = '';
+            Object.keys(PLANT_GUIDANCE).forEach((key) => {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = PLANT_LABELS[key] || key;
+                catSelect.appendChild(opt);
+            });
+            catSelect.addEventListener('change', () => {
+                updateStageOptions();
+                suggestEcRange();
+            });
+            stageSelect.addEventListener('change', suggestEcRange);
+            updateStageOptions();
+        }
+
+        function updateStageOptions() {
+            const cat = document.getElementById('plant_category').value;
+            const stageSelect = document.getElementById('plant_stage');
+            const stages = (PLANT_GUIDANCE[cat] && PLANT_GUIDANCE[cat].stages) || ['default'];
+            stageSelect.innerHTML = '';
+            stages.forEach((stage) => {
+                const opt = document.createElement('option');
+                opt.value = stage;
+                opt.textContent = STAGE_LABELS[stage] || stage;
+                stageSelect.appendChild(opt);
+            });
+        }
+
+        function suggestEcRange() {
+            const cat = document.getElementById('plant_category').value;
+            const stage = document.getElementById('plant_stage').value;
+            const guidance = PLANT_GUIDANCE[cat];
+            if (!guidance) return;
+            const range = guidance.ranges[stage] || guidance.ranges.default;
+            if (!range) return;
+            document.getElementById('ec_low_alarm_us').value = range[0];
+            document.getElementById('ec_high_alarm_us').value = range[1];
+        }
+
+        function populateEcSettings(ec) {
+            const data = ec || {};
+            initPlantSelectors();
+            if (data.plant_category) {
+                document.getElementById('plant_category').value = data.plant_category;
+                updateStageOptions();
+            }
+            if (data.plant_stage) {
+                document.getElementById('plant_stage').value = data.plant_stage;
+            }
+            if (data.ec_low_alarm_us !== undefined) {
+                document.getElementById('ec_low_alarm_us').value = data.ec_low_alarm_us;
+            }
+            if (data.ec_high_alarm_us !== undefined) {
+                document.getElementById('ec_high_alarm_us').value = data.ec_high_alarm_us;
+            }
+            if (!data.ec_low_alarm_us || !data.ec_high_alarm_us) {
+                suggestEcRange();
+            }
+        }
+
+        function populateAmbientSettings(ambient) {
+            const data = ambient || {};
+            const selectKeys = ['als_enabled', 'als_control_mode', 'als_fault_action'];
+            selectKeys.forEach((key) => {
+                const el = document.getElementById(key);
+                if (el && data[key] !== undefined) {
+                    el.value = String(data[key]);
+                }
+            });
+            const inputKeys = [
+                'als_threshold_on',
+                'als_threshold_dim',
+                'als_filter_window',
+                'als_sample_interval_ms',
+                'als_dim_level',
+                'als_ramp_rate_ms'
+            ];
+            inputKeys.forEach((key) => {
+                const el = document.getElementById(key);
+                if (el && data[key] !== undefined) {
+                    el.value = data[key];
+                }
+            });
+        }
+
+        function loadSettings() {
+            const status = document.getElementById('settings-status');
+            status.textContent = 'Loading current settings…';
+
+            fetch('/current_settings')
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    populateSettingsForm(data);
+                    populateEcSettings(data.ec);
+                    populateAmbientSettings(data.ambient);
+                    status.textContent = 'Showing current saved settings.';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    status.textContent = 'Could not load settings.';
+                });
+        }
+
+        function loadEcValue() {
+            const ecValueEl = document.getElementById('ec-value');
+            const status = document.getElementById('ec-status');
+            status.textContent = 'Updating…';
+
+            fetch('/adc_value')
+                .then((res) => res.text())
+                .then((value) => {
+                    ecValueEl.textContent = value;
+                    status.textContent = 'Live reading';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    status.textContent = 'Could not read EC value.';
+                });
+        }
+
+        function loadWaterLevel() {
+            const waterValueEl = document.getElementById('water-level');
+            const waterLitersEl = document.getElementById('water-liters');
+            const status = document.getElementById('water-status');
+            status.textContent = 'Updating…';
+
+            fetch('/water_level')
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    waterValueEl.textContent = data.depth_mm !== null ? data.depth_mm : '--';
+                    waterLitersEl.textContent = data.liters !== null && data.liters !== undefined ? data.liters : '--';
+                    status.textContent = data.raw !== null && data.raw !== undefined ? ('Live reading, raw touch ' + data.raw) : 'Live reading';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    status.textContent = 'Could not read water level.';
+                });
+        }
+
+        function loadAmbientStatus() {
+            const status = document.getElementById('als-status');
+            status.textContent = 'Updating…';
+
+            fetch('/ambient_status')
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    document.getElementById('als-raw').textContent = data.raw !== null ? data.raw : '--';
+                    document.getElementById('als-filtered').textContent = data.filtered !== null ? data.filtered : '--';
+                    document.getElementById('als-mode').textContent = data.mode || '--';
+                    document.getElementById('als-fault').textContent = data.fault ? 'Yes' : 'No';
+                    status.textContent = 'Live reading';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    status.textContent = 'Could not read ambient sensor.';
+                });
+        }
+
+        function exitSettings() {
+            fetch('/exit_settings')
+                .then(() => {
+                    // small delay before navigating away
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                })
+                .catch(() => {
+                    // still try to refresh
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCalibration();
+            loadSettings();
+            loadEcValue();
+            loadWaterLevel();
+            loadAmbientStatus();
+            setInterval(() => {
+                loadEcValue();
+                loadWaterLevel();
+                loadAmbientStatus();
+            }, 5000);
+        });
+    </script>
+</body>
+
+</html>

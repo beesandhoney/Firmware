@@ -1,36 +1,120 @@
 {
   "version": 1,
-  "syncId": "008f3969-f327-47b2-8b3d-538dfe6836df",
+  "syncId": "15f7150e-c048-4477-aa90-21f4f1692ce9",
   "root": "/Users/jonasolsson/Documents/GIT/Firmware/CB_vR3A",
-  "generatedAt": 1777708034401,
+  "generatedAt": 1779043214738,
   "files": {
-    "app/.micropico": {
-      "size": 70,
-      "mtime": 1766161558529
+    "CONTRIBUTORS": {
+      "size": 56,
+      "mtime": 1766161558531
     },
-    "app/level_indicator.py": {
-      "size": 1797,
-      "mtime": 1777492069614
+    "LICENSE": {
+      "size": 1071,
+      "mtime": 1766161558531
     },
-    "app/water_level.py": {
-      "size": 1227,
-      "mtime": 1777490833988
+    "README.md": {
+      "size": 1390,
+      "mtime": 1766161558531
     },
     "boot.py": {
       "size": 139,
-      "mtime": 1777491201906
+      "mtime": 1766161558531
+    },
+    "captive_dns.py": {
+      "size": 2526,
+      "mtime": 1766161558531
+    },
+    "captive_http.py": {
+      "size": 25530,
+      "mtime": 1779038527290
+    },
+    "captive_portal.py": {
+      "size": 17122,
+      "mtime": 1771455087269
+    },
+    "connected.html": {
+      "size": 339,
+      "mtime": 1766161558532
+    },
+    "credentials.py": {
+      "size": 4669,
+      "mtime": 1771453177956
+    },
+    "ec_meter_test.py": {
+      "size": 4201,
+      "mtime": 1779038596655
+    },
+    "gpio.py": {
+      "size": 12952,
+      "mtime": 1779038583835
+    },
+    "index.html": {
+      "size": 1688,
+      "mtime": 1766161558532
+    },
+    "level_indicator.py": {
+      "size": 1797,
+      "mtime": 1777492069614
+    },
+    "main.py": {
+      "size": 21906,
+      "mtime": 1778753017883
+    },
+    "microdot.py": {
+      "size": 46415,
+      "mtime": 1766161558533
+    },
+    "rotary.py": {
+      "size": 5056,
+      "mtime": 1766161558533
+    },
+    "rotary_irq_esp.py": {
+      "size": 2425,
+      "mtime": 1766161558533
+    },
+    "server.py": {
+      "size": 821,
+      "mtime": 1766161558533
+    },
+    "settings.html": {
+      "size": 26268,
+      "mtime": 1779038571162
+    },
+    "settings.json": {
+      "size": 56,
+      "mtime": 1766161558534
+    },
+    "shared_settings.py": {
+      "size": 9100,
+      "mtime": 1779038542842
     },
     "tests/Harware_test.py": {
       "size": 4274,
       "mtime": 1777707766059
     },
     "tests/test_level_indicator.py": {
-      "size": 641,
-      "mtime": 1777492285370
+      "size": 638,
+      "mtime": 1779038574083
     },
     "tests/water_level_test.py": {
-      "size": 377,
-      "mtime": 1777490833988
+      "size": 374,
+      "mtime": 1779038576850
+    },
+    "traceback.py": {
+      "size": 671,
+      "mtime": 1766161558534
+    },
+    "water_level.py": {
+      "size": 1118,
+      "mtime": 1779038589145
+    },
+    "web_server.py": {
+      "size": 13296,
+      "mtime": 1779038532416
+    },
+    "wifi.creds": {
+      "size": 24,
+      "mtime": 1766161558534
     }
   }
 }
