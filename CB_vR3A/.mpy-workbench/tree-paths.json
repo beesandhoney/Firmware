@@ -132,6 +132,12 @@
     "depth": 0
   },
   {
+    "fullPath": "/status_led.py",
+    "name": "status_led.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
     "fullPath": "/tests",
     "name": "tests",
     "isDir": true,

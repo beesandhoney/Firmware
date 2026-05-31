@@ -8,6 +8,7 @@ import utime as time
 from captive_dns import DNSServer
 from captive_http import HTTPServer
 from credentials import Creds
+import status_led
 
 
 class CaptivePortal:
@@ -147,6 +148,8 @@ class CaptivePortal:
             return False
 
     def _connect_attempt(self, attempt_idx=1, force_scan=False):
+        status_led.set_connecting()
+
         if not self._ensure_interfaces():
             return False, self.FAIL_OTHER
 
@@ -191,7 +194,9 @@ class CaptivePortal:
                 except Exception:
                     pass
                 print("Connected with IP:", self.local_ip)
+                status_led.set_connected()
                 return True, None
+            status_led.tick()
             time.sleep_ms(250)
 
         try:
@@ -208,6 +213,7 @@ class CaptivePortal:
 
     def _run_fast_retries(self):
         self.state = self.STATE_TRY_STA
+        status_led.set_connecting()
         last_failure = self.FAIL_OTHER
         for attempt in range(1, self.FAST_RETRY_COUNT + 1):
             ok, failure = self._connect_attempt(attempt_idx=attempt, force_scan=True)
@@ -221,15 +227,18 @@ class CaptivePortal:
                 return False, self.FAIL_AUTH
             if attempt < self.FAST_RETRY_COUNT:
                 delay = self.FAST_RETRY_DELAYS[min(attempt - 1, len(self.FAST_RETRY_DELAYS) - 1)]
-                time.sleep(delay)
+                self._wait_seconds(delay)
         return False, last_failure
 
     def _wait_seconds(self, seconds):
-        for _ in range(seconds):
-            time.sleep(1)
+        end = time.ticks_add(time.ticks_ms(), seconds * 1000)
+        while time.ticks_diff(end, time.ticks_ms()) > 0:
+            status_led.tick()
+            time.sleep_ms(250)
 
     def _run_backoff_until_connected_or_ap(self):
         self.state = self.STATE_STA_RETRY_BACKOFF
+        status_led.set_connecting()
         while True:
             delay_s = self._backoff_s
             print("STA backoff waiting {}s".format(delay_s))
@@ -348,6 +357,10 @@ class CaptivePortal:
         print("Starting captive portal (AP+DNS+HTTP) mode=", mode)
         self.portal_mode = mode
         self.state = self.STATE_AP_PORTAL_ACTIVE
+        if self.creds.load(quiet=True).is_valid():
+            status_led.set_connecting()
+        else:
+            status_led.off()
 
         if not self.start_access_point():
             return
@@ -371,7 +384,8 @@ class CaptivePortal:
         try:
             while True:
                 gc.collect()
-                for response in self.poller.ipoll(1000):
+                status_led.tick()
+                for response in self.poller.ipoll(250):
                     sock, event, *others = response
                     is_handled = self.handle_dns(sock, event, others)
                     if not is_handled:
@@ -457,6 +471,7 @@ class CaptivePortal:
 
     def start(self, force_ap=False):
         self.state = self.STATE_BOOT
+        status_led.off()
         time.sleep_ms(self.BOOT_GRACE_MS)
 
         for attempt in range(1, 4):
@@ -471,10 +486,12 @@ class CaptivePortal:
         self.creds.load()
         if force_ap:
             self.last_error = None
+            status_led.off()
             return self.captive_portal(mode="wifi")
 
         if not self.creds.is_valid():
             self.last_error = self.FAIL_NO_SSID
+            status_led.off()
             return self.captive_portal(mode="wifi")
 
         ok, failure = self._run_fast_retries()

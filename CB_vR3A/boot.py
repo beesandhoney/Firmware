@@ -3,3 +3,5 @@
 #esp.osdebug(None)
 #import webrepl
 #webrepl.start()
+import main
+main.run()

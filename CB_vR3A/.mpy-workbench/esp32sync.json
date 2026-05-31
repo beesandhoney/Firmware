@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "syncId": "15f7150e-c048-4477-aa90-21f4f1692ce9",
+  "syncId": "f76d8bc0-580d-4a62-8cba-6fb193e99abe",
   "root": "/Users/jonasolsson/Documents/GIT/Firmware/CB_vR3A",
-  "generatedAt": 1779043214738,
+  "generatedAt": 1779908547263,
   "files": {
     "CONTRIBUTORS": {
       "size": 56,
@@ -29,24 +29,28 @@
       "mtime": 1779038527290
     },
     "captive_portal.py": {
-      "size": 17122,
-      "mtime": 1771455087269
+      "size": 17701,
+      "mtime": 1779908509219
+    },
+    "config.json": {
+      "size": 128,
+      "mtime": 1779044545438
     },
     "connected.html": {
       "size": 339,
       "mtime": 1766161558532
     },
     "credentials.py": {
-      "size": 4669,
-      "mtime": 1771453177956
+      "size": 4668,
+      "mtime": 1779044172048
     },
     "ec_meter_test.py": {
       "size": 4201,
-      "mtime": 1779038596655
+      "mtime": 1779045276603
     },
     "gpio.py": {
-      "size": 12952,
-      "mtime": 1779038583835
+      "size": 12982,
+      "mtime": 1779045276350
     },
     "index.html": {
       "size": 1688,
@@ -78,7 +82,7 @@
     },
     "settings.html": {
       "size": 26268,
-      "mtime": 1779038571162
+      "mtime": 1779045276520
     },
     "settings.json": {
       "size": 56,
@@ -86,7 +90,11 @@
     },
     "shared_settings.py": {
       "size": 9100,
-      "mtime": 1779038542842
+      "mtime": 1779045276433
+    },
+    "status_led.py": {
+      "size": 1720,
+      "mtime": 1779908445590
     },
     "tests/Harware_test.py": {
       "size": 4274,
@@ -106,7 +114,7 @@
     },
     "water_level.py": {
       "size": 1118,
-      "mtime": 1779038589145
+      "mtime": 1779045276285
     },
     "web_server.py": {
       "size": 13296,
