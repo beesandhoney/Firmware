@@ -1,38 +1,107 @@
 import uerrno
 import uio
-import uselect as select
 import usocket as socket
 import ujson
-
-try:
-    import micropython
-except ImportError:
-    class _MicroPythonCompat:
-        @staticmethod
-        def native(fn):
-            return fn
-    micropython = _MicroPythonCompat()
+import uos
+import utime
 
 from collections import namedtuple
-from credentials import Creds
-from shared_settings import (
-    LightIntensities,
-    AmbientLightSettings,
-    ECSettings,
-    WaterCalibration,
-    ambient_status,
-    save_all_settings_to_file,
-    load_all_settings_from_file,
-    depth_to_liters,
-)
-from gpio import setup_adc, read_ec_value, read_water_depth_mm, read_water_raw, water_raw_to_depth_mm, setup_ambient_adc, read_ambient_raw
 
-WriteConn = namedtuple("WriteConn", ["body", "buff", "buffmv", "write_range"])
 ReqInfo = namedtuple("ReqInfo", ["type", "path", "params", "host"])
 
-from server import Server
-
 import gc
+
+REQUEST_READ_TIMEOUT_S = 0.4
+RESPONSE_CHUNK_SIZE = 536
+HTTP_LISTEN_BACKLOG = 1
+EC_SETTLE_MS = 200
+WATER_LIVE_SAMPLES = 4
+WATER_LIVE_DELAY_MS = 5
+WATER_CAL_SAMPLES = 6
+WATER_CAL_DELAY_MS = 8
+
+LightIntensities = None
+AmbientLightSettings = None
+ECSettings = None
+WaterCalibration = None
+ambient_status = None
+save_all_settings_to_file = None
+load_all_settings_from_file = None
+depth_to_liters = None
+_settings_loaded = False
+Creds = None
+
+setup_adc = None
+read_ec_value = None
+set_ec_power = None
+read_water_raw = None
+water_raw_to_depth_mm = None
+setup_ambient_adc = None
+read_ambient_raw = None
+
+
+def _ensure_settings_loaded():
+    global LightIntensities, AmbientLightSettings, ECSettings, WaterCalibration
+    global ambient_status, save_all_settings_to_file, load_all_settings_from_file
+    global depth_to_liters, _settings_loaded
+
+    if LightIntensities is None:
+        from shared_settings import (
+            LightIntensities as LightIntensities_mod,
+            AmbientLightSettings as AmbientLightSettings_mod,
+            ECSettings as ECSettings_mod,
+            WaterCalibration as WaterCalibration_mod,
+            ambient_status as ambient_status_mod,
+            save_all_settings_to_file as save_all_settings_to_file_mod,
+            load_all_settings_from_file as load_all_settings_from_file_mod,
+            depth_to_liters as depth_to_liters_mod,
+        )
+        LightIntensities = LightIntensities_mod
+        AmbientLightSettings = AmbientLightSettings_mod
+        ECSettings = ECSettings_mod
+        WaterCalibration = WaterCalibration_mod
+        ambient_status = ambient_status_mod
+        save_all_settings_to_file = save_all_settings_to_file_mod
+        load_all_settings_from_file = load_all_settings_from_file_mod
+        depth_to_liters = depth_to_liters_mod
+
+    if not _settings_loaded:
+        try:
+            load_all_settings_from_file()
+        except Exception as e:
+            print("HTTP settings load failed:", e)
+        _settings_loaded = True
+
+
+def _ensure_gpio_loaded():
+    global setup_adc, read_ec_value, set_ec_power, read_water_raw
+    global water_raw_to_depth_mm, setup_ambient_adc, read_ambient_raw
+
+    if setup_adc is None:
+        from gpio import (
+            setup_adc as setup_adc_mod,
+            read_ec_value as read_ec_value_mod,
+            set_ec_power as set_ec_power_mod,
+            read_water_raw as read_water_raw_mod,
+            water_raw_to_depth_mm as water_raw_to_depth_mm_mod,
+            setup_ambient_adc as setup_ambient_adc_mod,
+            read_ambient_raw as read_ambient_raw_mod,
+        )
+        setup_adc = setup_adc_mod
+        read_ec_value = read_ec_value_mod
+        set_ec_power = set_ec_power_mod
+        read_water_raw = read_water_raw_mod
+        water_raw_to_depth_mm = water_raw_to_depth_mm_mod
+        setup_ambient_adc = setup_ambient_adc_mod
+        read_ambient_raw = read_ambient_raw_mod
+
+
+def _get_creds_class():
+    global Creds
+    if Creds is None:
+        from credentials import Creds as Creds_mod
+        Creds = Creds_mod
+    return Creds
 
 
 def unquote(string):
@@ -72,24 +141,50 @@ def unquote(string):
     return bytes(out)
 
 
-class HTTPServer(Server):
+class HTTPServer:
     def __init__(self, poller, local_ip, mode="wifi", exit_callback=None, portal_status_getter=None):
-        super().__init__(poller, 80, socket.SOCK_STREAM, "HTTP Server")
+        self.name = "HTTP Server"
+        self.sock = None
+        gc.collect()
+        stage = "socket"
+        try:
+            self.sock = socket.socket()
+            stage = "setsockopt"
+            try:
+                self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            except Exception as e:
+                print("HTTP server SO_REUSEADDR skipped:", e)
+            stage = "bind"
+            self.sock.bind(("0.0.0.0", 80))
+            stage = "listen"
+            self.sock.listen(HTTP_LISTEN_BACKLOG)
+            stage = "timeout"
+            try:
+                self.sock.settimeout(0.25)
+            except Exception:
+                self.sock.setblocking(False)
+        except Exception as e:
+            print("HTTP server socket init failed at {}: {}".format(stage, e))
+            try:
+                if self.sock:
+                    self.sock.close()
+            except Exception:
+                pass
+            self.sock = None
+            raise
+        print(self.name, "listening on", ("0.0.0.0", 80))
+
         if type(local_ip) is bytes:
             self.local_ip = local_ip
         else:
             self.local_ip = local_ip.encode()
-        self.request = dict()
-        self.conns = dict()
         self.exit_callback = exit_callback
         self.portal_status_getter = portal_status_getter
         self.mode = mode
         self.retry_requested = False
+        self.ec_adc = None
+        self.ambient_adc = None
         if mode == "settings":
-            try:
-                load_all_settings_from_file()
-            except Exception as e:
-                print("HTTP settings server: failed to load settings:", e)
             self.routes = {
                 b"/": b"./settings.html",
                 b"/settings": b"./settings.html",
@@ -105,6 +200,30 @@ class HTTPServer(Server):
                 b"/adc_value": self.adc_value,
                 b"/water_level": self.water_level,
                 b"/ambient_status": self.ambient_status,
+                b"/live_status": self.live_status,
+                b"/generate_204": self.redirect_root,
+                b"/gen_204": self.redirect_root,
+                b"/hotspot-detect.html": self.redirect_root,
+                b"/ncsi.txt": self.redirect_root,
+                b"/redirect": self.redirect_root,
+            }
+        elif mode == "sta":
+            self.routes = {
+                b"/": b"./settings.html",
+                b"/settings": b"./settings.html",
+                b"/wifi": b"./index.html",
+                b"/login": self.login,
+                b"/retry_wifi": self.retry_wifi,
+                b"/reset_wifi": self.reset_wifi,
+                b"/update_settings": self.update_lights,
+                b"/update_lights": self.update_lights,
+                b"/update_cal_point": self.update_cal_point,
+                b"/exit_settings": self.exit_settings,
+                b"/current_settings": self.current_settings,
+                b"/adc_value": self.adc_value,
+                b"/water_level": self.water_level,
+                b"/ambient_status": self.ambient_status,
+                b"/live_status": self.live_status,
                 b"/generate_204": self.redirect_root,
                 b"/gen_204": self.redirect_root,
                 b"/hotspot-detect.html": self.redirect_root,
@@ -126,6 +245,7 @@ class HTTPServer(Server):
                 b"/adc_value": self.adc_value,
                 b"/water_level": self.water_level,
                 b"/ambient_status": self.ambient_status,
+                b"/live_status": self.live_status,
                 b"/generate_204": self.redirect_root,
                 b"/gen_204": self.redirect_root,
                 b"/hotspot-detect.html": self.redirect_root,
@@ -135,9 +255,141 @@ class HTTPServer(Server):
 
         self.ssid = None
 
-        # queue up to 5 connection requests before refusing
-        self.sock.listen(5)
-        self.sock.setblocking(False)
+    def serve_once(self, idle_ms=250):
+        client_sock = None
+        try:
+            client_sock, addr = self.sock.accept()
+        except OSError as e:
+            # Timeout/no pending client. Keep the setup portal alive.
+            if idle_ms:
+                utime.sleep_ms(idle_ms)
+            return True
+
+        try:
+            self.handle_blocking(client_sock)
+            return True
+        except Exception as e:
+            if not self.is_transient_socket_error(e):
+                print("HTTP blocking handler failed:", e)
+            return False
+        finally:
+            try:
+                client_sock.close()
+            except Exception:
+                pass
+            gc.collect()
+
+    def handle_blocking(self, client_sock):
+        try:
+            client_sock.settimeout(REQUEST_READ_TIMEOUT_S)
+        except Exception:
+            pass
+
+        data = b""
+        while b"\r\n\r\n" not in data and len(data) < 8192:
+            try:
+                chunk = client_sock.recv(512)
+            except OSError as e:
+                if self.is_transient_socket_error(e):
+                    return
+                raise
+            if not chunk:
+                break
+            data += chunk
+
+        if not data:
+            return
+
+        try:
+            req = self.parse_request(data)
+        except Exception as e:
+            print("HTTP bad request:", e)
+            return
+        if not self.is_valid_req(req):
+            headers = (
+                b"HTTP/1.1 307 Temporary Redirect\r\n"
+                b"Location: http://%s/\r\n" % self.local_ip
+            )
+            body = uio.BytesIO(b"")
+            headers = self._ensure_content_length(headers, b"")
+        else:
+            body, headers = self.get_response(req)
+
+        self.write_blocking(client_sock, body, headers)
+
+    def is_transient_socket_error(self, err):
+        code = err.args[0] if getattr(err, "args", None) else err
+        transient = (
+            uerrno.EAGAIN,
+            11,
+            103,
+            104,
+            116,
+        )
+        for name in ("ETIMEDOUT", "ECONNABORTED", "ECONNRESET"):
+            try:
+                transient = transient + (getattr(uerrno, name),)
+            except AttributeError:
+                pass
+        return code in transient
+
+    def _ensure_connection_close(self, headers):
+        lowered = headers.lower()
+        if b"connection:" not in lowered:
+            headers += b"Connection: close\r\n"
+        return headers
+
+    def _ensure_content_length(self, headers, body):
+        if b"content-length:" not in headers.lower():
+            headers += b"Content-Length: %d\r\n" % len(body)
+        return headers
+
+    def _file_headers(self, path):
+        headers = (
+            b"HTTP/1.1 200 OK\r\n"
+            b"Content-Type: text/html\r\n"
+            b"Connection: close\r\n"
+        )
+        try:
+            headers += b"Content-Length: %d\r\n" % uos.stat(path)[6]
+        except Exception:
+            pass
+        return headers
+
+    def _write_all_blocking(self, client_sock, data):
+        if not data:
+            return True
+        view = memoryview(data)
+        offset = 0
+        total = len(data)
+        while offset < total:
+            try:
+                written = client_sock.write(view[offset:])
+            except OSError as e:
+                if self.is_transient_socket_error(e):
+                    return False
+                raise
+            if not written:
+                return False
+            offset += written
+        return True
+
+    def write_blocking(self, client_sock, body, headers):
+        try:
+            headers = self._ensure_connection_close(headers)
+            if not self._write_all_blocking(client_sock, headers + b"\r\n"):
+                return
+            while True:
+                chunk = body.read(RESPONSE_CHUNK_SIZE)
+                if not chunk:
+                    break
+                if not self._write_all_blocking(client_sock, chunk):
+                    return
+        finally:
+            try:
+                body.close()
+            except Exception:
+                pass
 
     def set_ip(self, new_ip, new_ssid):
         """update settings after connected to local WiFi"""
@@ -146,34 +398,14 @@ class HTTPServer(Server):
         self.ssid = new_ssid
         self.routes = {b"/": self.connected}
 
-    @micropython.native
-    def handle(self, sock, event, others):
-        if sock is self.sock:
-            # client connecting on port 80, so spawn off a new
-            # socket to handle this connection
-            print("- Accepting new HTTP connection")
-            self.accept(sock)
-        elif event & select.POLLIN:
-            # socket has data to read in
-            print("- Reading incoming HTTP data")
-            self.read(sock)
-        elif event & select.POLLOUT:
-            # existing connection has space to send more data
-            print("- Sending outgoing HTTP data")
-            self.write_to(sock)
-
-    def accept(self, server_sock):
-        """accept a new client request socket and register it for polling"""
-
+    def stop(self, poller=None):
         try:
-            client_sock, addr = server_sock.accept()
-        except OSError as e:
-            if e.args[0] == uerrno.EAGAIN:
-                return
-
-        client_sock.setblocking(False)
-        client_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.poller.register(client_sock, select.POLLIN)
+            if self.sock is not None:
+                self.sock.close()
+        except Exception:
+            pass
+        self.sock = None
+        print(self.name, "stopped")
 
     def parse_request(self, req):
         """parse a raw HTTP request to get items of interest"""
@@ -201,14 +433,14 @@ class HTTPServer(Server):
         password = unquote(params.get(b"password", None))
 
         # Write out credentials
-        Creds(ssid=ssid, password=password).write()
+        _get_creds_class()(ssid=ssid, password=password).write()
         # Always request an immediate retry after login, even if credentials
         # are unchanged from what's already stored.
         self.retry_requested = True
 
         headers = (
             b"HTTP/1.1 307 Temporary Redirect\r\n"
-            b"Location: http://{:s}/wifi\r\n".format(self.local_ip)
+            b"Location: http://%s/wifi\r\n" % self.local_ip
         )
 
         return b"", headers
@@ -217,16 +449,16 @@ class HTTPServer(Server):
         self.retry_requested = True
         headers = (
             b"HTTP/1.1 307 Temporary Redirect\r\n"
-            b"Location: http://{:s}/\r\n".format(self.local_ip)
+            b"Location: http://%s/\r\n" % self.local_ip
         )
         return b"", headers
 
     def reset_wifi(self, params):
-        Creds().remove()
+        _get_creds_class()().remove()
         self.retry_requested = False
         headers = (
             b"HTTP/1.1 307 Temporary Redirect\r\n"
-            b"Location: http://{:s}/wifi\r\n".format(self.local_ip)
+            b"Location: http://%s/wifi\r\n" % self.local_ip
         )
         return b"", headers
 
@@ -282,6 +514,7 @@ class HTTPServer(Server):
         return b"", headers
 
     def update_lights(self, params):
+        _ensure_settings_loaded()
         # params are bytes → decode to str for parsing
         INT_KEYS = {b'morning', b'daylight', b'evening', b'off'}
         TIME_KEYS = {b't_morning_start', b't_day_start', b't_evening_start', b't_lights_off'}
@@ -358,11 +591,7 @@ class HTTPServer(Server):
             ECSettings.update_values(**new_ec)
 
             if save_all_settings_to_file():
-                body = b"""\
-<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="2;url=/"><title>Saved</title></head><body><h2>Settings saved</h2><p>Device is applying changes. You can close this page.</p></body></html>
-"""
-                headers = b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
-                return body, headers
+                return b"Settings saved", b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
             else:
                 return b"Failed to save settings", b"HTTP/1.1 500 Internal Server Error\r\n"
         except Exception as e:
@@ -378,6 +607,7 @@ class HTTPServer(Server):
         if self.exit_callback:
             try:
                 self.exit_callback()
+                return b"", b"HTTP/1.1 200 OK\r\n"
             except Exception as e:
                 print("exit_settings callback failed:", e)
         try:
@@ -388,6 +618,8 @@ class HTTPServer(Server):
         return b"", b"HTTP/1.1 200 OK\r\n"
 
     def update_cal_point(self, params):
+        _ensure_settings_loaded()
+        _ensure_gpio_loaded()
         try:
             idx_raw = params.get(b"point", None)
             depth_raw = params.get(b"depth", None)
@@ -408,7 +640,7 @@ class HTTPServer(Server):
 
             # Capture the live touch reading as calibration input.
             try:
-                raw_depth = read_water_raw()
+                raw_depth = read_water_raw(WATER_CAL_SAMPLES, WATER_CAL_DELAY_MS)
             except Exception:
                 raw_depth = None
 
@@ -418,10 +650,8 @@ class HTTPServer(Server):
             existing[idx - 1] = {"depth_mm": depth_ref, "liters": round(liters_val, 1), "raw_depth_mm": raw_depth}
             WaterCalibration.update_points(existing)
             if save_all_settings_to_file():
-                body = b"""\
-<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content=\"1;url=/\"><title>Calibration saved</title></head><body><h3>Calibration point saved</h3><p>Point %d set: depth ref %.1f mm, liters %.1f, raw touch %.1f.</p></body></html>
-""" % (idx, depth_ref, liters_val, raw_depth if raw_depth is not None else -1)
-                headers = b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n"
+                body = b"Calibration point %d saved" % idx
+                headers = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
                 return body, headers
             else:
                 return b"Failed to save calibration", b"HTTP/1.1 500 Internal Server Error\r\n"
@@ -434,6 +664,7 @@ class HTTPServer(Server):
             return b"Failed to update calibration", b"HTTP/1.1 500 Internal Server Error\r\n"
 
     def current_settings(self, params):
+        _ensure_settings_loaded()
         headers = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
         try:
             payload = dict(LightIntensities.settings)
@@ -444,11 +675,76 @@ class HTTPServer(Server):
         except Exception:
             return ujson.dumps({'error': 'unable to read settings'}).encode(), b"HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\n"
 
+    def _get_ec_adc(self):
+        _ensure_gpio_loaded()
+        if self.ec_adc is None:
+            self.ec_adc = setup_adc()
+        return self.ec_adc
+
+    def _get_ambient_adc(self):
+        _ensure_gpio_loaded()
+        if self.ambient_adc is None:
+            self.ambient_adc = setup_ambient_adc()
+        return self.ambient_adc
+
+    def _read_ec_live(self):
+        _ensure_gpio_loaded()
+        set_ec_power(True)
+        try:
+            utime.sleep_ms(EC_SETTLE_MS)
+            return read_ec_value(self._get_ec_adc())
+        finally:
+            set_ec_power(False)
+
+    def _read_water_live(self):
+        _ensure_settings_loaded()
+        _ensure_gpio_loaded()
+        raw = read_water_raw(WATER_LIVE_SAMPLES, WATER_LIVE_DELAY_MS)
+        depth = water_raw_to_depth_mm(raw) if raw is not None else None
+        liters = depth_to_liters(depth)
+        return {"depth_mm": depth, "liters": liters, "raw": raw}
+
+    def _read_ambient_live(self):
+        _ensure_settings_loaded()
+        _ensure_gpio_loaded()
+        status = dict(ambient_status)
+        try:
+            raw = read_ambient_raw(self._get_ambient_adc())
+            status["raw"] = raw
+            status["filtered"] = raw
+            if not status.get("mode"):
+                status["mode"] = "UNKNOWN"
+        except Exception as e:
+            print("ambient live sample failed:", e)
+        return status
+
+    def live_status(self, params):
+        headers = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+        payload = {}
+        try:
+            payload["ec"] = {"value": self._read_ec_live()}
+        except Exception as e:
+            print("EC live sample failed:", e)
+            payload["ec"] = {"value": None, "error": "unable to read EC"}
+
+        try:
+            payload["water"] = self._read_water_live()
+        except Exception as e:
+            print("water live sample failed:", e)
+            payload["water"] = {"depth_mm": None, "liters": None, "raw": None, "error": "unable to read water"}
+
+        try:
+            payload["ambient"] = self._read_ambient_live()
+        except Exception as e:
+            print("ambient live status failed:", e)
+            payload["ambient"] = {"raw": None, "filtered": None, "mode": "UNKNOWN", "fault": False, "error": "unable to read ambient"}
+
+        return ujson.dumps(payload).encode(), headers
+
     def adc_value(self, params):
         headers = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
         try:
-            adc = setup_adc()
-            voltage = read_ec_value(adc)
+            voltage = self._read_ec_live()
             return str(voltage).encode(), headers
         except Exception:
             return b"error", b"HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n"
@@ -456,28 +752,14 @@ class HTTPServer(Server):
     def water_level(self, params):
         headers = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
         try:
-            raw = read_water_raw()
-            depth = water_raw_to_depth_mm(raw) if raw is not None else None
-            liters = depth_to_liters(depth)
-            return ujson.dumps({'depth_mm': depth, 'liters': liters, 'raw': raw}).encode(), headers
+            return ujson.dumps(self._read_water_live()).encode(), headers
         except Exception:
             return ujson.dumps({'error': 'unable to read water level'}).encode(), b"HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\n"
 
     def ambient_status(self, params):
         headers = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
         try:
-            status = dict(ambient_status)
-            # If no runtime status exists, provide a quick live sample
-            if status.get("raw") is None:
-                try:
-                    adc = setup_ambient_adc()
-                    raw = read_ambient_raw(adc)
-                    status["raw"] = raw
-                    status["filtered"] = raw
-                    status["mode"] = "UNKNOWN"
-                except Exception as e:
-                    print("ambient_status live sample failed:", e)
-            return ujson.dumps(status).encode(), headers
+            return ujson.dumps(self._read_ambient_live()).encode(), headers
         except Exception:
             return ujson.dumps({'error': 'unable to read ambient status'}).encode(), b"HTTP/1.1 500 Internal Server Error\r\nContent-Type: application/json\r\n"
 
@@ -494,139 +776,19 @@ class HTTPServer(Server):
 
         if type(route) is bytes:
             # expect a filename, so return contents of file
-            return open(route, "rb"), headers
+            path = route.decode() if isinstance(route, bytes) else route
+            return open(route, "rb"), self._file_headers(path)
 
         if callable(route):
             # call a function, which may or may not return a response
             response = route(req.params)
             body = response[0] or b""
             headers = response[1] or headers
+            headers = self._ensure_content_length(headers, body)
             return uio.BytesIO(body), headers
 
-        headers = b"HTTP/1.1 404 Not Found\r\n"
+        headers = self._ensure_content_length(b"HTTP/1.1 404 Not Found\r\n", b"")
         return uio.BytesIO(b""), headers
 
     def is_valid_req(self, req):
-        host = req.host
-        try:
-            host = host.split(b":", 1)[0]
-        except Exception:
-            pass
-        if host != self.local_ip:
-            # force a redirect to the MCU's IP address
-            return False
-        # redirect if we don't have a route for the requested path
         return req.path in self.routes
-
-    def read(self, s):
-        """read in client request from socket"""
-
-        data = s.read()
-        if not data:
-            # no data in the TCP stream, so close the socket
-            self.close(s)
-            return
-
-        # add new data to the full request
-        sid = id(s)
-        self.request[sid] = self.request.get(sid, b"") + data
-
-        # check if additional data expected
-        if data[-4:] != b"\r\n\r\n":
-            # HTTP request is not finished if no blank line at the end
-            # wait for next read event on this socket instead
-            return
-
-        # get the completed request
-        req = self.parse_request(self.request.pop(sid))
-
-        if not self.is_valid_req(req):
-            headers = (
-                b"HTTP/1.1 307 Temporary Redirect\r\n"
-                b"Location: http://{:s}/\r\n".format(self.local_ip)
-            )
-            body = uio.BytesIO(b"")
-            self.prepare_write(s, body, headers)
-            return
-
-        # by this point, we know the request has the correct
-        # host and a valid route
-        body, headers = self.get_response(req)
-        self.prepare_write(s, body, headers)
-
-    def prepare_write(self, s, body, headers):
-        # add newline to headers to signify transition to body
-        headers += "\r\n"
-        # TCP/IP MSS is 536 bytes, so create buffer of this size and
-        # initially populate with header data
-        buff = bytearray(headers + "\x00" * (536 - len(headers)))
-        # use memoryview to read directly into the buffer without copying
-        buffmv = memoryview(buff)
-        # start reading body data into the memoryview starting after
-        # the headers, and writing at most the remaining space of the buffer
-        # return the number of bytes written into the memoryview from the body
-        bw = body.readinto(buffmv[len(headers) :], 536 - len(headers))
-        # save place for next write event
-        c = WriteConn(body, buff, buffmv, [0, len(headers) + bw])
-        self.conns[id(s)] = c
-        # let the poller know we want to know when it's OK to write
-        self.poller.modify(s, select.POLLOUT)
-
-    def write_to(self, sock):
-        """write the next message to an open socket"""
-
-        # get the data that needs to be written to this socket
-        sid = id(sock)
-        c = self.conns.get(sid)
-        if c is None:
-            self.close(sock)
-            return
-        if c:
-            # write next 536 bytes (max) into the socket
-            try:
-                bytes_written = sock.write(c.buffmv[c.write_range[0] : c.write_range[1]])
-            except OSError:
-                print('cannot write to a closed socket')
-                self.close(sock)
-                return
-            if not bytes_written or c.write_range[1] < 536:
-                # either we wrote no bytes, or we wrote < TCP MSS of bytes
-                # so we're done with this connection
-                self.close(sock)
-            else:
-                # more to write, so read the next portion of the data into
-                # the memoryview for the next send event
-                self.buff_advance(c, bytes_written)
-
-    def buff_advance(self, c, bytes_written):
-        """advance the writer buffer for this connection to next outgoing bytes"""
-
-        if bytes_written == c.write_range[1] - c.write_range[0]:
-            # wrote all the bytes we had buffered into the memoryview
-            # set next write start on the memoryview to the beginning
-            c.write_range[0] = 0
-            # set next write end on the memoryview to length of bytes
-            # read in from remainder of the body, up to TCP MSS
-            c.write_range[1] = c.body.readinto(c.buff, 536)
-        else:
-            # didn't read in all the bytes that were in the memoryview
-            # so just set next write start to where we ended the write
-            c.write_range[0] += bytes_written
-
-    def close(self, s):
-        """close the socket, unregister from poller, and delete connection"""
-
-        try:
-            self.poller.unregister(s)
-        except Exception:
-            pass
-        try:
-            s.close()
-        except Exception:
-            pass
-        sid = id(s)
-        if sid in self.request:
-            del self.request[sid]
-        if sid in self.conns:
-            del self.conns[sid]
-        gc.collect()

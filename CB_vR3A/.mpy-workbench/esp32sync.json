@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "syncId": "f76d8bc0-580d-4a62-8cba-6fb193e99abe",
+  "syncId": "2e42c292-50d2-4057-bec6-b1253fad5fde",
   "root": "/Users/jonasolsson/Documents/GIT/Firmware/CB_vR3A",
-  "generatedAt": 1779908547263,
+  "generatedAt": 1780251078218,
   "files": {
     "CONTRIBUTORS": {
       "size": 56,
@@ -17,8 +17,8 @@
       "mtime": 1766161558531
     },
     "boot.py": {
-      "size": 139,
-      "mtime": 1766161558531
+      "size": 161,
+      "mtime": 1779908885110
     },
     "captive_dns.py": {
       "size": 2526,
@@ -29,8 +29,8 @@
       "mtime": 1779038527290
     },
     "captive_portal.py": {
-      "size": 17701,
-      "mtime": 1779908509219
+      "size": 17953,
+      "mtime": 1780250567228
     },
     "config.json": {
       "size": 128,
@@ -49,8 +49,8 @@
       "mtime": 1779045276603
     },
     "gpio.py": {
-      "size": 12982,
-      "mtime": 1779045276350
+      "size": 12635,
+      "mtime": 1780250604651
     },
     "index.html": {
       "size": 1688,
@@ -61,8 +61,8 @@
       "mtime": 1777492069614
     },
     "main.py": {
-      "size": 21906,
-      "mtime": 1778753017883
+      "size": 22300,
+      "mtime": 1780250595416
     },
     "microdot.py": {
       "size": 46415,
@@ -93,8 +93,8 @@
       "mtime": 1779045276433
     },
     "status_led.py": {
-      "size": 1720,
-      "mtime": 1779908445590
+      "size": 2807,
+      "mtime": 1780250547711
     },
     "tests/Harware_test.py": {
       "size": 4274,

@@ -8,18 +8,32 @@ class Server:
         # create socket with correct type: stream (TCP) or datagram (UDP)
         self.sock = socket.socket(socket.AF_INET, sock_type)
 
-        # register to get event updates for this socket
         self.poller = poller
-        self.poller.register(self.sock, select.POLLIN)
-
-        addr = socket.getaddrinfo("0.0.0.0", port)[0][-1]
-        # allow new requests while still sending last response
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind(addr)
+        try:
+            addr = ("0.0.0.0", port)
+            # allow new requests while still sending last response
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.sock.bind(addr)
+            # register to get event updates only after bind succeeds
+            if self.poller is not None:
+                self.poller.register(self.sock, select.POLLIN)
+        except Exception:
+            try:
+                self.sock.close()
+            except Exception:
+                pass
+            raise
 
         print(self.name, "listening on", addr)
 
     def stop(self, poller):
-        poller.unregister(self.sock)
-        self.sock.close()
+        try:
+            if poller is not None:
+                poller.unregister(self.sock)
+        except Exception:
+            pass
+        try:
+            self.sock.close()
+        except Exception:
+            pass
         print(self.name, "stopped")

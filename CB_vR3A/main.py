@@ -1,21 +1,21 @@
-import gpio
-import ntptime
 import utime
 import time
 import machine
 import gc
-import uasyncio as asyncio
 from machine import Pin
-from shared_settings import (
-    LightIntensities,
-    AmbientLightSettings,
-    ECSettings,
-    load_all_settings_from_file,
-    update_ambient_status,
-)
+import status_led
 from captive_portal import CaptivePortal
 
-DEBUG = True
+gpio = None
+ntptime = None
+asyncio = None
+LightIntensities = None
+AmbientLightSettings = None
+ECSettings = None
+load_all_settings_from_file = None
+update_ambient_status = None
+
+DEBUG = False
 _debug_last_ms = {}
 
 
@@ -45,37 +45,106 @@ debug("creating CaptivePortal")
 portal = CaptivePortal()
 debug("CaptivePortal created")
 
-pump_pin = Pin(13, Pin.OUT)
 PUMP_ON = True
 PUMP_OFF = False
-debug("pump pin initialized on GPIO13")
-
-pump_state = PUMP_OFF  # Keep track of the pump's state
-sensor_lock = asyncio.Lock()  # Prevent simultaneous EC and water-level reads
 EC_MEASURE_INTERVAL_MS = 5000  # REQ-EC-001: fixed 5s interval
 EC_MEASURE_WINDOW_MS = 1000
 EC_SETTLE_MS = 200
 WATER_MEASURE_INTERVAL_MS = 1000
-debug("creating EC ADC")
-ec_adc = gpio.setup_adc()
-debug("EC ADC ready")
+EC_ALARM_PRINT_INTERVAL_MS = 60000
 
 in_settings_mode = False  # This is the global flag
 current_water_depth = None  # Cached water depth for UI / alerts
 SETTINGS_AP = None  # Keep a reference so GC doesn't drop the AP object
 
+runtime_initialized = False
+pump_pin = None
+pump_state = PUMP_OFF  # Keep track of the pump's state
+sensor_lock = None  # Created after Wi-Fi startup.
+ec_adc = None
 ec_active = False  # track EC measurement window to inhibit water depth reads
 current_ec_value = None  # Cached EC value for alarms and EC LED indicator
 current_base_brightness = 0  # latest requested brightness before ALS overrides
+ambient_controller = None
+_last_ec_alarm_state = None
+_last_ec_alarm_print_ms = 0
 
 SETTINGS_FLAG_FILE = "settings_mode.flag"
 WIFI_PORTAL_FLAG_FILE = "wifi_portal_mode.flag"
 WIFI_RESET_FLAG_FILE = "wifi_reset_mode.flag"
 BOOT_HOLD_PIN = 0
+MODE_BUTTON_PIN = 26
+ON_OFF_DIM_BUTTON_PIN = 17
 BOOT_GRACE_MS = 4000
 BOOT_POLL_MS = 50
 NTP_HOSTS = ("pool.ntp.org", "time.google.com", "time.cloudflare.com")
 NTP_RETRY_INTERVAL_S = 30
+ENABLE_STA_HTTP_SERVER = False
+ALS_STATUS_THRESHOLD = 1500
+MODE_DEBOUNCE_MS = 50
+SETTINGS_PRESS_MS = 2000
+WIFI_PORTAL_PRESS_MS = 5000
+WIFI_RESET_PRESS_MS = 10000
+
+long_press_detector = None
+on_off_dim_detector = None
+
+
+class StartupModeButton:
+    def __init__(self, pin_no):
+        self.pin = Pin(pin_no, Pin.IN, Pin.PULL_UP)
+        self.last_level = self.pin.value()
+        self.last_change_ms = utime.ticks_ms()
+        self.press_start_ms = None
+        self.consumed = False
+
+    def update(self):
+        now = utime.ticks_ms()
+        level = self.pin.value()
+        if level != self.last_level:
+            self.last_level = level
+            self.last_change_ms = now
+            if level == 0:
+                self.press_start_ms = now
+                self.consumed = False
+            else:
+                self._handle_release(now)
+            return
+
+        if utime.ticks_diff(now, self.last_change_ms) < MODE_DEBOUNCE_MS:
+            return
+        if level != 0 or self.press_start_ms is None or self.consumed:
+            return
+
+        held_ms = utime.ticks_diff(now, self.press_start_ms)
+        if held_ms >= WIFI_RESET_PRESS_MS:
+            self.consumed = True
+            reset_wifi_callback()
+        elif held_ms >= WIFI_PORTAL_PRESS_MS:
+            self.consumed = True
+            enter_wifi_portal_callback()
+        elif held_ms >= SETTINGS_PRESS_MS:
+            self.consumed = True
+            enter_settings_callback()
+
+    def _handle_release(self, now):
+        if self.press_start_ms is None:
+            return
+        held_ms = utime.ticks_diff(now, self.press_start_ms)
+        self.press_start_ms = None
+        if self.consumed:
+            return
+        if held_ms >= WIFI_RESET_PRESS_MS:
+            reset_wifi_callback()
+        elif held_ms >= WIFI_PORTAL_PRESS_MS:
+            enter_wifi_portal_callback()
+        elif held_ms >= SETTINGS_PRESS_MS:
+            enter_settings_callback()
+        else:
+            toggle_control_mode_callback()
+
+
+startup_mode_button = StartupModeButton(MODE_BUTTON_PIN)
 
 
 class AmbientLightController:
@@ -96,7 +165,6 @@ class AmbientLightController:
 
     def _sample(self):
         raw = gpio.read_ambient_raw(self.adc)
-        print("ALS raw ADC:", raw)
         if raw is None:
             self.invalid_count += 1
             return None
@@ -143,7 +211,6 @@ class AmbientLightController:
             gpio.brightnessControl(target)
             self.last_output = target
             self.last_apply_ms = now_ms
-            print("ALS mode={}, applied brightness={}".format(self.mode, target))
         return self.last_output
 
     def tick(self, base_brightness):
@@ -161,7 +228,6 @@ class AmbientLightController:
             self.sensor_fault = self.invalid_count >= 3
             self._update_mode()
             update_ambient_status(raw, self.filtered, self.mode, self.sensor_fault)
-            print("ALS filtered={:.2f} mode={} fault={}".format(self.filtered if self.filtered is not None else -1, self.mode, self.sensor_fault))
 
         target = base_brightness
         ambient_change = False
@@ -337,6 +403,18 @@ def wait_for_boot_hold(grace_ms=BOOT_GRACE_MS, pin_no=BOOT_HOLD_PIN):
     return False
 
 
+def service_startup_controls():
+    """
+    Keep physical controls responsive while Wi-Fi startup is running before
+    the asyncio main loop exists.
+    """
+    startup_mode_button.update()
+    if long_press_detector:
+        long_press_detector.update()
+    if on_off_dim_detector:
+        on_off_dim_detector.update()
+
+
 def sync_time_once(attempt_index):
     """Single NTP attempt to avoid blocking the main loop."""
     host = NTP_HOSTS[attempt_index % len(NTP_HOSTS)]
@@ -351,6 +429,7 @@ def sync_time_once(attempt_index):
         err = e.args[0] if e.args else e
         print("NTP sync failed via {} (OSError: {})".format(host, err))
         return False
+
 
 async def pump_control():
     global pump_state
@@ -395,18 +474,42 @@ async def measure_ec():
                 debug("EC measurement window complete")
 
             current_ec_value = ec_value
-            print("EC Value (uS/cm):", ec_value)
 
             low_lim = ECSettings.settings.get("ec_low_alarm_us", 0)
             high_lim = ECSettings.settings.get("ec_high_alarm_us", 999999)
             if ec_value is not None:
                 gpio.update_ec_indicator(ec_value, low_lim, high_lim)
-                if ec_value < low_lim:
-                    print("EC alarm: below low limit {} uS/cm".format(low_lim))
-                elif ec_value > high_lim:
-                    print("EC alarm: above high limit {} uS/cm".format(high_lim))
+                report_ec_alarm(ec_value, low_lim, high_lim)
 
         await asyncio.sleep(0.1)  # Keep loop responsive while rate-limiting EC reads
+
+
+def report_ec_alarm(ec_value, low_lim, high_lim):
+    global _last_ec_alarm_state, _last_ec_alarm_print_ms
+
+    if ec_value < low_lim:
+        alarm_state = "low"
+        message = "EC alarm: below low limit {} uS/cm".format(low_lim)
+    elif ec_value > high_lim:
+        alarm_state = "high"
+        message = "EC alarm: above high limit {} uS/cm".format(high_lim)
+    else:
+        alarm_state = None
+        message = None
+
+    now = utime.ticks_ms()
+    if alarm_state is None:
+        if _last_ec_alarm_state is not None:
+            print("EC alarm cleared")
+        _last_ec_alarm_state = None
+        _last_ec_alarm_print_ms = now
+        return
+
+    due = utime.ticks_diff(now, _last_ec_alarm_print_ms) >= EC_ALARM_PRINT_INTERVAL_MS
+    if alarm_state != _last_ec_alarm_state or due:
+        print(message)
+        _last_ec_alarm_state = alarm_state
+        _last_ec_alarm_print_ms = now
 
 
 
@@ -415,22 +518,18 @@ async def monitor_water_level():
     debug("monitor_water_level task started")
     while True:
         if sensor_lock.locked() or ec_active:
-            debug_every("water_skip", "water depth read paused during EC measurement", 5000)
             await asyncio.sleep_ms(200)
             continue
 
         async with sensor_lock:
             depth = gpio.read_water_depth_mm()
         current_water_depth = depth
-        debug_every("water_depth", "measured water depth={} mm".format(depth), 5000)
         gpio.update_water_level_indicator(depth)
         await asyncio.sleep_ms(WATER_MEASURE_INTERVAL_MS)
 
 
-hour = current_hour()
-debug("initial RTC hour={}".format(hour))
+hour = 0
 oldHour = -1
-debug("oldHour initialized={}".format(oldHour))
 time_synced = False
 last_in_settings_mode = False
 
@@ -438,11 +537,89 @@ last_in_settings_mode = False
 def manualLightControl():
     return current_base_brightness
 
-# At the start of your main logic or when you need to refresh settings
-LightIntensities.settings = load_settings_from_file()
-ambient_controller = AmbientLightController()
-current_base_brightness = LightIntensities.settings.get('off', 0)
-debug("initial base brightness={}".format(current_base_brightness))
+
+def load_runtime_modules():
+    global gpio, ntptime, asyncio
+    global LightIntensities, AmbientLightSettings, ECSettings
+    global load_all_settings_from_file, update_ambient_status
+
+    if gpio is not None:
+        return
+
+    debug("loading runtime modules")
+    gc.collect()
+
+    import gpio as gpio_mod
+    import ntptime as ntptime_mod
+    import uasyncio as asyncio_mod
+    from shared_settings import (
+        LightIntensities as LightIntensities_mod,
+        AmbientLightSettings as AmbientLightSettings_mod,
+        ECSettings as ECSettings_mod,
+        load_all_settings_from_file as load_all_settings_from_file_mod,
+        update_ambient_status as update_ambient_status_mod,
+    )
+
+    gpio = gpio_mod
+    ntptime = ntptime_mod
+    asyncio = asyncio_mod
+    LightIntensities = LightIntensities_mod
+    AmbientLightSettings = AmbientLightSettings_mod
+    ECSettings = ECSettings_mod
+    load_all_settings_from_file = load_all_settings_from_file_mod
+    update_ambient_status = update_ambient_status_mod
+
+
+def init_runtime_controls():
+    global long_press_detector, on_off_dim_detector
+
+    if long_press_detector is not None and on_off_dim_detector is not None:
+        return
+
+    long_press_detector = gpio.LongPressDetector(
+        gpio.mode_button_pin,
+        short_press_callback=toggle_control_mode_callback,
+        settings_press_callback=enter_settings_callback,
+        wifi_portal_callback=enter_wifi_portal_callback,
+        wifi_reset_callback=reset_wifi_callback,
+        debounce_ms=50,
+    )
+    debug("mode button detector ready on GPIO{}".format(gpio.MODE_BUTTON_PIN))
+
+    on_off_dim_detector = gpio.LongPressDetector(
+        gpio.on_off_dim_button_pin,
+        short_press_callback=cycle_on_off_dim_callback,
+        debounce_ms=50,
+    )
+    debug("on/off/dim button detector ready on GPIO{}".format(gpio.ON_OFF_DIM_BUTTON_PIN))
+
+
+def init_runtime_hardware():
+    global runtime_initialized, pump_pin, sensor_lock, ec_adc
+    global ambient_controller, current_base_brightness, hour
+
+    if runtime_initialized:
+        return
+
+    debug("initializing runtime hardware")
+    load_runtime_modules()
+    gc.collect()
+
+    pump_pin = Pin(13, Pin.OUT)
+    debug("pump pin initialized on GPIO13")
+
+    sensor_lock = asyncio.Lock()
+    debug("creating EC ADC")
+    ec_adc = gpio.setup_adc()
+    debug("EC ADC ready")
+
+    LightIntensities.settings = load_settings_from_file()
+    ambient_controller = AmbientLightController()
+    current_base_brightness = LightIntensities.settings.get("off", 0)
+    hour = current_hour()
+    init_runtime_controls()
+    runtime_initialized = True
+    debug("runtime hardware initialized; base brightness={}".format(current_base_brightness))
 
 def timeControl(hour, oldHour):
     update = False
@@ -491,24 +668,53 @@ def cycle_on_off_dim_callback():
     state = MANUALMODE
     print("ON/OFF/DIM button brightness:", current_base_brightness)
 
+
+def prepare_for_mode_reset(reason):
+    print("Preparing for reset:", reason)
+    try:
+        portal.cleanup(keep_sta=False)
+    except Exception as e:
+        print("WiFi cleanup before reset failed:", e)
+    try:
+        gc.collect()
+    except Exception:
+        pass
+    utime.sleep_ms(1200)
+
+
+def reboot_clean(reason="mode change"):
+    print("Rebooting cleanly:", reason)
+    try:
+        gc.collect()
+    except Exception:
+        pass
+    try:
+        machine.deepsleep(250)
+    except Exception as e:
+        print("Clean reboot fallback:", e)
+        machine.reset()
+
+
 def enter_settings_callback():
     print("Button 2-5s: request settings mode")
     if not set_mode_flag(SETTINGS_FLAG_FILE):
         return
-    print("Rebooting into settings mode...")
-    machine.reset()
+    prepare_for_mode_reset("settings mode")
+    reboot_clean("settings mode")
     
-# This is a global callback function that will be called from web_server.py
+# This callback is used by the lightweight captive_http settings server.
 def exit_settings_callback():
     print("Settings saved, rebooting to normal mode...")
-    machine.reset()
+    prepare_for_mode_reset("exit settings")
+    reboot_clean("normal mode")
 
     
 def enter_wifi_portal_callback():
     print("Button 5-10s: request WiFi portal")
     if not set_mode_flag(WIFI_PORTAL_FLAG_FILE):
         return
-    machine.reset()
+    prepare_for_mode_reset("WiFi portal mode")
+    reboot_clean("WiFi portal mode")
 
 
 def reset_wifi_callback():
@@ -519,26 +725,13 @@ def reset_wifi_callback():
         print("Failed to clear WiFi credentials:", e)
     if not set_mode_flag(WIFI_RESET_FLAG_FILE):
         return
-    machine.reset()
+    prepare_for_mode_reset("WiFi reset portal mode")
+    reboot_clean("WiFi reset portal mode")
     
-# Initialize the LongPressDetector with the button pin from gpio.py
-long_press_detector = gpio.LongPressDetector(
-    gpio.mode_button_pin,
-    short_press_callback=toggle_control_mode_callback,
-    settings_press_callback=enter_settings_callback,
-    wifi_portal_callback=enter_wifi_portal_callback,
-    wifi_reset_callback=reset_wifi_callback,
-    debounce_ms=50,
-)
-debug("mode button detector ready on GPIO{}".format(gpio.MODE_BUTTON_PIN))
-
-on_off_dim_detector = gpio.LongPressDetector(
-    gpio.on_off_dim_button_pin,
-    short_press_callback=cycle_on_off_dim_callback,
-    debounce_ms=50,
-)
-debug("on/off/dim button detector ready on GPIO{}".format(gpio.ON_OFF_DIM_BUTTON_PIN))
-
+def update_runtime_status_led():
+    if portal.sta_if and portal.sta_if.isconnected():
+        status_led.set_connected()
+    status_led.tick()
 
 
 async def main_logic():
@@ -553,6 +746,8 @@ async def main_logic():
         # Always let the long-press logic run
         long_press_detector.update()
         on_off_dim_detector.update()
+        if ENABLE_STA_HTTP_SERVER:
+            portal.poll_http(0)
 
         base_brightness = current_base_brightness
 
@@ -594,6 +789,7 @@ async def main_logic():
                 ECSettings.settings.get("ec_high_alarm_us", 2000),
             )
         ambient_controller.tick(base_brightness)
+        update_runtime_status_led()
 
         await asyncio.sleep(0.05)
 
@@ -614,7 +810,10 @@ def run():
         print("Settings mode: launching captive portal server for settings UI")
         # allow HTTP handler to reset back to normal mode
         portal.exit_callback = exit_settings_callback
-        portal.captive_portal(mode="settings")
+        portal.service_callback = service_startup_controls
+        if not portal.captive_portal(mode="settings"):
+            print("Settings portal failed to start")
+            reboot_clean("settings portal failed")
     else:
         print("Booting in NORMAL MODE")
         force_ap = False
@@ -632,19 +831,18 @@ def run():
             force_ap = True
 
         debug("starting portal; force_ap={}".format(force_ap))
-        portal.start(force_ap=force_ap)
+        portal.service_callback = service_startup_controls
+        wifi_ready = portal.start(force_ap=force_ap)
         debug("portal.start returned")
 
-        try:
-            import gc
-            gc.collect()
-            debug("importing web_server")
-            import web_server
-            web_server.set_exit_settings_callback(exit_settings_callback)
-            debug("web_server imported")
-        except MemoryError as e:
-            # Skip optional microdot server hook if RAM is too tight
-            print("Skipping web_server import due to MemoryError:", e)
+        if wifi_ready and ENABLE_STA_HTTP_SERVER:
+            portal.start_sta_server()
+        elif wifi_ready:
+            print("STA HTTP server disabled; use mode button for settings portal")
+        else:
+            print("WiFi startup did not complete; continuing offline without HTTP server")
+
+        init_runtime_hardware()
 
         loop = asyncio.get_event_loop()
         debug("scheduling tasks")

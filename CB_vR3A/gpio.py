@@ -57,14 +57,12 @@ async def _buzzer_worker():
     while buzzer_mode:
         if buzzer_mode == "water":
             # Short beeps for low water level
-            print("DEBUG: buzzer worker in WATER mode")
             _set_buzzer_output(duty=512, freq=600)
             await asyncio.sleep(0.2)
             _set_buzzer_output(duty=0)
             await asyncio.sleep(0.2)
         elif buzzer_mode == "ec":
             # Alternating tones for EC warning
-            print("DEBUG: buzzer worker in EC mode")
             _set_buzzer_output(duty=512, freq=1000)
             await asyncio.sleep(0.5)
             _set_buzzer_output(duty=512, freq=2000)
@@ -108,14 +106,11 @@ def control_water_buzzer(depth_mm, low_threshold=WATER_LOW_THRESHOLD_MM):
     if buzzer is None:
         return
     if depth_mm is None:
-        print("DEBUG: water depth is None; skipping buzzer check")
         return
-    print("DEBUG: control_water_buzzer depth_mm={}, threshold={}".format(depth_mm, low_threshold))
     if depth_mm < low_threshold:
         _set_buzzer_mode("water")
     else:
         if buzzer_mode == "water":
-            print("DEBUG: water depth recovered; stopping water alarm")
             _set_buzzer_mode(None)
 
 def setup_adc():

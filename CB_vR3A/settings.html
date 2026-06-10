@@ -395,6 +395,7 @@
             vegetative: 'Vegetative',
             flowering: 'Flowering / Fruiting'
         };
+        let liveStatusInFlight = false;
 
         function renderCalibration(points) {
             const grid = document.getElementById('calibration-grid');
@@ -454,6 +455,8 @@
                 btn.type = 'submit';
                 btn.className = 'btn';
                 btn.textContent = 'Save point ' + pointNum;
+
+                form.addEventListener('submit', submitCalibrationForm);
 
                 form.appendChild(depthWrap);
                 form.appendChild(literWrap);
@@ -575,11 +578,60 @@
             });
         }
 
-        function loadSettings() {
-            const status = document.getElementById('settings-status');
-            status.textContent = 'Loading current settings…';
+        function fetchNoStore(url) {
+            return fetch(url, { cache: 'no-store' });
+        }
 
-            fetch('/current_settings')
+        function requestForm(form) {
+            const params = new URLSearchParams(new FormData(form));
+            const sep = form.action.indexOf('?') === -1 ? '?' : '&';
+            return fetchNoStore(form.action + sep + params.toString())
+                .then((res) => res.text().then((text) => {
+                    if (!res.ok) {
+                        throw new Error(text || ('HTTP ' + res.status));
+                    }
+                    return text;
+                }));
+        }
+
+        function submitSettingsForm(event) {
+            event.preventDefault();
+            const status = document.getElementById('settings-status');
+            status.textContent = 'Saving settings...';
+            requestForm(event.currentTarget)
+                .then(() => loadSettings(false))
+                .then(() => {
+                    status.textContent = 'Settings saved.';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    status.textContent = 'Could not save settings: ' + err.message;
+                });
+        }
+
+        function submitCalibrationForm(event) {
+            event.preventDefault();
+            const status = document.getElementById('settings-status');
+            status.textContent = 'Saving calibration point...';
+            requestForm(event.currentTarget)
+                .then(() => loadSettings(false))
+                .then(() => loadLiveStatus())
+                .then(() => {
+                    status.textContent = 'Calibration point saved.';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    status.textContent = 'Could not save calibration point: ' + err.message;
+                });
+        }
+
+        function loadSettings(showStatus = true) {
+            const status = document.getElementById('settings-status');
+            if (showStatus) {
+                status.textContent = 'Loading current settings...';
+            }
+
+            return fetchNoStore('/current_settings')
                 .then((res) => res.json())
                 .then((data) => {
                     if (data.error) {
@@ -588,7 +640,9 @@
                     populateSettingsForm(data);
                     populateEcSettings(data.ec);
                     populateAmbientSettings(data.ambient);
-                    status.textContent = 'Showing current saved settings.';
+                    if (showStatus) {
+                        status.textContent = 'Showing current saved settings.';
+                    }
                 })
                 .catch((err) => {
                     console.error(err);
@@ -596,69 +650,56 @@
                 });
         }
 
-        function loadEcValue() {
+        function loadLiveStatus() {
+            if (liveStatusInFlight) {
+                return Promise.resolve();
+            }
+            liveStatusInFlight = true;
+
             const ecValueEl = document.getElementById('ec-value');
-            const status = document.getElementById('ec-status');
-            status.textContent = 'Updating…';
-
-            fetch('/adc_value')
-                .then((res) => res.text())
-                .then((value) => {
-                    ecValueEl.textContent = value;
-                    status.textContent = 'Live reading';
-                })
-                .catch((err) => {
-                    console.error(err);
-                    status.textContent = 'Could not read EC value.';
-                });
-        }
-
-        function loadWaterLevel() {
+            const ecStatus = document.getElementById('ec-status');
             const waterValueEl = document.getElementById('water-level');
             const waterLitersEl = document.getElementById('water-liters');
-            const status = document.getElementById('water-status');
-            status.textContent = 'Updating…';
+            const waterStatus = document.getElementById('water-status');
+            const alsStatus = document.getElementById('als-status');
 
-            fetch('/water_level')
+            return fetchNoStore('/live_status')
                 .then((res) => res.json())
                 .then((data) => {
-                    if (data.error) {
-                        throw new Error(data.error);
+                    const ec = data.ec || {};
+                    if (ec.value !== null && ec.value !== undefined && ec.value !== 'error') {
+                        ecValueEl.textContent = Math.round(Number(ec.value));
+                        ecStatus.textContent = 'Live reading';
+                    } else {
+                        ecValueEl.textContent = '--';
+                        ecStatus.textContent = ec.error || 'Could not read EC value.';
                     }
-                    waterValueEl.textContent = data.depth_mm !== null ? data.depth_mm : '--';
-                    waterLitersEl.textContent = data.liters !== null && data.liters !== undefined ? data.liters : '--';
-                    status.textContent = data.raw !== null && data.raw !== undefined ? ('Live reading, raw touch ' + data.raw) : 'Live reading';
+
+                    const water = data.water || {};
+                    waterValueEl.textContent = water.depth_mm !== null && water.depth_mm !== undefined ? Number(water.depth_mm).toFixed(1) : '--';
+                    waterLitersEl.textContent = water.liters !== null && water.liters !== undefined ? water.liters : '--';
+                    waterStatus.textContent = water.error || (water.raw !== null && water.raw !== undefined ? ('Live reading, raw touch ' + water.raw) : 'Live reading');
+
+                    const ambient = data.ambient || {};
+                    document.getElementById('als-raw').textContent = ambient.raw !== null && ambient.raw !== undefined ? ambient.raw : '--';
+                    document.getElementById('als-filtered').textContent = ambient.filtered !== null && ambient.filtered !== undefined ? ambient.filtered : '--';
+                    document.getElementById('als-mode').textContent = ambient.mode || '--';
+                    document.getElementById('als-fault').textContent = ambient.fault ? 'Yes' : 'No';
+                    alsStatus.textContent = ambient.error || 'Live reading';
                 })
                 .catch((err) => {
                     console.error(err);
-                    status.textContent = 'Could not read water level.';
-                });
-        }
-
-        function loadAmbientStatus() {
-            const status = document.getElementById('als-status');
-            status.textContent = 'Updating…';
-
-            fetch('/ambient_status')
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    document.getElementById('als-raw').textContent = data.raw !== null ? data.raw : '--';
-                    document.getElementById('als-filtered').textContent = data.filtered !== null ? data.filtered : '--';
-                    document.getElementById('als-mode').textContent = data.mode || '--';
-                    document.getElementById('als-fault').textContent = data.fault ? 'Yes' : 'No';
-                    status.textContent = 'Live reading';
+                    ecStatus.textContent = 'Could not read live status.';
+                    waterStatus.textContent = 'Could not read live status.';
+                    alsStatus.textContent = 'Could not read live status.';
                 })
-                .catch((err) => {
-                    console.error(err);
-                    status.textContent = 'Could not read ambient sensor.';
+                .then(() => {
+                    liveStatusInFlight = false;
                 });
         }
 
         function exitSettings() {
-            fetch('/exit_settings')
+            fetchNoStore('/exit_settings')
                 .then(() => {
                     // small delay before navigating away
                     setTimeout(() => {
@@ -674,15 +715,14 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const settingsForm = document.querySelector('form[action="/update_lights"]');
+            if (settingsForm) {
+                settingsForm.addEventListener('submit', submitSettingsForm);
+            }
             renderCalibration();
-            loadSettings();
-            loadEcValue();
-            loadWaterLevel();
-            loadAmbientStatus();
+            loadSettings().then(() => loadLiveStatus());
             setInterval(() => {
-                loadEcValue();
-                loadWaterLevel();
-                loadAmbientStatus();
+                loadLiveStatus();
             }, 5000);
         });
     </script>
