@@ -5,7 +5,6 @@ import utime
 EC_POWER_PIN = 5
 EC_ADC_PIN = 35
 MODE_BUTTON_PIN = 26
-EC_LED_PIN = 15
 WATER_LEVEL_PIN = 27
 
 READ_INTERVAL_MS = 1000
@@ -24,8 +23,6 @@ WATER_LOOKUP_TABLE = [
 
 ec_power = Pin(EC_POWER_PIN, Pin.OUT)
 mode_button = Pin(MODE_BUTTON_PIN, Pin.IN, Pin.PULL_UP)
-ec_led = Pin(EC_LED_PIN, Pin.OUT)
-
 ec_adc = ADC(Pin(EC_ADC_PIN))
 ec_adc.atten(ADC.ATTN_11DB)
 
@@ -73,7 +70,6 @@ def read_water_raw(samples=WATER_SAMPLES, delay_ms=WATER_SAMPLE_DELAY_MS):
 
 def set_ec_power(enabled):
     ec_power.value(1 if enabled else 0)
-    ec_led.value(1 if enabled else 0)
     print("EC supply GPIO{} {}".format(EC_POWER_PIN, "ON" if enabled else "OFF"))
 
 

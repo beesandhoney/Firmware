@@ -302,8 +302,8 @@
                     </div>
 
                     <div class="field">
-                        <label for="als_dim_level">LED dim level (PWM)</label>
-                        <input id="als_dim_level" name="als_dim_level" type="number" min="0" max="1023" step="1">
+                        <label for="als_dim_level">LED dim level (%)</label>
+                        <input id="als_dim_level" name="als_dim_level" type="number" min="0" max="100" step="1">
                     </div>
 
                     <div class="field">
@@ -328,12 +328,20 @@
 
         <!-- Calibration forms -->
         <div class="card ec-card">
-            <h2>Water calibration</h2>
+            <h2>Volume calibration</h2>
+            <form id="calibration-config-form" action="/configure_water_calibration" method="GET" class="field">
+                <label for="max_volume_l">Maximum container volume (L)</label>
+                <input id="max_volume_l" name="max_volume_l" type="number" min="0.1" max="10000" step="0.1" required>
+                <label for="point_count">Number of calibration points</label>
+                <input id="point_count" name="point_count" type="number" min="2" max="20" step="1" required>
+                <button class="btn" type="submit">Start new calibration</button>
+            </form>
             <div class="help">
-                Save each point separately: depth in mm and corresponding liters.
+                Set the container volume and number of points. Then fill to each displayed target volume and press Record sensor value.
             </div>
+            <div id="calibration-status" class="status"></div>
             <div class="cal-grid" id="calibration-grid">
-                <!-- Rows injected by JS for point 1-5 -->
+                <!-- Guided calibration rows injected by JavaScript -->
             </div>
         </div>
 
@@ -345,13 +353,9 @@
         </div>
 
         <div class="card ec-card">
-            <h2>Water level</h2>
-            <span class="water-value" id="water-level">--</span>
-            <span class="water-unit">mm</span>
-            <div class="cal-row-label">
-                <span class="water-value" id="water-liters">--</span>
-                <span class="water-unit">L</span>
-            </div>
+            <h2>Liquid volume</h2>
+            <span class="water-value" id="water-volume">--</span>
+            <span class="water-unit">L</span>
             <div id="water-status" class="status"></div>
         </div>
 
@@ -371,7 +375,6 @@
     </div>
 
     <script>
-        const DEPTH_POINTS = [0, 25, 50, 100, 250];
         const PLANT_GUIDANCE = {
             seedlings: { stages: ['default'], ranges: { default: [300, 700] } },
             herbs: { stages: ['default'], ranges: { default: [800, 1400] } },
@@ -400,51 +403,24 @@
         function renderCalibration(points) {
             const grid = document.getElementById('calibration-grid');
             grid.innerHTML = '';
-            const pts = Array.isArray(points) ? points.slice(0, 5) : [];
-            for (let i = 0; i < 5; i++) {
+            const pts = Array.isArray(points) ? points : [];
+            for (let i = 0; i < pts.length; i++) {
                 const pointNum = i + 1;
                 const point = pts[i] || {};
-                const depthVal = DEPTH_POINTS[i];
-                const litersVal = point.liters !== undefined ? point.liters : '';
-                const rawVal = point.raw_depth_mm !== undefined && point.raw_depth_mm !== null ? point.raw_depth_mm : '';
+                const volumeVal = point.volume_l !== undefined ? point.volume_l : '';
+                const rawVal = point.raw_value !== undefined && point.raw_value !== null ? point.raw_value : '';
 
                 const form = document.createElement('form');
                 form.action = '/update_cal_point';
                 form.method = 'GET';
                 form.className = 'field';
 
-                const depthWrap = document.createElement('div');
-                depthWrap.className = 'field';
-                const depthLabel = document.createElement('label');
-                depthLabel.textContent = 'Depth ' + pointNum + ' (mm, fixed)';
-                depthLabel.setAttribute('for', 'cal_depth_' + pointNum);
-                const depthInput = document.createElement('input');
-                depthInput.type = 'text';
-                depthInput.readOnly = true;
-                depthInput.id = 'cal_depth_' + pointNum;
-                depthInput.value = depthVal;
-
-                depthWrap.appendChild(depthLabel);
-                depthWrap.appendChild(depthInput);
-
-                const literWrap = document.createElement('div');
-                literWrap.className = 'field';
-                const literLabel = document.createElement('label');
-                literLabel.textContent = 'Liters ' + pointNum;
-                literLabel.setAttribute('for', 'cal_liters_' + pointNum);
-                const literInput = document.createElement('input');
-                literInput.type = 'number';
-                literInput.step = '0.1';
-                literInput.id = 'cal_liters_' + pointNum;
-                literInput.name = 'liters';
-                literInput.value = litersVal;
-
-                literWrap.appendChild(literLabel);
-                literWrap.appendChild(literInput);
+                const instruction = document.createElement('h3');
+                instruction.textContent = 'Point ' + pointNum + ': fill to ' + volumeVal + ' L';
 
                 const rawInfo = document.createElement('div');
                 rawInfo.className = 'help';
-                rawInfo.textContent = rawVal !== '' ? ('Last raw touch: ' + rawVal) : 'No raw reading saved yet';
+                rawInfo.textContent = rawVal !== '' ? ('Recorded raw value: ' + rawVal) : 'Waiting for confirmation and sensor reading';
 
                 const hiddenIdx = document.createElement('input');
                 hiddenIdx.type = 'hidden';
@@ -454,12 +430,11 @@
                 const btn = document.createElement('button');
                 btn.type = 'submit';
                 btn.className = 'btn';
-                btn.textContent = 'Save point ' + pointNum;
+                btn.textContent = 'Record sensor value';
 
                 form.addEventListener('submit', submitCalibrationForm);
 
-                form.appendChild(depthWrap);
-                form.appendChild(literWrap);
+                form.appendChild(instruction);
                 form.appendChild(rawInfo);
                 form.appendChild(hiddenIdx);
                 form.appendChild(btn);
@@ -487,6 +462,8 @@
                 }
             });
 
+            document.getElementById('max_volume_l').value = settings.water_max_volume_l;
+            document.getElementById('point_count').value = settings.water_calibration_point_count;
             renderCalibration(settings.water_calibration);
         }
 
@@ -611,17 +588,32 @@
 
         function submitCalibrationForm(event) {
             event.preventDefault();
-            const status = document.getElementById('settings-status');
-            status.textContent = 'Saving calibration point...';
+            const status = document.getElementById('calibration-status');
+            status.textContent = 'Reading sensor and recording calibration point...';
             requestForm(event.currentTarget)
                 .then(() => loadSettings(false))
                 .then(() => loadLiveStatus())
                 .then(() => {
-                    status.textContent = 'Calibration point saved.';
+                    status.textContent = 'Calibration point recorded.';
                 })
                 .catch((err) => {
                     console.error(err);
-                    status.textContent = 'Could not save calibration point: ' + err.message;
+                    status.textContent = 'Could not record calibration point: ' + err.message;
+                });
+        }
+
+        function submitCalibrationConfig(event) {
+            event.preventDefault();
+            const status = document.getElementById('calibration-status');
+            status.textContent = 'Creating calibration procedure...';
+            requestForm(event.currentTarget)
+                .then(() => loadSettings(false))
+                .then(() => {
+                    status.textContent = 'New calibration created. Fill and record each target volume in order.';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    status.textContent = 'Could not create calibration: ' + err.message;
                 });
         }
 
@@ -658,8 +650,7 @@
 
             const ecValueEl = document.getElementById('ec-value');
             const ecStatus = document.getElementById('ec-status');
-            const waterValueEl = document.getElementById('water-level');
-            const waterLitersEl = document.getElementById('water-liters');
+            const waterVolumeEl = document.getElementById('water-volume');
             const waterStatus = document.getElementById('water-status');
             const alsStatus = document.getElementById('als-status');
 
@@ -676,9 +667,16 @@
                     }
 
                     const water = data.water || {};
-                    waterValueEl.textContent = water.depth_mm !== null && water.depth_mm !== undefined ? Number(water.depth_mm).toFixed(1) : '--';
-                    waterLitersEl.textContent = water.liters !== null && water.liters !== undefined ? water.liters : '--';
-                    waterStatus.textContent = water.error || (water.raw !== null && water.raw !== undefined ? ('Live reading, raw touch ' + water.raw) : 'Live reading');
+                    waterVolumeEl.textContent = water.volume_l !== null && water.volume_l !== undefined ? Number(water.volume_l).toFixed(2) : '--';
+                    if (water.error) {
+                        waterStatus.textContent = water.error;
+                    } else if (water.calibration_state === 'invalid') {
+                        waterStatus.textContent = 'Calibration invalid: raw readings must change consistently as volume increases.';
+                    } else if (water.volume_l === null || water.volume_l === undefined) {
+                        waterStatus.textContent = 'Calibration incomplete (' + (water.calibrated_points || 0) + '/' + (water.required_points || 0) + '). Raw sensor: ' + water.raw;
+                    } else {
+                        waterStatus.textContent = 'Raw sensor: ' + water.raw;
+                    }
 
                     const ambient = data.ambient || {};
                     document.getElementById('als-raw').textContent = ambient.raw !== null && ambient.raw !== undefined ? ambient.raw : '--';
@@ -718,6 +716,10 @@
             const settingsForm = document.querySelector('form[action="/update_lights"]');
             if (settingsForm) {
                 settingsForm.addEventListener('submit', submitSettingsForm);
+            }
+            const calibrationConfigForm = document.getElementById('calibration-config-form');
+            if (calibrationConfigForm) {
+                calibrationConfigForm.addEventListener('submit', submitCalibrationConfig);
             }
             renderCalibration();
             loadSettings().then(() => loadLiveStatus());

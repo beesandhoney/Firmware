@@ -2,58 +2,129 @@ import ujson
 
 
 class WaterCalibration:
-    # Fixed depth marks; do not let users change these
-    DEPTH_POINTS = [0, 25, 50, 100, 250]
-    # Each point: {"depth_mm": fixed depth, "liters": float, "raw_depth_mm": raw touch reading}
-    default_points = [
-        {"depth_mm": DEPTH_POINTS[0], "liters": 0.0, "raw_depth_mm": None},
-        {"depth_mm": DEPTH_POINTS[1], "liters": 0.5, "raw_depth_mm": None},
-        {"depth_mm": DEPTH_POINTS[2], "liters": 1.0, "raw_depth_mm": None},
-        {"depth_mm": DEPTH_POINTS[3], "liters": 1.5, "raw_depth_mm": None},
-        {"depth_mm": DEPTH_POINTS[4], "liters": 2.0, "raw_depth_mm": None},
+    DEFAULT_MAX_VOLUME_L = 10.0
+    DEFAULT_POINT_COUNT = 5
+    MIN_POINT_COUNT = 2
+    MAX_POINT_COUNT = 20
+    MIN_MAX_VOLUME_L = 0.1
+    MAX_MAX_VOLUME_L = 10000.0
+
+    max_volume_l = DEFAULT_MAX_VOLUME_L
+    point_count = DEFAULT_POINT_COUNT
+    points = [
+        {"raw_value": None, "volume_l": 0.0},
+        {"raw_value": None, "volume_l": 2.5},
+        {"raw_value": None, "volume_l": 5.0},
+        {"raw_value": None, "volume_l": 7.5},
+        {"raw_value": None, "volume_l": 10.0},
     ]
-    points = list(default_points)
 
     @classmethod
-    def update_points(cls, points):
-        """Replace calibration points with sanitized input (used on file load)."""
+    def _target_volumes(cls, max_volume_l, point_count):
+        step = max_volume_l / (point_count - 1)
+        return [round(step * idx, 3) for idx in range(point_count)]
+
+    @classmethod
+    def configure(cls, max_volume_l, point_count=DEFAULT_POINT_COUNT):
+        """Create a fresh guided-calibration table."""
+        try:
+            max_volume_l = float(max_volume_l)
+            point_count = int(point_count)
+        except Exception as e:
+            print("Invalid volume calibration configuration:", e)
+            return False
+        if not cls.MIN_MAX_VOLUME_L <= max_volume_l <= cls.MAX_MAX_VOLUME_L:
+            print("Maximum volume out of range:", max_volume_l)
+            return False
+        if not cls.MIN_POINT_COUNT <= point_count <= cls.MAX_POINT_COUNT:
+            print("Calibration point count out of range:", point_count)
+            return False
+
+        cls.max_volume_l = round(max_volume_l, 3)
+        cls.point_count = point_count
+        cls.points = [
+            {"raw_value": None, "volume_l": volume}
+            for volume in cls._target_volumes(cls.max_volume_l, cls.point_count)
+        ]
+        return True
+
+    @classmethod
+    def update_points(cls, points, max_volume_l=None, point_count=None):
+        """Load and sanitize new or legacy calibration data."""
+        if not isinstance(points, list):
+            return False
+        if point_count is None:
+            point_count = len(points)
+        if max_volume_l is None:
+            try:
+                last = points[-1]
+                max_volume_l = last.get("volume_l", last.get("liters"))
+            except Exception:
+                max_volume_l = None
+        if max_volume_l is None:
+            max_volume_l = cls.DEFAULT_MAX_VOLUME_L
+        if not cls.configure(max_volume_l, point_count):
+            return False
+
         cleaned = []
-        for idx, depth_ref in enumerate(cls.DEPTH_POINTS):
+        targets = cls._target_volumes(cls.max_volume_l, cls.point_count)
+        for idx in range(cls.point_count):
             try:
                 p = points[idx]
-                liters = round(float(p.get("liters", 0)), 1)
-                raw_depth = p.get("raw_depth_mm", None)
-                raw_depth = float(raw_depth) if raw_depth is not None else None
-                cleaned.append({"depth_mm": depth_ref, "liters": liters, "raw_depth_mm": raw_depth})
+                volume = p.get("volume_l", p.get("liters", targets[idx]))
+                raw_value = p.get("raw_value", p.get("raw_depth_mm"))
+                volume = round(float(volume), 3)
+                raw_value = float(raw_value) if raw_value is not None else None
+                cleaned.append({"raw_value": raw_value, "volume_l": volume})
             except Exception as e:
                 print("Invalid calibration point at index", idx, e)
-                cleaned.append(cls.default_points[idx])
-        if len(cleaned) == 5:
+                cleaned.append({"raw_value": None, "volume_l": targets[idx]})
+        if len(cleaned) == cls.point_count:
             cls.points = cleaned
+            return True
+        return False
 
     @classmethod
-    def update_point(cls, idx, liters, raw_depth_mm=None):
-        """Update a single calibration point by fixed index."""
-        if not 0 <= idx < 5:
+    def update_point(cls, idx, raw_value):
+        """Store the sensor value for one guided target volume."""
+        if not 0 <= idx < cls.point_count:
             print("update_point: invalid idx", idx)
-            return
+            return False
         try:
-            liters = round(float(liters), 1)
-            raw_depth_mm = float(raw_depth_mm) if raw_depth_mm is not None else None
+            raw_value = float(raw_value)
         except Exception as e:
             print("update_point: invalid data", e)
-            return
-
-        # Ensure list length and fixed depths
-        if len(cls.points) != 5:
-            cls.points = list(cls.default_points)
-
-        depth_ref = cls.DEPTH_POINTS[idx]
-        cls.points[idx] = {"depth_mm": depth_ref, "liters": liters, "raw_depth_mm": raw_depth_mm}
+            return False
+        cls.points[idx] = {
+            "raw_value": raw_value,
+            "volume_l": cls.points[idx]["volume_l"],
+        }
+        return True
 
     @classmethod
     def to_serializable(cls):
-        return cls.points
+        return [dict(point) for point in cls.points]
+
+    @classmethod
+    def status(cls):
+        raw_values = [
+            point.get("raw_value")
+            for point in cls.points
+            if point.get("raw_value") is not None
+        ]
+        recorded = len(raw_values)
+        if recorded != cls.point_count:
+            return {"state": "incomplete", "recorded": recorded, "required": cls.point_count}
+        deltas = [
+            float(raw_values[idx + 1]) - float(raw_values[idx])
+            for idx in range(len(raw_values) - 1)
+        ]
+        valid = all(delta > 0 for delta in deltas) or all(delta < 0 for delta in deltas)
+        return {
+            "state": "complete" if valid else "invalid",
+            "recorded": recorded,
+            "required": cls.point_count,
+        }
 
 
 class AmbientLightSettings:
@@ -65,7 +136,7 @@ class AmbientLightSettings:
         "als_threshold_on": 1200,
         "als_threshold_dim": 2000,
         "als_control_mode": "DIM",  # DIM or OFF
-        "als_dim_level": 20,        # PWM duty value (0-1023 typical)
+        "als_dim_level": 20,        # LED intensity percent (0-100)
         "als_ramp_rate_ms": 200,
         "als_fault_action": "normal",  # "normal" or "dim"
     }
@@ -125,9 +196,9 @@ class LightIntensities:
     # Default settings
     settings = {
         # intensities (%)
-        'morning': 350,
-        'daylight': 450,
-        'evening': 350,
+        'morning': 35,
+        'daylight': 45,
+        'evening': 35,
         'off': 0,
 
         # schedule (HH:MM)
@@ -141,7 +212,7 @@ class LightIntensities:
     def update_values(cls, **kwargs):
         for key, value in kwargs.items():
             if key in cls.settings:
-                cls.settings[key] = value
+                cls.settings[key] = int(value) if key in ("morning", "daylight", "evening", "off") else value
 
     @classmethod
     def save_settings_to_file(cls, filename='settings.json'):
@@ -161,9 +232,13 @@ class LightIntensities:
             # only update known keys
             for k in cls.settings:
                 if k in data:
-                    cls.settings[k] = data[k]
+                    cls.update_values(**{k: data[k]})
             if "water_calibration" in data:
-                WaterCalibration.update_points(data["water_calibration"])
+                WaterCalibration.update_points(
+                    data["water_calibration"],
+                    data.get("water_max_volume_l"),
+                    data.get("water_calibration_point_count"),
+                )
             return True
         except OSError:
             return False
@@ -172,6 +247,8 @@ class LightIntensities:
 def _build_settings_payload():
     """Return combined settings dict for persistence or API."""
     payload = dict(LightIntensities.settings)
+    payload["water_max_volume_l"] = WaterCalibration.max_volume_l
+    payload["water_calibration_point_count"] = WaterCalibration.point_count
     payload["water_calibration"] = WaterCalibration.to_serializable()
     payload["ambient"] = dict(AmbientLightSettings.settings)
     payload["ec"] = dict(ECSettings.settings)
@@ -182,6 +259,11 @@ def save_all_settings_to_file(filename='settings.json'):
     try:
         with open(filename, 'w') as f:
             ujson.dump(_build_settings_payload(), f)
+        try:
+            import status_led
+            status_led.settings_saved()
+        except Exception as e:
+            print("Settings-saved LED event failed:", e)
         return True
     except Exception as e:
         print("Failed to save settings to file:", e)
@@ -200,9 +282,13 @@ def load_all_settings_from_file(filename='settings.json'):
         # Backward compatibility: flat structure
         for k in LightIntensities.settings:
             if k in data:
-                LightIntensities.settings[k] = data[k]
+                LightIntensities.update_values(**{k: data[k]})
         if "water_calibration" in data:
-            WaterCalibration.update_points(data["water_calibration"])
+            WaterCalibration.update_points(
+                data["water_calibration"],
+                data.get("water_max_volume_l"),
+                data.get("water_calibration_point_count"),
+            )
         if "ambient" in data and isinstance(data["ambient"], dict):
             AmbientLightSettings.update_values(**data["ambient"])
         if "ec" in data and isinstance(data["ec"], dict):
@@ -210,35 +296,48 @@ def load_all_settings_from_file(filename='settings.json'):
     return True
 
 
-def depth_to_liters(depth_mm, points=None):
-    """Linearly interpolate liters from depth using calibration points."""
-    if depth_mm is None:
+def raw_to_liters(raw_value, points=None):
+    """Interpolate volume directly from raw sensor values."""
+    if raw_value is None:
         return None
 
     pts = points or WaterCalibration.points
     try:
-        pts = sorted(pts, key=lambda p: p["depth_mm"])
+        calibrated = [
+            (float(point["raw_value"]), float(point["volume_l"]))
+            for point in pts
+            if point.get("raw_value") is not None
+        ]
     except Exception as e:
         print("Invalid calibration points:", e)
         return None
 
-    if not pts:
+    # Do not report a volume from a partially completed procedure.
+    if len(calibrated) < 2 or len(calibrated) != len(pts):
         return None
 
-    if depth_mm <= pts[0]["depth_mm"]:
-        return pts[0]["liters"]
-    if depth_mm >= pts[-1]["depth_mm"]:
-        return pts[-1]["liters"]
+    # Raw readings must move consistently in either direction as volume rises.
+    raw_deltas = [
+        calibrated[idx + 1][0] - calibrated[idx][0]
+        for idx in range(len(calibrated) - 1)
+    ]
+    if not (all(delta > 0 for delta in raw_deltas) or all(delta < 0 for delta in raw_deltas)):
+        return None
 
-    for i in range(len(pts) - 1):
-        d0, l0 = pts[i]["depth_mm"], pts[i]["liters"]
-        d1, l1 = pts[i + 1]["depth_mm"], pts[i + 1]["liters"]
-        if d0 <= depth_mm <= d1 or d1 <= depth_mm <= d0:
-            # Avoid division by zero
-            if d1 == d0:
-                return l0
-            ratio = (depth_mm - d0) / (d1 - d0)
-            return round(l0 + ratio * (l1 - l0), 2)
+    calibrated.sort(key=lambda pair: pair[0])
+
+    raw_value = float(raw_value)
+    if raw_value <= calibrated[0][0]:
+        return round(calibrated[0][1], 3)
+    if raw_value >= calibrated[-1][0]:
+        return round(calibrated[-1][1], 3)
+
+    for idx in range(len(calibrated) - 1):
+        raw0, volume0 = calibrated[idx]
+        raw1, volume1 = calibrated[idx + 1]
+        if raw0 <= raw_value <= raw1:
+            ratio = (raw_value - raw0) / (raw1 - raw0)
+            return round(volume0 + ratio * (volume1 - volume0), 3)
 
     return None
 

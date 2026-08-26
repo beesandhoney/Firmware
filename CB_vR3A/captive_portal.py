@@ -430,6 +430,7 @@ class CaptivePortal:
                 return True, None
             last_failure = failure
             self.last_error = failure
+            status_led.set_connection_failed()
             print("STA fast attempt {} failed with {}".format(attempt, failure))
             if failure == self.FAIL_AUTH:
                 print("Stopping fast retries due to authentication failure")
@@ -457,6 +458,7 @@ class CaptivePortal:
                 return True, None
 
             self.last_error = failure
+            status_led.set_connection_failed()
             now = time.ticks_ms()
 
             if failure == self.FAIL_NO_SSID:
@@ -666,33 +668,36 @@ class CaptivePortal:
         print("Starting captive portal (AP+DNS+HTTP) mode=", mode)
         self.portal_mode = mode
         self.state = self.STATE_AP_PORTAL_ACTIVE
-        status_led.off()
+        status_led.set_wifi_connected(False)
+        status_led.set_config_portal(True)
 
         self._stop_http_server()
         self._hard_reset_wlan("portal start")
 
         if not self._start_portal_network(mode):
             print("Portal start failed; HTTP server never became available")
+            status_led.set_system_error()
             return False
+
+        # The portal is now a valid operating mode, so operation indication
+        # can start even though the full sensor runtime is not loaded.
+        status_led.set_operation_started()
 
         self.dns_server = None
         print("DNS server disabled; open http://{}/ manually".format(self.AP_IP))
 
         self._ap_creds_sig = self._credentials_sig()
         self._ap_last_bg_retry_ms = time.ticks_ms()
-        last_loop_service_ms = time.ticks_ms()
-
         try:
             while True:
+                self._service()
                 now = time.ticks_ms()
-                if time.ticks_diff(now, last_loop_service_ms) >= 1000:
-                    last_loop_service_ms = now
-                    self._service()
+                if time.ticks_diff(now, self._last_ap_station_check_ms) >= self.AP_STATION_CHECK_MS:
                     self._ap_station_count()
                 if self.http_server is None:
-                    time.sleep_ms(250)
+                    time.sleep_ms(50)
                 else:
-                    self._poll_once(250, mode=mode)
+                    self._poll_once(50, mode=mode)
 
                 manual_retry = self.http_server.consume_retry_request() if self.http_server else False
                 if manual_retry:
@@ -728,6 +733,8 @@ class CaptivePortal:
             return False
 
         self.cleanup(keep_sta=True)
+        status_led.set_config_portal(False)
+        status_led.set_wifi_connected(self._is_sta_connected_with_ip())
         return self._is_sta_connected_with_ip()
 
     def poll_http(self, timeout_ms=0):
@@ -812,7 +819,6 @@ class CaptivePortal:
 
     def start(self, force_ap=False):
         self.state = self.STATE_BOOT
-        status_led.off()
         self._wait_seconds(max(1, self.BOOT_GRACE_MS // 1000))
 
         self.creds.load()
@@ -822,7 +828,6 @@ class CaptivePortal:
 
         if not self.creds.is_valid():
             self.last_error = self.FAIL_NO_SSID
-            status_led.off()
             return self.captive_portal(mode="wifi")
 
         ok, failure = self._run_fast_retries()

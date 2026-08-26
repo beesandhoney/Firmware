@@ -7,10 +7,10 @@ from shared_settings import (
     WaterCalibration,
     save_all_settings_to_file,
     load_all_settings_from_file,
-    depth_to_liters,
+    raw_to_liters,
     ambient_status as ambient_runtime_status,
 )
-from gpio import setup_adc, read_ec_value, read_water_depth_mm, read_water_raw, water_raw_to_depth_mm, setup_ambient_adc, read_ambient_raw
+from gpio import setup_adc, read_ec_value, read_water_raw, setup_ambient_adc, read_ambient_raw
 import _thread
 import network
 import time
@@ -81,7 +81,6 @@ def update_settings(request):
     print("inside update_settings")
     formData = request.form
     new_settings = {}
-    cal_points = []
     new_ambient = {}
     new_ec = {}
 
@@ -130,27 +129,9 @@ def update_settings(request):
                     )
             elif key in EC_STR_KEYS:
                 new_ec[key] = value
-            elif key.startswith("cal_depth_") or key.startswith("cal_liters_"):
-                # handled below as pairs
-                continue
             else:
                 # Unknown key – ignore or log
                 print("Ignoring unknown form key:", key)
-
-        # Collect 5 calibration points (depth + liters)
-        for i in range(1, 6):
-            depth_key = "cal_depth_{}".format(i)
-            liters_key = "cal_liters_{}".format(i)
-            if depth_key in formData and liters_key in formData:
-                try:
-                    depth_val = float(formData[depth_key][0] if isinstance(formData[depth_key], list) else formData[depth_key])
-                    liters_val = float(formData[liters_key][0] if isinstance(formData[liters_key], list) else formData[liters_key])
-                    cal_points.append({"depth_mm": depth_val, "liters": liters_val})
-                except Exception as e:
-                    return Response(
-                        "Invalid calibration pair {}: depth={}, liters={}".format(i, formData[depth_key], formData[liters_key]),
-                        status_code=400
-                    )
 
         print("Before updating light intensities", new_settings)
         LightIntensities.update_values(**new_settings)
@@ -174,9 +155,6 @@ def update_settings(request):
             if new_ec["ec_low_alarm_us"] >= new_ec["ec_high_alarm_us"]:
                 return Response("EC low must be less than high limit", status_code=400)
         ECSettings.update_values(**new_ec)
-
-        if len(cal_points) == 5:
-            WaterCalibration.update_points(cal_points)
 
         if save_all_settings_to_file():
             print("Updated light settings:", LightIntensities.settings)
@@ -225,6 +203,8 @@ def current_settings(request):
     headers = {'Content-Type': 'application/json'}
     try:
         payload = dict(LightIntensities.settings)
+        payload["water_max_volume_l"] = WaterCalibration.max_volume_l
+        payload["water_calibration_point_count"] = WaterCalibration.point_count
         payload["water_calibration"] = WaterCalibration.to_serializable()
         payload["ambient"] = AmbientLightSettings.to_serializable()
         payload["ec"] = ECSettings.to_serializable()
@@ -234,15 +214,41 @@ def current_settings(request):
         return Response(ujson.dumps({'error': 'unable to read settings'}), status_code=500, headers=headers)
 
 
+@app.route('/configure_water_calibration')
+def configure_water_calibration(request):
+    max_volume_l = request.args.get('max_volume_l')
+    point_count = request.args.get('point_count')
+    if not WaterCalibration.configure(max_volume_l, point_count):
+        return Response('Invalid maximum volume or point count', status_code=400)
+    if save_all_settings_to_file():
+        return Response('Calibration procedure configured')
+    return Response('Failed to save calibration configuration', status_code=500)
+
+
+@app.route('/update_cal_point')
+def update_cal_point(request):
+    try:
+        idx = int(request.args.get('point')) - 1
+    except Exception:
+        return Response('Invalid calibration point', status_code=400)
+    raw_value = read_water_raw()
+    if raw_value is None:
+        return Response('Unable to read water sensor', status_code=503)
+    if not WaterCalibration.update_point(idx, raw_value):
+        return Response('Calibration point out of range', status_code=400)
+    if save_all_settings_to_file():
+        return Response('Calibration point recorded')
+    return Response('Failed to save calibration point', status_code=500)
+
+
 @app.route('/water_level')
 def water_level(request):
-    """Return current water depth in mm from the touch sensor."""
+    """Return current volume directly from the touch sensor."""
     headers = {'Content-Type': 'application/json'}
     try:
         raw = read_water_raw()
-        depth = water_raw_to_depth_mm(raw) if raw is not None else None
-        liters = depth_to_liters(depth)
-        return Response(ujson.dumps({'depth_mm': depth, 'liters': liters, 'raw': raw}), headers=headers)
+        volume_l = raw_to_liters(raw)
+        return Response(ujson.dumps({'volume_l': volume_l, 'raw': raw}), headers=headers)
     except Exception as e:
         print("Failed to read water level:", e)
         return Response(ujson.dumps({'error': 'unable to read water level'}), status_code=500, headers=headers)

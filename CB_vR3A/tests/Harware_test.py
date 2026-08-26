@@ -4,7 +4,7 @@ import utime
 # --------------------
 # Pin map - new hardware
 # --------------------
-EC_LED_PIN = 15          # EC indicator LED
+OPERATION_LED_PIN = 15   # General operation indicator
 EC_ADC_PIN = 35          # EC op-amp input, ADC input only
 EC_POWER_PIN = 5         # EC meter power enable
 
@@ -18,7 +18,7 @@ PUMP1_PIN = 13           # Pump 1 output
 # --------------------
 # Outputs
 # --------------------
-ec_led = Pin(EC_LED_PIN, Pin.OUT)
+operation_led = Pin(OPERATION_LED_PIN, Pin.OUT)
 ec_power = Pin(EC_POWER_PIN, Pin.OUT)
 fan = Pin(FAN_PIN, Pin.OUT)
 pump1 = Pin(PUMP1_PIN, Pin.OUT)
@@ -58,36 +58,13 @@ def read_ec_value():
     return raw, voltage, ec_value
 
 
-def blink_ec_led_for_ec(ec_value):
-    """
-    Slow blink below 500 EC.
-    Fast blink above 2000 EC.
-    Solid ON between 500 and 2000 EC.
-    """
-    if ec_value < 500:
-        ec_led.on()
-        utime.sleep_ms(700)
-        ec_led.off()
-        utime.sleep_ms(700)
-
-    elif ec_value > 2000:
-        ec_led.on()
-        utime.sleep_ms(120)
-        ec_led.off()
-        utime.sleep_ms(120)
-
-    else:
-        ec_led.on()
-        utime.sleep_ms(300)
-
-
 def test_outputs_once():
     print("Testing outputs...")
 
-    print("EC LED ON")
-    ec_led.on()
+    print("Operation LED ON")
+    operation_led.on()
     utime.sleep(1)
-    ec_led.off()
+    operation_led.off()
 
     print("EC power ON")
     ec_power.on()
@@ -131,9 +108,10 @@ def main():
     print("GPIO34/GPIO35 are ADC input-only pins")
     print("Press MODE button to toggle fan")
     print("Press ON_OFF_DIM button to toggle pump")
-    print("EC LED blink speed follows EC value")
+    print("Operation LED remains ON while the hardware test is running")
 
     test_outputs_once()
+    operation_led.on()
 
     ec_power.on()
     print("EC meter power enabled")
@@ -166,9 +144,6 @@ def main():
         last_mode = mode_now
         last_dim = dim_now
 
-        ec_raw, ec_voltage, ec_value = read_ec_value()
-        blink_ec_led_for_ec(ec_value)
-
         now = utime.ticks_ms()
         if utime.ticks_diff(now, last_print_ms) > 1000:
             print_inputs()
@@ -180,7 +155,7 @@ try:
 except KeyboardInterrupt:
     print("Stopping test")
 finally:
-    ec_led.off()
+    operation_led.off()
     ec_power.off()
     fan.off()
     pump1.off()

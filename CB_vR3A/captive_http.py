@@ -15,10 +15,6 @@ REQUEST_READ_TIMEOUT_S = 0.4
 RESPONSE_CHUNK_SIZE = 536
 HTTP_LISTEN_BACKLOG = 1
 EC_SETTLE_MS = 200
-WATER_LIVE_SAMPLES = 4
-WATER_LIVE_DELAY_MS = 5
-WATER_CAL_SAMPLES = 6
-WATER_CAL_DELAY_MS = 8
 
 LightIntensities = None
 AmbientLightSettings = None
@@ -27,15 +23,12 @@ WaterCalibration = None
 ambient_status = None
 save_all_settings_to_file = None
 load_all_settings_from_file = None
-depth_to_liters = None
 _settings_loaded = False
 Creds = None
 
 setup_adc = None
 read_ec_value = None
 set_ec_power = None
-read_water_raw = None
-water_raw_to_depth_mm = None
 setup_ambient_adc = None
 read_ambient_raw = None
 
@@ -43,7 +36,7 @@ read_ambient_raw = None
 def _ensure_settings_loaded():
     global LightIntensities, AmbientLightSettings, ECSettings, WaterCalibration
     global ambient_status, save_all_settings_to_file, load_all_settings_from_file
-    global depth_to_liters, _settings_loaded
+    global _settings_loaded
 
     if LightIntensities is None:
         from shared_settings import (
@@ -54,7 +47,6 @@ def _ensure_settings_loaded():
             ambient_status as ambient_status_mod,
             save_all_settings_to_file as save_all_settings_to_file_mod,
             load_all_settings_from_file as load_all_settings_from_file_mod,
-            depth_to_liters as depth_to_liters_mod,
         )
         LightIntensities = LightIntensities_mod
         AmbientLightSettings = AmbientLightSettings_mod
@@ -63,7 +55,6 @@ def _ensure_settings_loaded():
         ambient_status = ambient_status_mod
         save_all_settings_to_file = save_all_settings_to_file_mod
         load_all_settings_from_file = load_all_settings_from_file_mod
-        depth_to_liters = depth_to_liters_mod
 
     if not _settings_loaded:
         try:
@@ -74,24 +65,20 @@ def _ensure_settings_loaded():
 
 
 def _ensure_gpio_loaded():
-    global setup_adc, read_ec_value, set_ec_power, read_water_raw
-    global water_raw_to_depth_mm, setup_ambient_adc, read_ambient_raw
+    global setup_adc, read_ec_value, set_ec_power
+    global setup_ambient_adc, read_ambient_raw
 
     if setup_adc is None:
         from gpio import (
             setup_adc as setup_adc_mod,
             read_ec_value as read_ec_value_mod,
             set_ec_power as set_ec_power_mod,
-            read_water_raw as read_water_raw_mod,
-            water_raw_to_depth_mm as water_raw_to_depth_mm_mod,
             setup_ambient_adc as setup_ambient_adc_mod,
             read_ambient_raw as read_ambient_raw_mod,
         )
         setup_adc = setup_adc_mod
         read_ec_value = read_ec_value_mod
         set_ec_power = set_ec_power_mod
-        read_water_raw = read_water_raw_mod
-        water_raw_to_depth_mm = water_raw_to_depth_mm_mod
         setup_ambient_adc = setup_ambient_adc_mod
         read_ambient_raw = read_ambient_raw_mod
 
@@ -194,6 +181,7 @@ class HTTPServer:
                 b"/reset_wifi": self.reset_wifi,
                 b"/update_settings": self.update_lights,  # backward compatibility
                 b"/update_lights": self.update_lights,
+                b"/configure_water_calibration": self.configure_water_calibration,
                 b"/update_cal_point": self.update_cal_point,
                 b"/exit_settings": self.exit_settings,
                 b"/current_settings": self.current_settings,
@@ -217,6 +205,7 @@ class HTTPServer:
                 b"/reset_wifi": self.reset_wifi,
                 b"/update_settings": self.update_lights,
                 b"/update_lights": self.update_lights,
+                b"/configure_water_calibration": self.configure_water_calibration,
                 b"/update_cal_point": self.update_cal_point,
                 b"/exit_settings": self.exit_settings,
                 b"/current_settings": self.current_settings,
@@ -240,7 +229,9 @@ class HTTPServer:
                 b"/reset_wifi": self.reset_wifi,
                 b"/update_settings": self.update_lights,
                 b"/update_lights": self.update_lights,
+                b"/configure_water_calibration": self.configure_water_calibration,
                 b"/update_cal_point": self.update_cal_point,
+                b"/exit_settings": self.exit_settings,
                 b"/current_settings": self.current_settings,
                 b"/adc_value": self.adc_value,
                 b"/water_level": self.water_level,
@@ -617,57 +608,21 @@ class HTTPServer:
             pass
         return b"", b"HTTP/1.1 200 OK\r\n"
 
+    def configure_water_calibration(self, params):
+        from volume_http import configure
+        return configure(params)
+
     def update_cal_point(self, params):
-        _ensure_settings_loaded()
-        _ensure_gpio_loaded()
-        try:
-            idx_raw = params.get(b"point", None)
-            depth_raw = params.get(b"depth", None)
-            liters_raw = params.get(b"liters", None)
-            if idx_raw is None or liters_raw in (None, b""):
-                return b"Missing calibration params", b"HTTP/1.1 400 Bad Request\r\n"
-            try:
-                idx = int(idx_raw)
-            except Exception:
-                return b"Invalid point index", b"HTTP/1.1 400 Bad Request\r\n"
-            if not 1 <= idx <= 5:
-                return b"Point must be 1-5", b"HTTP/1.1 400 Bad Request\r\n"
-            depth_ref = WaterCalibration.DEPTH_POINTS[idx - 1]
-            try:
-                liters_val = float(liters_raw)
-            except Exception:
-                return b"Invalid liters value", b"HTTP/1.1 400 Bad Request\r\n"
-
-            # Capture the live touch reading as calibration input.
-            try:
-                raw_depth = read_water_raw(WATER_CAL_SAMPLES, WATER_CAL_DELAY_MS)
-            except Exception:
-                raw_depth = None
-
-            existing = list(WaterCalibration.points)
-            if len(existing) < 5:
-                existing = WaterCalibration.default_points[:]
-            existing[idx - 1] = {"depth_mm": depth_ref, "liters": round(liters_val, 1), "raw_depth_mm": raw_depth}
-            WaterCalibration.update_points(existing)
-            if save_all_settings_to_file():
-                body = b"Calibration point %d saved" % idx
-                headers = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
-                return body, headers
-            else:
-                return b"Failed to save calibration", b"HTTP/1.1 500 Internal Server Error\r\n"
-        except Exception as e:
-            try:
-                import sys
-                sys.print_exception(e)
-            except Exception:
-                pass
-            return b"Failed to update calibration", b"HTTP/1.1 500 Internal Server Error\r\n"
+        from volume_http import record
+        return record(params)
 
     def current_settings(self, params):
         _ensure_settings_loaded()
         headers = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
         try:
             payload = dict(LightIntensities.settings)
+            payload["water_max_volume_l"] = WaterCalibration.max_volume_l
+            payload["water_calibration_point_count"] = WaterCalibration.point_count
             payload["water_calibration"] = WaterCalibration.to_serializable()
             payload["ambient"] = AmbientLightSettings.to_serializable()
             payload["ec"] = ECSettings.to_serializable()
@@ -697,12 +652,8 @@ class HTTPServer:
             set_ec_power(False)
 
     def _read_water_live(self):
-        _ensure_settings_loaded()
-        _ensure_gpio_loaded()
-        raw = read_water_raw(WATER_LIVE_SAMPLES, WATER_LIVE_DELAY_MS)
-        depth = water_raw_to_depth_mm(raw) if raw is not None else None
-        liters = depth_to_liters(depth)
-        return {"depth_mm": depth, "liters": liters, "raw": raw}
+        from volume_http import read_live
+        return read_live()
 
     def _read_ambient_live(self):
         _ensure_settings_loaded()
@@ -731,7 +682,7 @@ class HTTPServer:
             payload["water"] = self._read_water_live()
         except Exception as e:
             print("water live sample failed:", e)
-            payload["water"] = {"depth_mm": None, "liters": None, "raw": None, "error": "unable to read water"}
+            payload["water"] = {"volume_l": None, "raw": None, "error": "unable to read water"}
 
         try:
             payload["ambient"] = self._read_ambient_live()
