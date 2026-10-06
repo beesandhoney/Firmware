@@ -1,24 +1,15 @@
-from machine import Pin, ADC, TouchPad
+from machine import Pin, ADC
 import utime
+from water_level import WATER_ECHO_PIN, WATER_TRIG_PIN, WaterLevelSensor
 
 
 EC_POWER_PIN = 5
 EC_ADC_PIN = 35
 MODE_BUTTON_PIN = 26
-WATER_LEVEL_PIN = 27
-
 READ_INTERVAL_MS = 1000
 DEBOUNCE_MS = 50
-WATER_SAMPLES = 8
-WATER_SAMPLE_DELAY_MS = 10
-
-WATER_LOOKUP_TABLE = [
-    (100, 0),
-    (80, 25),
-    (59, 50),
-    (55, 100),
-    (42, 250),
-]
+WATER_SAMPLES = 3
+WATER_SAMPLE_DELAY_MS = 60
 
 
 ec_power = Pin(EC_POWER_PIN, Pin.OUT)
@@ -27,10 +18,10 @@ ec_adc = ADC(Pin(EC_ADC_PIN))
 ec_adc.atten(ADC.ATTN_11DB)
 
 try:
-    water_touch = TouchPad(Pin(WATER_LEVEL_PIN))
+    water_sensor = WaterLevelSensor(WATER_TRIG_PIN, WATER_ECHO_PIN)
 except Exception as e:
-    water_touch = None
-    print("Failed to init water depth sensor on GPIO{}: {}".format(WATER_LEVEL_PIN, e))
+    water_sensor = None
+    print("Failed to init ultrasonic sensor: {}".format(e))
 
 
 def adc_to_voltage(raw):
@@ -42,30 +33,10 @@ def raw_to_ec(raw):
     return voltage * 1013
 
 
-def raw_to_depth_mm(reading):
-    table = WATER_LOOKUP_TABLE
-    for i in range(len(table) - 1):
-        r0, d0 = table[i]
-        r1, d1 = table[i + 1]
-        if r1 <= reading <= r0:
-            return d0 + (reading - r0) * (d1 - d0) / (r1 - r0)
-
-    if reading > table[0][0]:
-        return table[0][1]
-    if reading < table[-1][0]:
-        return table[-1][1]
-    return None
-
-
 def read_water_raw(samples=WATER_SAMPLES, delay_ms=WATER_SAMPLE_DELAY_MS):
-    if water_touch is None:
+    if water_sensor is None:
         return None
-
-    total = 0
-    for _ in range(samples):
-        total += water_touch.read()
-        utime.sleep_ms(delay_ms)
-    return total / samples
+    return water_sensor.read_distance_cm(samples, delay_ms)
 
 
 def set_ec_power(enabled):
@@ -89,15 +60,16 @@ def button_pressed(last_level, last_change_ms):
 
 
 def main():
-    print("EC + water depth interference test started")
-    print("EC_POWER=GPIO{}, EC_ADC=GPIO{}, MODE_BUTTON=GPIO{}, WATER_LEVEL=GPIO{}".format(
+    print("EC + ultrasonic water distance interference test started")
+    print("EC_POWER=GPIO{}, EC_ADC=GPIO{}, MODE_BUTTON=GPIO{}, WATER_TRIG=GPIO{}, WATER_ECHO=GPIO{}".format(
         EC_POWER_PIN,
         EC_ADC_PIN,
         MODE_BUTTON_PIN,
-        WATER_LEVEL_PIN,
+        WATER_TRIG_PIN,
+        WATER_ECHO_PIN,
     ))
     print("Press MODE button to toggle EC supply")
-    print("Each line shows water depth with EC supply state, so compare OFF vs ON")
+    print("Each line shows ultrasonic distance with EC supply state, so compare OFF vs ON")
 
     ec_enabled = False
     set_ec_power(ec_enabled)
@@ -126,8 +98,7 @@ def main():
                 if water_raw is None:
                     water_text = "water unavailable"
                 else:
-                    water_depth = raw_to_depth_mm(water_raw)
-                    water_text = "water raw={:.1f}, depth={} mm".format(water_raw, water_depth)
+                    water_text = "water distance={:.2f} cm".format(water_raw)
 
                 if ec_enabled:
                     raw = ec_adc.read()

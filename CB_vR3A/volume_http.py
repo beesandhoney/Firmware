@@ -1,50 +1,72 @@
-"""Volume calibration HTTP actions, loaded only after the portal is running."""
+"""Shared pressure calibration and live reading API for both HTTP servers."""
+from shared_settings import WaterCalibration, raw_to_liters, save_all_settings_to_file
+
+
+def _param(params, key, default=None):
+    return params.get(key, params.get(key.encode(), default))
+
+
+def _reply(message, status=b"200 OK"):
+    return message.encode(), b"HTTP/1.1 " + status + b"\r\n"
+
+
+def _save(previous):
+    if save_all_settings_to_file():
+        return _reply("Calibration saved")
+    WaterCalibration.max_volume_l, WaterCalibration.point_count, WaterCalibration.points = previous
+    return _reply("Unable to save calibration", b"500 Internal Server Error")
+
+
+def _snapshot():
+    return (WaterCalibration.max_volume_l, WaterCalibration.point_count,
+            WaterCalibration.to_serializable())
 
 
 def configure(params):
-    from shared_settings import WaterCalibration, save_all_settings_to_file
-
-    maximum = params.get(b"max_volume_l")
-    count = params.get(b"point_count")
-    if maximum in (None, b"") or count in (None, b""):
-        return b"Maximum volume and point count are required", b"HTTP/1.1 400 Bad Request\r\n"
-    if not WaterCalibration.configure(maximum, count):
-        return b"Invalid maximum volume or point count", b"HTTP/1.1 400 Bad Request\r\n"
-    if save_all_settings_to_file():
-        return b"Calibration procedure configured", b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
-    return b"Failed to save calibration configuration", b"HTTP/1.1 500 Internal Server Error\r\n"
+    previous = _snapshot()
+    if not WaterCalibration.configure(_param(params, "max_volume_l"), _param(params, "point_count", 4)):
+        return _reply("Enter a capacity from 0.1 to 10000 L and four points", b"400 Bad Request")
+    return _save(previous)
 
 
 def record(params):
-    from gpio import read_water_raw
-    from shared_settings import WaterCalibration, save_all_settings_to_file
-
     try:
-        idx = int(params.get(b"point")) - 1
-    except Exception:
-        return b"Invalid calibration point", b"HTTP/1.1 400 Bad Request\r\n"
-    if not 0 <= idx < WaterCalibration.point_count:
-        return b"Calibration point out of range", b"HTTP/1.1 400 Bad Request\r\n"
-    raw = read_water_raw(6, 8)
+        index = int(_param(params, "point"))
+    except (TypeError, ValueError):
+        return _reply("Invalid calibration point", b"400 Bad Request")
+    if not 0 <= index < 4:
+        return _reply("Invalid calibration point", b"400 Bad Request")
+    from firmware_loader import load
+    load("gpio")
+    from gpio import read_water_raw
+    raw = read_water_raw(20, 5)
     if raw is None:
-        return b"Unable to read water sensor", b"HTTP/1.1 503 Service Unavailable\r\n"
-    if not WaterCalibration.update_point(idx, raw):
-        return b"Unable to store calibration point", b"HTTP/1.1 400 Bad Request\r\n"
-    if save_all_settings_to_file():
-        return b"Calibration point recorded", b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
-    return b"Failed to save calibration", b"HTTP/1.1 500 Internal Server Error\r\n"
+        return _reply("Unable to read pressure sensor", b"503 Service Unavailable")
+    previous = _snapshot()
+    if not WaterCalibration.update_point(index, raw):
+        return _reply("ADC must increase at each higher volume. Check the fill level and sensor.", b"400 Bad Request")
+    return _save(previous)
 
 
 def read_live():
-    from gpio import read_water_raw
-    from shared_settings import WaterCalibration, raw_to_liters
-
-    raw = read_water_raw(4, 5)
-    calibration = WaterCalibration.status()
+    from firmware_loader import load
+    load("gpio")
+    from gpio import read_water_raw, update_water_level_indicator
+    from water_level import raw_to_depth_mm
+    raw = read_water_raw(20, 5)
+    volume = raw_to_liters(raw)
+    led_count = update_water_level_indicator(volume)
+    state = WaterCalibration.status()["state"]
     return {
-        "volume_l": raw_to_liters(raw),
+        "enabled": True,
+        "sensor_type": WaterCalibration.SENSOR_TYPE,
+        "volume_l": volume,
+        "led_count": led_count,
+        "max_volume_l": WaterCalibration.max_volume_l,
+        "depth_mm": raw_to_depth_mm(raw),
         "raw": raw,
-        "calibration_state": calibration["state"],
-        "calibrated_points": calibration["recorded"],
-        "required_points": calibration["required"],
+        "calibration_state": state,
+        "message": ("Unable to read pressure sensor" if raw is None else
+                    "Live reading" if state == "complete" else
+                    "Complete all four calibration points to display volume and light the LED bar"),
     }

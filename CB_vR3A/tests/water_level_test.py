@@ -1,19 +1,10 @@
-# firmware/v2/tests/test_water_level.py
-
+"""Run on the ESP32 to check the pressure sensor independently."""
 import utime
-import gc
-from water_level import WaterLevelSensor
+from water_level import WATER_ADC_PIN, WaterLevelSensor, raw_to_depth_mm
 
-sensor = WaterLevelSensor(pin=27)
-
-print("Water level test started")
-print("Free memory:", gc.mem_free())
-
+sensor = WaterLevelSensor()
+print("GZP6899A water level test: GPIO{}".format(WATER_ADC_PIN))
 while True:
     raw = sensor.read_raw()
-    depth = sensor.raw_to_depth_mm(raw)
-
-    print("Raw:", raw, "Depth mm:", depth)
-
-    gc.collect()
-    utime.sleep(1)
+    print("ADC:", raw, "Depth mm:", raw_to_depth_mm(raw))
+    utime.sleep_ms(500)

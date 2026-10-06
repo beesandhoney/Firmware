@@ -1,4 +1,4 @@
-from machine import Pin, PWM, ADC, TouchPad
+from machine import Pin, PWM, ADC
 import utime
 from shared_settings import WaterCalibration, raw_to_liters
 from level_indicator import LevelIndicator
@@ -12,7 +12,6 @@ PHOTO_ADC_PIN = 34
 FAN_PIN = 25
 ON_OFF_DIM_BUTTON_PIN = 17
 PUMP1_PIN = 13
-WATER_LEVEL_PIN = 27
 PWM_LED_1_PIN = 18
 PWM_LED_2_PIN = 23
 LEVEL_DATA_PIN = 4
@@ -106,16 +105,19 @@ def set_ec_power(enabled):
 
 
 def update_water_level_indicator(volume_l):
+    """Write immediately and return the commanded count, or None on failure."""
     if level_indicator is None:
         return
     if volume_l is None:
         level_indicator.clear()
-        return
+        return 0
     try:
         count = int((float(volume_l) * 8) / WaterCalibration.max_volume_l)
         if volume_l > 0 and count < 1:
             count = 1
+        count = max(0, min(8, count))
         level_indicator.bar(count)
+        return count
     except Exception as e:
         print("Failed to update water level indicator:", e)
 
@@ -266,28 +268,21 @@ def brightnessControl(duty_cycle):
         fan_pin.off()
 
 
-# ---------- Water level sensor ----------
-try:
-    water_touch = TouchPad(Pin(WATER_LEVEL_PIN))
-except Exception as e:
-    water_touch = None
-    print("Failed to init water touch sensor:", e)
+# Initialize lazily so sensor failure does not prevent startup.
+water_sensor = None
 
-def read_water_raw(samples=8, delay_ms=10):
-    """Return filtered raw touch reading from the water sensor."""
-    if water_touch is None:
+
+def read_water_raw(samples=20, delay_ms=5):
+    global water_sensor
+    try:
+        if water_sensor is None:
+            from water_level import WaterLevelSensor
+            water_sensor = WaterLevelSensor()
+        return water_sensor.read_raw(samples, delay_ms)
+    except Exception as e:
+        print("Water sensor read failed:", e)
         return None
 
-    total = 0
-    for _ in range(samples):
-        total += water_touch.read()
-        utime.sleep_ms(delay_ms)
-    return total / samples
 
-
-def read_water_liters(samples=8, delay_ms=10):
-    """Return calibrated liquid volume directly from the touch sensor."""
-    avg = read_water_raw(samples, delay_ms)
-    if avg is None:
-        return None
-    return raw_to_liters(avg)
+def read_water_liters(samples=20, delay_ms=5):
+    return raw_to_liters(read_water_raw(samples, delay_ms))

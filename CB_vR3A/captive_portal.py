@@ -43,6 +43,7 @@ class CaptivePortal:
     AP_CONFIG_RETRIES = const(3)
     AP_STATION_CHECK_MS = const(1000)
     PORTAL_HTTP_START_ATTEMPTS = const(2)
+    HTTP_RESTART_INTERVAL_MS = const(2000)
 
     def __init__(self, essid=None):
         self.local_ip = self.AP_IP
@@ -72,6 +73,7 @@ class CaptivePortal:
         self._ap_last_bg_retry_ms = 0
         self._last_ap_health_ms = 0
         self._poll_error_count = 0
+        self._last_http_restart_ms = None
         self._ap_started_ms = 0
         self._last_ap_station_check_ms = 0
         self._last_ap_station_count = None
@@ -122,21 +124,9 @@ class CaptivePortal:
             except Exception:
                 pass
 
-        # Soft resets can leave ESP-IDF netifs/driver state behind even when
-        # this CaptivePortal instance has no cached WLAN objects yet.
-        for iface in (network.STA_IF, network.AP_IF):
-            try:
-                wlan = network.WLAN(iface)
-                try:
-                    wlan.disconnect()
-                except Exception:
-                    pass
-                try:
-                    wlan.active(False)
-                except Exception:
-                    pass
-            except Exception as e:
-                print("Global WLAN reset skipped iface {}: {}".format(iface, e))
+        # Do not construct fresh WLAN objects merely to deactivate them. On a
+        # clean boot that initializes the Wi-Fi driver during "cleanup", and a
+        # failed initialization can leave duplicate ESP-NETIF keys behind.
         self.sta_if = None
         self.ap_if = None
 
@@ -174,8 +164,32 @@ class CaptivePortal:
         self._stop_http_server()
         gc.collect()
         self._print_mem_free("mem_free before HTTP start:")
+        self._print_network_heap()
+        listen_sock = None
         try:
+            # Reserve the lwIP socket while the larger pre-import heap is still
+            # available. Importing captive_http afterwards previously left too
+            # little contiguous networking memory and could abort the ESP32.
+            import usocket as portal_socket
+            listen_sock = portal_socket.socket()
+            try:
+                listen_sock.setsockopt(portal_socket.SOL_SOCKET, portal_socket.SO_REUSEADDR, 1)
+            except Exception as e:
+                print("Portal socket SO_REUSEADDR skipped:", e)
+            listen_sock.bind(("0.0.0.0", 80))
+            listen_sock.listen(1)
+            try:
+                listen_sock.settimeout(0.25)
+            except Exception:
+                listen_sock.setblocking(False)
+            print("HTTP listening socket reserved before module load")
+
             from captive_http import HTTPServer
+            # Module import creates temporary parser/import objects. Free those
+            # before asking lwIP for its listening socket.
+            gc.collect()
+            self._print_mem_free("mem_free after HTTP load:")
+            self._print_network_heap()
 
             self.http_server = HTTPServer(
                 None,
@@ -183,11 +197,18 @@ class CaptivePortal:
                 mode=mode,
                 exit_callback=self.exit_callback,
                 portal_status_getter=self._status_snapshot,
+                listen_sock=listen_sock,
             )
+            listen_sock = None  # HTTPServer now owns the socket.
             print("Configured HTTP server mode=", mode)
             self._poll_error_count = 0
             return True
         except Exception as e:
+            if listen_sock is not None:
+                try:
+                    listen_sock.close()
+                except Exception:
+                    pass
             print("Failed to start HTTP server:", e)
             self._print_mem_free("mem_free after HTTP start failure:")
             self.http_server = None
@@ -195,14 +216,21 @@ class CaptivePortal:
 
     def _poll_once(self, timeout_ms=250, mode=None):
         if self.http_server is None:
-            return False
+            now = time.ticks_ms()
+            if (self._last_http_restart_ms is not None and
+                    time.ticks_diff(now, self._last_http_restart_ms) < self.HTTP_RESTART_INTERVAL_MS):
+                return False
+            self._last_http_restart_ms = now
+            print("Recovering HTTP listener")
+            if not self._start_http_server(mode or self.portal_mode):
+                return False
         try:
             self.http_server.serve_once(timeout_ms)
             self._poll_error_count = 0
             return True
         except OSError as e:
             self._poll_error_count += 1
-            print("HTTP poll failed ({}): {}".format(self._poll_error_count, e))
+            print("HTTP listener failed ({}): {}".format(self._poll_error_count, e))
             self._stop_http_server()
             return False
 
@@ -234,6 +262,7 @@ class CaptivePortal:
         prev_count = self._last_ap_station_count
         if count != prev_count:
             print("AP station count:", count)
+            self._print_network_heap()
         self._last_ap_station_count = count
         return count
 
@@ -286,6 +315,9 @@ class CaptivePortal:
                 ))
                 self._print_mem_free("mem_free after STA WLAN init failure:")
                 self.sta_if = None
+                if "out of memory" in str(e).lower():
+                    print("STA WLAN memory failure requires a device reset")
+                    return False
                 gc.collect()
                 time.sleep_ms(self.WLAN_RETRY_DELAY_MS)
         return False
@@ -306,6 +338,9 @@ class CaptivePortal:
                 ))
                 self._print_mem_free("mem_free after AP WLAN init failure:")
                 self.ap_if = None
+                if "out of memory" in str(e).lower():
+                    print("AP WLAN memory failure requires a device reset")
+                    return False
                 gc.collect()
                 time.sleep_ms(self.WLAN_RETRY_DELAY_MS)
         return False
@@ -361,14 +396,17 @@ class CaptivePortal:
         if not self.creds.is_valid():
             return False, self.FAIL_NO_SSID
 
-        ssid_present = self._ssid_exists(force=force_scan)
-        if not ssid_present:
-            if force_scan:
-                # Some APs/hotspots may not appear reliably in scan results.
-                # Still attempt a direct connect before classifying as no-SSID.
+        # A synchronous ESP32 scan is memory-heavy and may appear to hang.
+        # Try the saved SSID directly first; scan only on later attempts so it
+        # can help classify an actual connection failure.
+        ssid_present = None
+        if force_scan and attempt_idx > 1:
+            print("Scanning for saved SSID before STA attempt", attempt_idx)
+            ssid_present = self._ssid_exists(force=True)
+            if not ssid_present:
                 print("SSID not seen in scan; attempting direct connect anyway")
-            else:
-                return False, self.FAIL_NO_SSID
+        else:
+            print("Starting direct STA connection attempt", attempt_idx)
 
         if not keep_ap:
             try:
@@ -378,15 +416,18 @@ class CaptivePortal:
                 pass
 
         try:
+            print("Activating STA interface")
             self.sta_if.active(True)
             try:
                 self.sta_if.disconnect()
             except Exception:
                 pass
+            print("Connecting to saved SSID")
             self.sta_if.connect(
                 self._as_text(self.creds.ssid),
                 self._as_text(self.creds.password),
             )
+            print("STA connection started")
         except Exception as e:
             print("Failed to start STA connect:", e)
             self._recover_wlan_after_sta_start_failure(preserve_ap=keep_ap)
@@ -416,6 +457,9 @@ class CaptivePortal:
                 return False, self.FAIL_AUTH
         except Exception:
             pass
+
+        if ssid_present is False:
+            return False, self.FAIL_NO_SSID
 
         if attempt_idx >= self.FAST_RETRY_COUNT:
             return False, self.FAIL_TIMEOUT
@@ -499,6 +543,31 @@ class CaptivePortal:
             print("AP identity fallback:", e)
             self.essid = b"Growlight-setup"
 
+    def _configure_ap_ipv4(self):
+        # Preserve ESP-IDF's DHCP server started by active(True) when the
+        # default subnet already matches. On ESP32, writing ifconfig stops
+        # and restarts DHCP even if the supplied IPv4 values are unchanged.
+        expected = (self.AP_IP, "255.255.255.0", self.AP_IP)
+        current = self.ap_if.ifconfig()
+        if tuple(current[:3]) != expected:
+            self.ap_if.ifconfig(expected + (self.AP_IP,))
+            print("AP IPv4 changed; DHCP restart requested")
+        else:
+            print("AP IPv4 already correct; preserving default DHCP startup")
+        current = self.ap_if.ifconfig()
+        if tuple(current[:3]) != expected:
+            raise RuntimeError("AP IPv4 configuration did not apply")
+        self.local_ip = self.AP_IP
+
+    def _print_network_heap(self):
+        # Report native memory directly; gc.mem_free() includes Python capacity.
+        try:
+            import esp32
+            print("Network heap (total, free, largest, minimum):",
+                  esp32.idf_heap_info(esp32.HEAP_DATA))
+        except Exception as e:
+            print("Network heap diagnostics unavailable:", e)
+
     def start_access_point(self):
         for config_attempt in range(1, self.AP_CONFIG_RETRIES + 1):
             if config_attempt > 1:
@@ -571,7 +640,7 @@ class CaptivePortal:
                         hidden=False,
                         max_clients=4,
                     )
-                self.ap_if.ifconfig((self.AP_IP, "255.255.255.0", self.AP_IP, self.AP_IP))
+                self._configure_ap_ipv4()
                 self._sleep_service_ms(1000)
                 print("AP mode configured:", self.ap_if.ifconfig())
                 print("AP SSID:", essid)
@@ -592,6 +661,9 @@ class CaptivePortal:
                 print("Failed to configure AP (attempt {}/{}): {}".format(
                     config_attempt, self.AP_CONFIG_RETRIES, e
                 ))
+                if "out of memory" in str(e).lower():
+                    print("AP configuration memory failure requires a device reset")
+                    return False
 
         print("Access point failed to configure after retries")
         return False
@@ -639,32 +711,34 @@ class CaptivePortal:
         return True
 
     def _start_portal_network(self, mode):
+        if not self.start_access_point():
+            return False
+
+        self._ap_started_ms = time.ticks_ms()
+        self._last_ap_station_check_ms = 0
+        self._last_ap_station_count = None
+        self._station_status_supported = None
+
+        print("AP ready; starting HTTP server")
         for attempt in range(1, self.PORTAL_HTTP_START_ATTEMPTS + 1):
-            if attempt > 1:
-                print("Retrying portal AP+HTTP start ({}/{})".format(
-                    attempt, self.PORTAL_HTTP_START_ATTEMPTS
-                ))
-                self.cleanup(keep_sta=False)
-                self._hard_reset_wlan("portal HTTP retry")
-
-            if not self.start_access_point():
-                return False
-
-            self._ap_started_ms = time.ticks_ms()
-            self._last_ap_station_check_ms = 0
-            self._last_ap_station_count = None
-            self._station_status_supported = None
-
-            print("AP ready; starting HTTP server")
             if self._start_http_server(mode):
                 return True
 
-            print("HTTP server unavailable after AP start")
+            print("HTTP server unavailable after AP start ({}/{})".format(
+                attempt, self.PORTAL_HTTP_START_ATTEMPTS
+            ))
+            if attempt < self.PORTAL_HTTP_START_ATTEMPTS:
+                # A failed socket allocation does not require recreating the
+                # Wi-Fi driver. Reinitializing an already active AP can itself
+                # fail with "WiFi Out of Memory" on the ESP32.
+                gc.collect()
+                self._sleep_service_ms(500)
 
         self.cleanup(keep_sta=False)
         return False
 
     def captive_portal(self, mode="wifi"):
+        print("Portal build: dhcp-preserve-1")
         print("Starting captive portal (AP+DNS+HTTP) mode=", mode)
         self.portal_mode = mode
         self.state = self.STATE_AP_PORTAL_ACTIVE
@@ -684,20 +758,21 @@ class CaptivePortal:
         status_led.set_operation_started()
 
         self.dns_server = None
-        print("DNS server disabled; open http://{}/ manually".format(self.AP_IP))
+        print("DNS disabled for pre-local-time comparison; open http://192.168.4.1/")
 
         self._ap_creds_sig = self._credentials_sig()
         self._ap_last_bg_retry_ms = time.ticks_ms()
         try:
             while True:
                 self._service()
+                if self.dns_server is not None:
+                    self.dns_server.serve_once()
                 now = time.ticks_ms()
                 if time.ticks_diff(now, self._last_ap_station_check_ms) >= self.AP_STATION_CHECK_MS:
                     self._ap_station_count()
+                self._poll_once(50, mode=mode)
                 if self.http_server is None:
                     time.sleep_ms(50)
-                else:
-                    self._poll_once(50, mode=mode)
 
                 manual_retry = self.http_server.consume_retry_request() if self.http_server else False
                 if manual_retry:
@@ -738,8 +813,6 @@ class CaptivePortal:
         return self._is_sta_connected_with_ip()
 
     def poll_http(self, timeout_ms=0):
-        if self.http_server is None:
-            return
         self._poll_once(timeout_ms, mode="sta")
 
     def start_sta_server(self):

@@ -3,8 +3,8 @@
 Wiring (HC-SR04 -> ESP32):
     VCC  -> 5 V
     GND  -> GND
-    TRIG -> GPIO27
-    ECHO -> GPIO12 through a 5 V-to-3.3 V level shifter/voltage divider
+    TRIG -> GPIO12
+    ECHO -> GPIO27 through a 5 V-to-3.3 V level shifter/voltage divider
 
 Run this file directly from Thonny or with:
     mpremote run ultrasonic_test.py
@@ -15,9 +15,8 @@ Stop the test with Ctrl-C.
 from machine import Pin, time_pulse_us
 import time
 
-
-TRIG_PIN = 27
-ECHO_PIN = 12
+from water_level import WATER_ECHO_PIN as ECHO_PIN
+from water_level import WATER_TRIG_PIN as TRIG_PIN
 
 MIN_DISTANCE_CM = 10.0
 MAX_DISTANCE_CM = 50.0

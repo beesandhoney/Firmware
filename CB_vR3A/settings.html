@@ -176,6 +176,16 @@
                 <h1>Light Settings</h1>
 
                 <h2>Schedule</h2>
+                <div class="field">
+                    <label for="timezone">Time Zone</label>
+                    <select id="timezone" name="timezone">
+                        <option value="Europe/Stockholm">Europe/Stockholm</option>
+                        <option value="Europe/Lisbon">Europe/Lisbon</option>
+                        <option value="Europe/London">Europe/London</option>
+                    </select>
+                </div>
+                <div class="help">Current local time: <span id="local-time">--</span></div>
+                <div class="help">All schedule times use the selected time zone, with automatic daylight saving.</div>
                 <div class="help">
                     Morning → Daylight → Evening are used in order.
                     “Lights off” is when all lights go to the Off / Night intensity.
@@ -183,7 +193,7 @@
 
                 <div class="grid-2">
                     <div class="field">
-                        <label for="t_morning_start">Morning starts at</label>
+                        <label for="t_morning_start">Light ON / Morning starts at</label>
                         <input id="t_morning_start" name="t_morning_start" type="time">
                     </div>
 
@@ -198,7 +208,7 @@
                     </div>
 
                     <div class="field">
-                        <label for="t_lights_off">Lights off at</label>
+                        <label for="t_lights_off">Light OFF at</label>
                         <input id="t_lights_off" name="t_lights_off" type="time">
                     </div>
                 </div>
@@ -326,29 +336,10 @@
         </form>
         <button class="btn btn-secondary" onclick="exitSettings()">Exit Settings</button>
 
-        <!-- Calibration forms -->
-        <div class="card ec-card">
-            <h2>Volume calibration</h2>
-            <form id="calibration-config-form" action="/configure_water_calibration" method="GET" class="field">
-                <label for="max_volume_l">Maximum container volume (L)</label>
-                <input id="max_volume_l" name="max_volume_l" type="number" min="0.1" max="10000" step="0.1" required>
-                <label for="point_count">Number of calibration points</label>
-                <input id="point_count" name="point_count" type="number" min="2" max="20" step="1" required>
-                <button class="btn" type="submit">Start new calibration</button>
-            </form>
-            <div class="help">
-                Set the container volume and number of points. Then fill to each displayed target volume and press Record sensor value.
-            </div>
-            <div id="calibration-status" class="status"></div>
-            <div class="cal-grid" id="calibration-grid">
-                <!-- Guided calibration rows injected by JavaScript -->
-            </div>
-        </div>
-
         <div class="card ec-card">
             <h2>EC value</h2>
             <span class="ec-value" id="ec-value">--</span>
-            <span class="ec-unit">EC</span>
+            <span class="ec-unit">µS/cm</span>
             <div id="ec-status" class="status"></div>
         </div>
 
@@ -356,7 +347,16 @@
             <h2>Liquid volume</h2>
             <span class="water-value" id="water-volume">--</span>
             <span class="water-unit">L</span>
+            <div>Depth: <span id="water-depth">--</span> mm · ADC: <span id="water-raw">--</span></div>
             <div id="water-status" class="status"></div>
+            <h3>Four-point volume calibration</h3>
+            <p>Set the usable tank capacity, then record empty, one-third, two-thirds, and full. Keep the pressure tube in its installed position and wait for the water to settle before each reading. Each point is saved immediately.</p>
+            <label for="water-capacity">Full tank volume (L)</label>
+            <input id="water-capacity" type="number" min="0.1" max="10000" step="0.001" value="10">
+            <button class="btn" type="button" onclick="startWaterCalibration()">Start / reset calibration</button>
+            <div id="water-points"></div>
+            <div id="water-calibration-status" class="status"></div>
+            <p>The LED bar shows calibrated volume from empty to full. Depth uses the measured sensor conversion (ADC − 65.7) / 5.59; volume uses your four saved readings.</p>
         </div>
 
         <div class="card ec-card">
@@ -399,52 +399,12 @@
             flowering: 'Flowering / Fruiting'
         };
         let liveStatusInFlight = false;
-
-        function renderCalibration(points) {
-            const grid = document.getElementById('calibration-grid');
-            grid.innerHTML = '';
-            const pts = Array.isArray(points) ? points : [];
-            for (let i = 0; i < pts.length; i++) {
-                const pointNum = i + 1;
-                const point = pts[i] || {};
-                const volumeVal = point.volume_l !== undefined ? point.volume_l : '';
-                const rawVal = point.raw_value !== undefined && point.raw_value !== null ? point.raw_value : '';
-
-                const form = document.createElement('form');
-                form.action = '/update_cal_point';
-                form.method = 'GET';
-                form.className = 'field';
-
-                const instruction = document.createElement('h3');
-                instruction.textContent = 'Point ' + pointNum + ': fill to ' + volumeVal + ' L';
-
-                const rawInfo = document.createElement('div');
-                rawInfo.className = 'help';
-                rawInfo.textContent = rawVal !== '' ? ('Recorded raw value: ' + rawVal) : 'Waiting for confirmation and sensor reading';
-
-                const hiddenIdx = document.createElement('input');
-                hiddenIdx.type = 'hidden';
-                hiddenIdx.name = 'point';
-                hiddenIdx.value = pointNum;
-
-                const btn = document.createElement('button');
-                btn.type = 'submit';
-                btn.className = 'btn';
-                btn.textContent = 'Record sensor value';
-
-                form.addEventListener('submit', submitCalibrationForm);
-
-                form.appendChild(instruction);
-                form.appendChild(rawInfo);
-                form.appendChild(hiddenIdx);
-                form.appendChild(btn);
-
-                grid.appendChild(form);
-            }
-        }
+        let liveStatusPromise = Promise.resolve();
+        let settingsMutationInFlight = false;
 
         function populateSettingsForm(settings) {
             const mapping = [
+                'timezone',
                 't_morning_start',
                 't_day_start',
                 't_evening_start',
@@ -462,9 +422,6 @@
                 }
             });
 
-            document.getElementById('max_volume_l').value = settings.water_max_volume_l;
-            document.getElementById('point_count').value = settings.water_calibration_point_count;
-            renderCalibration(settings.water_calibration);
         }
 
         function initPlantSelectors() {
@@ -555,27 +512,54 @@
             });
         }
 
-        function fetchNoStore(url) {
-            return fetch(url, { cache: 'no-store' });
+        function fetchNoStore(url, readBody = (res) => res.text()) {
+            const sep = url.indexOf('?') === -1 ? '?' : '&';
+            const controller = new AbortController();
+            let timer;
+            const timeout = new Promise((resolve, reject) => {
+                timer = setTimeout(() => {
+                    reject(new Error('Request timed out. Check your connection to the device.'));
+                    controller.abort();
+                }, 8000);
+            });
+            // Keep the timeout active until the whole response body is read.
+            const request = fetch(url + sep + '_cb=' + Date.now(), {
+                cache: 'no-store', signal: controller.signal
+            }).then((res) => {
+                if (!res.ok) {
+                    return res.text().then((text) => {
+                        throw new Error(text || ('HTTP ' + res.status));
+                    });
+                }
+                return readBody(res);
+            });
+            return Promise.race([request, timeout]).finally(() => clearTimeout(timer));
+        }
+
+        function fetchJsonWithRetry(url, attempts = 3) {
+            return fetchNoStore(url, (res) => res.json())
+                .catch((err) => {
+                    if (attempts <= 1) throw err;
+                    return new Promise((resolve) => setTimeout(resolve, 300))
+                        .then(() => fetchJsonWithRetry(url, attempts - 1));
+                });
         }
 
         function requestForm(form) {
             const params = new URLSearchParams(new FormData(form));
             const sep = form.action.indexOf('?') === -1 ? '?' : '&';
-            return fetchNoStore(form.action + sep + params.toString())
-                .then((res) => res.text().then((text) => {
-                    if (!res.ok) {
-                        throw new Error(text || ('HTTP ' + res.status));
-                    }
-                    return text;
-                }));
+            return fetchNoStore(form.action + sep + params.toString());
         }
 
         function submitSettingsForm(event) {
             event.preventDefault();
+            if (settingsMutationInFlight) return;
+            const form = event.currentTarget;
             const status = document.getElementById('settings-status');
             status.textContent = 'Saving settings...';
-            requestForm(event.currentTarget)
+            settingsMutationInFlight = true;
+            liveStatusPromise
+                .then(() => requestForm(form))
                 .then(() => loadSettings(false))
                 .then(() => {
                     status.textContent = 'Settings saved.';
@@ -583,37 +567,10 @@
                 .catch((err) => {
                     console.error(err);
                     status.textContent = 'Could not save settings: ' + err.message;
-                });
-        }
-
-        function submitCalibrationForm(event) {
-            event.preventDefault();
-            const status = document.getElementById('calibration-status');
-            status.textContent = 'Reading sensor and recording calibration point...';
-            requestForm(event.currentTarget)
-                .then(() => loadSettings(false))
-                .then(() => loadLiveStatus())
-                .then(() => {
-                    status.textContent = 'Calibration point recorded.';
                 })
-                .catch((err) => {
-                    console.error(err);
-                    status.textContent = 'Could not record calibration point: ' + err.message;
-                });
-        }
-
-        function submitCalibrationConfig(event) {
-            event.preventDefault();
-            const status = document.getElementById('calibration-status');
-            status.textContent = 'Creating calibration procedure...';
-            requestForm(event.currentTarget)
-                .then(() => loadSettings(false))
                 .then(() => {
-                    status.textContent = 'New calibration created. Fill and record each target volume in order.';
-                })
-                .catch((err) => {
-                    console.error(err);
-                    status.textContent = 'Could not create calibration: ' + err.message;
+                    settingsMutationInFlight = false;
+                    loadLiveStatus();
                 });
         }
 
@@ -623,62 +580,102 @@
                 status.textContent = 'Loading current settings...';
             }
 
-            return fetchNoStore('/current_settings')
-                .then((res) => res.json())
+            return fetchJsonWithRetry('/current_settings')
                 .then((data) => {
                     if (data.error) {
                         throw new Error(data.error);
                     }
                     populateSettingsForm(data);
+                    populateWaterSettings(data);
+                    displayLocalTime(data.clock);
                     populateEcSettings(data.ec);
                     populateAmbientSettings(data.ambient);
                     if (showStatus) {
                         status.textContent = 'Showing current saved settings.';
                     }
+                    return data;
                 })
                 .catch((err) => {
                     console.error(err);
                     status.textContent = 'Could not load settings.';
+                    throw err;
                 });
         }
 
+        function populateWaterSettings(data) {
+            document.getElementById('water-capacity').value = data.water_max_volume_l;
+            const container = document.getElementById('water-points');
+            container.textContent = '';
+            (data.water_calibration || []).forEach((point, index) => {
+                const row = document.createElement('div');
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-secondary';
+                button.textContent = 'Record ' + Number(point.volume_l).toFixed(3) + ' L';
+                button.onclick = () => mutateWater('/update_cal_point?point=' + index);
+                const label = document.createElement('span');
+                label.textContent = point.raw_value === null ? ' Not recorded' : ' Saved ADC: ' + Number(point.raw_value).toFixed(1);
+                row.appendChild(button);
+                row.appendChild(label);
+                container.appendChild(row);
+            });
+        }
+
+        function startWaterCalibration() {
+            const input = document.getElementById('water-capacity');
+            if (!input.reportValidity()) return;
+            mutateWater('/configure_water_calibration?point_count=4&max_volume_l=' + encodeURIComponent(input.value));
+        }
+
+        function mutateWater(url) {
+            if (settingsMutationInFlight) return;
+            settingsMutationInFlight = true;
+            const status = document.getElementById('water-calibration-status');
+            status.textContent = 'Measuring / saving...';
+            return liveStatusPromise.then(() => fetchNoStore(url))
+                .then(() => loadSettings(false))
+                .then(() => { status.textContent = 'Calibration saved.'; })
+                .catch(err => { status.textContent = err.message; })
+                .then(() => {
+                    settingsMutationInFlight = false;
+                    return loadLiveStatus();
+                });
+        }
+
+        function displayLocalTime(clock) {
+            document.getElementById('local-time').textContent = clock && clock.local_time
+                ? clock.local_time + ' (' + clock.timezone + ')'
+                : 'Time unavailable — waiting for clock synchronization';
+        }
+
         function loadLiveStatus() {
-            if (liveStatusInFlight) {
-                return Promise.resolve();
+            if (document.hidden || settingsMutationInFlight || liveStatusInFlight) {
+                return liveStatusPromise;
             }
             liveStatusInFlight = true;
 
             const ecValueEl = document.getElementById('ec-value');
             const ecStatus = document.getElementById('ec-status');
-            const waterVolumeEl = document.getElementById('water-volume');
-            const waterStatus = document.getElementById('water-status');
             const alsStatus = document.getElementById('als-status');
 
-            return fetchNoStore('/live_status')
-                .then((res) => res.json())
+            // Display EC independently: a failed ambient read cannot hide it.
+            liveStatusPromise = fetchNoStore('/adc_value')
+                .then((text) => {
+                    const value = Number(text);
+                    if (!text.trim() || !Number.isFinite(value)) {
+                        throw new Error('Invalid EC response');
+                    }
+                    ecValueEl.textContent = Math.round(value);
+                    ecStatus.textContent = 'Live reading';
+                })
+                .catch((err) => {
+                    ecValueEl.textContent = '--';
+                    ecStatus.textContent = 'Could not read EC: ' + err.message + '. Check the device Wi-Fi connection; retrying automatically.';
+                })
+                .then(() => fetchNoStore('/ambient_status', (res) => res.json()))
                 .then((data) => {
-                    const ec = data.ec || {};
-                    if (ec.value !== null && ec.value !== undefined && ec.value !== 'error') {
-                        ecValueEl.textContent = Math.round(Number(ec.value));
-                        ecStatus.textContent = 'Live reading';
-                    } else {
-                        ecValueEl.textContent = '--';
-                        ecStatus.textContent = ec.error || 'Could not read EC value.';
-                    }
-
-                    const water = data.water || {};
-                    waterVolumeEl.textContent = water.volume_l !== null && water.volume_l !== undefined ? Number(water.volume_l).toFixed(2) : '--';
-                    if (water.error) {
-                        waterStatus.textContent = water.error;
-                    } else if (water.calibration_state === 'invalid') {
-                        waterStatus.textContent = 'Calibration invalid: raw readings must change consistently as volume increases.';
-                    } else if (water.volume_l === null || water.volume_l === undefined) {
-                        waterStatus.textContent = 'Calibration incomplete (' + (water.calibrated_points || 0) + '/' + (water.required_points || 0) + '). Raw sensor: ' + water.raw;
-                    } else {
-                        waterStatus.textContent = 'Raw sensor: ' + water.raw;
-                    }
-
-                    const ambient = data.ambient || {};
+                    const ambient = data || {};
+                    displayLocalTime(ambient.clock);
                     document.getElementById('als-raw').textContent = ambient.raw !== null && ambient.raw !== undefined ? ambient.raw : '--';
                     document.getElementById('als-filtered').textContent = ambient.filtered !== null && ambient.filtered !== undefined ? ambient.filtered : '--';
                     document.getElementById('als-mode').textContent = ambient.mode || '--';
@@ -687,13 +684,24 @@
                 })
                 .catch((err) => {
                     console.error(err);
-                    ecStatus.textContent = 'Could not read live status.';
-                    waterStatus.textContent = 'Could not read live status.';
-                    alsStatus.textContent = 'Could not read live status.';
+                    document.getElementById('local-time').textContent = 'Time unavailable — connection lost';
+                    alsStatus.textContent = 'Could not read ambient light: ' + err.message + '. Check the device Wi-Fi connection; retrying automatically.';
+                })
+                .then(() => fetchNoStore('/water_level', res => res.json()))
+                .then(data => {
+                    document.getElementById('water-volume').textContent = data.volume_l == null ? '--' : Number(data.volume_l).toFixed(2);
+                    document.getElementById('water-depth').textContent = data.depth_mm == null ? '--' : Number(data.depth_mm).toFixed(1);
+                    document.getElementById('water-raw').textContent = data.raw == null ? '--' : Number(data.raw).toFixed(1);
+                    document.getElementById('water-status').textContent = data.message;
+                })
+                .catch(err => {
+                    ['water-volume', 'water-depth', 'water-raw'].forEach(id => { document.getElementById(id).textContent = '--'; });
+                    document.getElementById('water-status').textContent = 'Could not read water level: ' + err.message;
                 })
                 .then(() => {
                     liveStatusInFlight = false;
                 });
+            return liveStatusPromise;
         }
 
         function exitSettings() {
@@ -712,20 +720,21 @@
                 });
         }
 
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) loadLiveStatus();
+        });
+        window.addEventListener('pageshow', () => loadLiveStatus());
+        window.addEventListener('online', () => loadLiveStatus());
+
         document.addEventListener('DOMContentLoaded', () => {
             const settingsForm = document.querySelector('form[action="/update_lights"]');
             if (settingsForm) {
                 settingsForm.addEventListener('submit', submitSettingsForm);
             }
-            const calibrationConfigForm = document.getElementById('calibration-config-form');
-            if (calibrationConfigForm) {
-                calibrationConfigForm.addEventListener('submit', submitCalibrationConfig);
-            }
-            renderCalibration();
-            loadSettings().then(() => loadLiveStatus());
+            loadSettings().then(() => loadLiveStatus(), () => loadLiveStatus());
             setInterval(() => {
                 loadLiveStatus();
-            }, 5000);
+            }, 2000);
         });
     </script>
 </body>

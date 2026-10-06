@@ -1,11 +1,13 @@
 import ujson
+from local_time import DEFAULT_TIMEZONE, normalize_timezone, valid_schedule_time
 
 
 class WaterCalibration:
+    SENSOR_TYPE = "gzp6899a_adc12"
     DEFAULT_MAX_VOLUME_L = 10.0
-    DEFAULT_POINT_COUNT = 5
-    MIN_POINT_COUNT = 2
-    MAX_POINT_COUNT = 20
+    DEFAULT_POINT_COUNT = 4
+    MIN_POINT_COUNT = 4
+    MAX_POINT_COUNT = 4
     MIN_MAX_VOLUME_L = 0.1
     MAX_MAX_VOLUME_L = 10000.0
 
@@ -13,9 +15,8 @@ class WaterCalibration:
     point_count = DEFAULT_POINT_COUNT
     points = [
         {"raw_value": None, "volume_l": 0.0},
-        {"raw_value": None, "volume_l": 2.5},
-        {"raw_value": None, "volume_l": 5.0},
-        {"raw_value": None, "volume_l": 7.5},
+        {"raw_value": None, "volume_l": 3.333},
+        {"raw_value": None, "volume_l": 6.667},
         {"raw_value": None, "volume_l": 10.0},
     ]
 
@@ -95,10 +96,22 @@ class WaterCalibration:
         except Exception as e:
             print("update_point: invalid data", e)
             return False
+        if not 0 <= raw_value <= 4095:
+            return False
+        for other_idx, point in enumerate(cls.points):
+            other = point["raw_value"]
+            if other is not None and ((other_idx < idx and other >= raw_value) or
+                                      (other_idx > idx and other <= raw_value)):
+                return False
         cls.points[idx] = {
             "raw_value": raw_value,
             "volume_l": cls.points[idx]["volume_l"],
         }
+        print("WATER CALIBRATION: point {}, target={:.3f} L, ADC={:.2f}".format(
+            idx + 1,
+            cls.points[idx]["volume_l"],
+            raw_value,
+        ))
         return True
 
     @classmethod
@@ -115,16 +128,37 @@ class WaterCalibration:
         recorded = len(raw_values)
         if recorded != cls.point_count:
             return {"state": "incomplete", "recorded": recorded, "required": cls.point_count}
-        deltas = [
-            float(raw_values[idx + 1]) - float(raw_values[idx])
-            for idx in range(len(raw_values) - 1)
-        ]
-        valid = all(delta > 0 for delta in deltas) or all(delta < 0 for delta in deltas)
+        valid = raw_to_liters(raw_values[0]) is not None
         return {
             "state": "complete" if valid else "invalid",
             "recorded": recorded,
             "required": cls.point_count,
         }
+
+
+def _load_water_calibration(data):
+    """Load only pressure ADC calibration; reset incompatible legacy data."""
+    if not isinstance(data, dict):
+        return False
+
+    max_volume_l = data.get("water_max_volume_l", WaterCalibration.DEFAULT_MAX_VOLUME_L)
+    if data.get("water_sensor_type") != WaterCalibration.SENSOR_TYPE:
+        # Preserve the configured tank capacity, but never interpret old
+        # distance values as pressure ADC counts.
+        WaterCalibration.configure(max_volume_l, WaterCalibration.DEFAULT_POINT_COUNT)
+        if "water_calibration" in data:
+            print("Ignoring incompatible legacy water calibration")
+        return False
+
+    if "water_calibration" not in data:
+        WaterCalibration.configure(max_volume_l, WaterCalibration.DEFAULT_POINT_COUNT)
+        return False
+
+    return WaterCalibration.update_points(
+        data["water_calibration"],
+        max_volume_l,
+        data.get("water_calibration_point_count", WaterCalibration.DEFAULT_POINT_COUNT),
+    )
 
 
 class AmbientLightSettings:
@@ -201,7 +235,9 @@ class LightIntensities:
         'evening': 35,
         'off': 0,
 
-        # schedule (HH:MM)
+        'timezone': DEFAULT_TIMEZONE,
+
+        # schedule (local HH:MM)
         't_morning_start': '07:30',
         't_day_start': '09:00',
         't_evening_start': '18:00',
@@ -212,6 +248,10 @@ class LightIntensities:
     def update_values(cls, **kwargs):
         for key, value in kwargs.items():
             if key in cls.settings:
+                if key.startswith('t_') and not valid_schedule_time(value):
+                    continue
+                if key == 'timezone':
+                    value = normalize_timezone(value)
                 cls.settings[key] = int(value) if key in ("morning", "daylight", "evening", "off") else value
 
     @classmethod
@@ -233,12 +273,7 @@ class LightIntensities:
             for k in cls.settings:
                 if k in data:
                     cls.update_values(**{k: data[k]})
-            if "water_calibration" in data:
-                WaterCalibration.update_points(
-                    data["water_calibration"],
-                    data.get("water_max_volume_l"),
-                    data.get("water_calibration_point_count"),
-                )
+            _load_water_calibration(data)
             return True
         except OSError:
             return False
@@ -247,6 +282,7 @@ class LightIntensities:
 def _build_settings_payload():
     """Return combined settings dict for persistence or API."""
     payload = dict(LightIntensities.settings)
+    payload["water_sensor_type"] = WaterCalibration.SENSOR_TYPE
     payload["water_max_volume_l"] = WaterCalibration.max_volume_l
     payload["water_calibration_point_count"] = WaterCalibration.point_count
     payload["water_calibration"] = WaterCalibration.to_serializable()
@@ -283,12 +319,7 @@ def load_all_settings_from_file(filename='settings.json'):
         for k in LightIntensities.settings:
             if k in data:
                 LightIntensities.update_values(**{k: data[k]})
-        if "water_calibration" in data:
-            WaterCalibration.update_points(
-                data["water_calibration"],
-                data.get("water_max_volume_l"),
-                data.get("water_calibration_point_count"),
-            )
+        _load_water_calibration(data)
         if "ambient" in data and isinstance(data["ambient"], dict):
             AmbientLightSettings.update_values(**data["ambient"])
         if "ec" in data and isinstance(data["ec"], dict):
@@ -297,7 +328,7 @@ def load_all_settings_from_file(filename='settings.json'):
 
 
 def raw_to_liters(raw_value, points=None):
-    """Interpolate volume directly from raw sensor values."""
+    """Interpolate volume from four pressure ADC calibration points."""
     if raw_value is None:
         return None
 
@@ -313,20 +344,26 @@ def raw_to_liters(raw_value, points=None):
         return None
 
     # Do not report a volume from a partially completed procedure.
-    if len(calibrated) < 2 or len(calibrated) != len(pts):
+    if len(calibrated) != 4 or len(calibrated) != len(pts):
         return None
 
-    # Raw readings must move consistently in either direction as volume rises.
+    # Both pressure ADC and volume must increase consistently.
     raw_deltas = [
         calibrated[idx + 1][0] - calibrated[idx][0]
         for idx in range(len(calibrated) - 1)
     ]
-    if not (all(delta > 0 for delta in raw_deltas) or all(delta < 0 for delta in raw_deltas)):
+    if not all(delta > 0 for delta in raw_deltas):
         return None
 
+    if not all(0 <= raw <= 4095 and 0 <= volume <= 10000 for raw, volume in calibrated):
+        return None
+    if not all(calibrated[i + 1][1] > calibrated[i][1] for i in range(3)):
+        return None
     calibrated.sort(key=lambda pair: pair[0])
 
     raw_value = float(raw_value)
+    if not 0 <= raw_value <= 4095:
+        return None
     if raw_value <= calibrated[0][0]:
         return round(calibrated[0][1], 3)
     if raw_value >= calibrated[-1][0]:

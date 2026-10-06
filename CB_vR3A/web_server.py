@@ -1,3 +1,4 @@
+from local_time import TIMEZONES, status as local_time_status, valid_schedule_time
 from microdot import Microdot, send_file, Response
 import ujson
 from shared_settings import (
@@ -10,7 +11,7 @@ from shared_settings import (
     raw_to_liters,
     ambient_status as ambient_runtime_status,
 )
-from gpio import setup_adc, read_ec_value, read_water_raw, setup_ambient_adc, read_ambient_raw
+from gpio import setup_adc, read_ec_value, set_ec_power, setup_ambient_adc, read_ambient_raw
 import _thread
 import network
 import time
@@ -98,9 +99,13 @@ def update_settings(request):
                         "Invalid integer for {}: {}".format(key, value),
                         status_code=400
                     )
+            elif key == 'timezone':
+                if value not in TIMEZONES:
+                    return Response('Invalid time zone', status_code=400)
+                new_settings['timezone'] = value
             elif key in TIME_KEYS:
                 # simple sanity check: "HH:MM"
-                if len(value) == 5 and value[2] == ':':
+                if valid_schedule_time(value):
                     new_settings[key] = value
                 else:
                     return Response(
@@ -192,7 +197,12 @@ def update_settings(request):
 @app.route('/adc_value')
 def adc_value(request):
     adc = setup_adc()
-    voltage = read_ec_value(adc)
+    set_ec_power(True)
+    try:
+        time.sleep_ms(200)
+        voltage = read_ec_value(adc)
+    finally:
+        set_ec_power(False)
     headers = {'Content-Type': 'text/plain'}
     return Response(str(voltage), headers=headers)
 
@@ -203,6 +213,9 @@ def current_settings(request):
     headers = {'Content-Type': 'application/json'}
     try:
         payload = dict(LightIntensities.settings)
+        payload['clock'] = local_time_status(payload['timezone'])
+        payload["water_sensor_type"] = WaterCalibration.SENSOR_TYPE
+        payload["water_metering_enabled"] = True
         payload["water_max_volume_l"] = WaterCalibration.max_volume_l
         payload["water_calibration_point_count"] = WaterCalibration.point_count
         payload["water_calibration"] = WaterCalibration.to_serializable()
@@ -216,42 +229,22 @@ def current_settings(request):
 
 @app.route('/configure_water_calibration')
 def configure_water_calibration(request):
-    max_volume_l = request.args.get('max_volume_l')
-    point_count = request.args.get('point_count')
-    if not WaterCalibration.configure(max_volume_l, point_count):
-        return Response('Invalid maximum volume or point count', status_code=400)
-    if save_all_settings_to_file():
-        return Response('Calibration procedure configured')
-    return Response('Failed to save calibration configuration', status_code=500)
+    from volume_http import configure
+    body, headers = configure(request.args)
+    return Response(body, status_code=int(headers.split()[1]))
 
 
 @app.route('/update_cal_point')
 def update_cal_point(request):
-    try:
-        idx = int(request.args.get('point')) - 1
-    except Exception:
-        return Response('Invalid calibration point', status_code=400)
-    raw_value = read_water_raw()
-    if raw_value is None:
-        return Response('Unable to read water sensor', status_code=503)
-    if not WaterCalibration.update_point(idx, raw_value):
-        return Response('Calibration point out of range', status_code=400)
-    if save_all_settings_to_file():
-        return Response('Calibration point recorded')
-    return Response('Failed to save calibration point', status_code=500)
+    from volume_http import record
+    body, headers = record(request.args)
+    return Response(body, status_code=int(headers.split()[1]))
 
 
 @app.route('/water_level')
 def water_level(request):
-    """Return current volume directly from the touch sensor."""
-    headers = {'Content-Type': 'application/json'}
-    try:
-        raw = read_water_raw()
-        volume_l = raw_to_liters(raw)
-        return Response(ujson.dumps({'volume_l': volume_l, 'raw': raw}), headers=headers)
-    except Exception as e:
-        print("Failed to read water level:", e)
-        return Response(ujson.dumps({'error': 'unable to read water level'}), status_code=500, headers=headers)
+    from volume_http import read_live
+    return Response(ujson.dumps(read_live()), headers={'Content-Type': 'application/json'})
 
 
 @app.route('/ambient_status')
@@ -260,6 +253,7 @@ def ambient_status(request):
     headers = {'Content-Type': 'application/json'}
     try:
         status = dict(ambient_runtime_status)
+        status['clock'] = local_time_status(LightIntensities.settings['timezone'])
         if status.get("raw") is None:
             try:
                 adc = setup_ambient_adc()

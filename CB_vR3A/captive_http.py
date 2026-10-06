@@ -14,6 +14,9 @@ import gc
 REQUEST_READ_TIMEOUT_S = 0.4
 RESPONSE_CHUNK_SIZE = 536
 HTTP_LISTEN_BACKLOG = 1
+RESPONSE_WRITE_RETRIES = 5
+RESPONSE_RETRY_DELAY_MS = 10
+RESPONSE_CLOSE_GRACE_MS = 25
 EC_SETTLE_MS = 200
 
 LightIntensities = None
@@ -69,6 +72,8 @@ def _ensure_gpio_loaded():
     global setup_ambient_adc, read_ambient_raw
 
     if setup_adc is None:
+        from firmware_loader import load
+        load("gpio")
         from gpio import (
             setup_adc as setup_adc_mod,
             read_ec_value as read_ec_value_mod,
@@ -129,27 +134,29 @@ def unquote(string):
 
 
 class HTTPServer:
-    def __init__(self, poller, local_ip, mode="wifi", exit_callback=None, portal_status_getter=None):
+    def __init__(self, poller, local_ip, mode="wifi", exit_callback=None,
+                 portal_status_getter=None, listen_sock=None):
         self.name = "HTTP Server"
-        self.sock = None
+        self.sock = listen_sock
         gc.collect()
         stage = "socket"
         try:
-            self.sock = socket.socket()
-            stage = "setsockopt"
-            try:
-                self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            except Exception as e:
-                print("HTTP server SO_REUSEADDR skipped:", e)
-            stage = "bind"
-            self.sock.bind(("0.0.0.0", 80))
-            stage = "listen"
-            self.sock.listen(HTTP_LISTEN_BACKLOG)
-            stage = "timeout"
-            try:
-                self.sock.settimeout(0.25)
-            except Exception:
-                self.sock.setblocking(False)
+            if self.sock is None:
+                self.sock = socket.socket()
+                stage = "setsockopt"
+                try:
+                    self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                except Exception as e:
+                    print("HTTP server SO_REUSEADDR skipped:", e)
+                stage = "bind"
+                self.sock.bind(("0.0.0.0", 80))
+                stage = "listen"
+                self.sock.listen(HTTP_LISTEN_BACKLOG)
+                stage = "timeout"
+                try:
+                    self.sock.settimeout(0.25)
+                except Exception:
+                    self.sock.setblocking(False)
         except Exception as e:
             print("HTTP server socket init failed at {}: {}".format(stage, e))
             try:
@@ -170,79 +177,31 @@ class HTTPServer:
         self.mode = mode
         self.retry_requested = False
         self.ec_adc = None
+        self.ec_continuous_enabled = False
         self.ambient_adc = None
-        if mode == "settings":
-            self.routes = {
-                b"/": b"./settings.html",
-                b"/settings": b"./settings.html",
-                b"/wifi": b"./index.html",
-                b"/login": self.login,
-                b"/retry_wifi": self.retry_wifi,
-                b"/reset_wifi": self.reset_wifi,
-                b"/update_settings": self.update_lights,  # backward compatibility
-                b"/update_lights": self.update_lights,
-                b"/configure_water_calibration": self.configure_water_calibration,
-                b"/update_cal_point": self.update_cal_point,
-                b"/exit_settings": self.exit_settings,
-                b"/current_settings": self.current_settings,
-                b"/adc_value": self.adc_value,
-                b"/water_level": self.water_level,
-                b"/ambient_status": self.ambient_status,
-                b"/live_status": self.live_status,
-                b"/generate_204": self.redirect_root,
-                b"/gen_204": self.redirect_root,
-                b"/hotspot-detect.html": self.redirect_root,
-                b"/ncsi.txt": self.redirect_root,
-                b"/redirect": self.redirect_root,
-            }
-        elif mode == "sta":
-            self.routes = {
-                b"/": b"./settings.html",
-                b"/settings": b"./settings.html",
-                b"/wifi": b"./index.html",
-                b"/login": self.login,
-                b"/retry_wifi": self.retry_wifi,
-                b"/reset_wifi": self.reset_wifi,
-                b"/update_settings": self.update_lights,
-                b"/update_lights": self.update_lights,
-                b"/configure_water_calibration": self.configure_water_calibration,
-                b"/update_cal_point": self.update_cal_point,
-                b"/exit_settings": self.exit_settings,
-                b"/current_settings": self.current_settings,
-                b"/adc_value": self.adc_value,
-                b"/water_level": self.water_level,
-                b"/ambient_status": self.ambient_status,
-                b"/live_status": self.live_status,
-                b"/generate_204": self.redirect_root,
-                b"/gen_204": self.redirect_root,
-                b"/hotspot-detect.html": self.redirect_root,
-                b"/ncsi.txt": self.redirect_root,
-                b"/redirect": self.redirect_root,
-            }
-        else:
-            self.routes = {
-                b"/": self.portal_home,
-                b"/wifi": b"./index.html",
-                b"/settings": b"./settings.html",
-                b"/login": self.login,
-                b"/retry_wifi": self.retry_wifi,
-                b"/reset_wifi": self.reset_wifi,
-                b"/update_settings": self.update_lights,
-                b"/update_lights": self.update_lights,
-                b"/configure_water_calibration": self.configure_water_calibration,
-                b"/update_cal_point": self.update_cal_point,
-                b"/exit_settings": self.exit_settings,
-                b"/current_settings": self.current_settings,
-                b"/adc_value": self.adc_value,
-                b"/water_level": self.water_level,
-                b"/ambient_status": self.ambient_status,
-                b"/live_status": self.live_status,
-                b"/generate_204": self.redirect_root,
-                b"/gen_204": self.redirect_root,
-                b"/hotspot-detect.html": self.redirect_root,
-                b"/ncsi.txt": self.redirect_root,
-                b"/redirect": self.redirect_root,
-            }
+        self.routes = {
+            b"/": b"./settings.html" if mode in ("settings", "sta") else self.portal_home,
+            b"/settings": b"./settings.html",
+            b"/wifi": b"./index.html",
+            b"/login": self.login,
+            b"/retry_wifi": self.retry_wifi,
+            b"/reset_wifi": self.reset_wifi,
+            b"/update_settings": self.update_lights,
+            b"/update_lights": self.update_lights,
+            b"/configure_water_calibration": self.configure_water_calibration,
+            b"/update_cal_point": self.update_cal_point,
+            b"/exit_settings": self.exit_settings,
+            b"/current_settings": self.current_settings,
+            b"/adc_value": self.adc_value,
+            b"/water_level": self.water_level,
+            b"/ambient_status": self.ambient_status,
+            b"/live_status": self.live_status,
+            b"/generate_204": self.redirect_root,
+            b"/gen_204": self.redirect_root,
+            b"/hotspot-detect.html": self.redirect_root,
+            b"/ncsi.txt": self.redirect_root,
+            b"/redirect": self.redirect_root,
+        }
 
         self.ssid = None
 
@@ -251,13 +210,19 @@ class HTTPServer:
         try:
             client_sock, addr = self.sock.accept()
         except OSError as e:
-            # Timeout/no pending client. Keep the setup portal alive.
+            # Only idle/transient errors are harmless. Let the portal rebuild a
+            # broken listening socket instead of silently failing forever.
+            if not self.is_transient_socket_error(e):
+                raise
             if idle_ms:
                 utime.sleep_ms(idle_ms)
             return True
 
         try:
-            self.handle_blocking(client_sock)
+            response_sent = self.handle_blocking(client_sock)
+            if response_sent:
+                # Let lwIP queue the final TCP segment before close().
+                utime.sleep_ms(RESPONSE_CLOSE_GRACE_MS)
             return True
         except Exception as e:
             if not self.is_transient_socket_error(e):
@@ -306,7 +271,10 @@ class HTTPServer:
         else:
             body, headers = self.get_response(req)
 
-        self.write_blocking(client_sock, body, headers)
+        response_sent = self.write_blocking(client_sock, body, headers)
+        if not response_sent:
+            print("HTTP response delivery failed for", req.path)
+        return response_sent
 
     def is_transient_socket_error(self, err):
         code = err.args[0] if getattr(err, "args", None) else err
@@ -339,6 +307,7 @@ class HTTPServer:
         headers = (
             b"HTTP/1.1 200 OK\r\n"
             b"Content-Type: text/html\r\n"
+            b"Cache-Control: no-store\r\n"
             b"Connection: close\r\n"
         )
         try:
@@ -353,29 +322,42 @@ class HTTPServer:
         view = memoryview(data)
         offset = 0
         total = len(data)
+        retries = 0
         while offset < total:
             try:
                 written = client_sock.write(view[offset:])
             except OSError as e:
                 if self.is_transient_socket_error(e):
-                    return False
+                    retries += 1
+                    if retries >= RESPONSE_WRITE_RETRIES:
+                        print("HTTP write retry limit at {}/{} bytes".format(offset, total))
+                        return False
+                    utime.sleep_ms(RESPONSE_RETRY_DELAY_MS)
+                    continue
                 raise
             if not written:
-                return False
+                retries += 1
+                if retries >= RESPONSE_WRITE_RETRIES:
+                    print("HTTP write stalled at {}/{} bytes".format(offset, total))
+                    return False
+                utime.sleep_ms(RESPONSE_RETRY_DELAY_MS)
+                continue
             offset += written
+            retries = 0
         return True
 
     def write_blocking(self, client_sock, body, headers):
         try:
             headers = self._ensure_connection_close(headers)
             if not self._write_all_blocking(client_sock, headers + b"\r\n"):
-                return
+                return False
             while True:
                 chunk = body.read(RESPONSE_CHUNK_SIZE)
                 if not chunk:
                     break
                 if not self._write_all_blocking(client_sock, chunk):
-                    return
+                    return False
+            return True
         finally:
             try:
                 body.close()
@@ -390,6 +372,12 @@ class HTTPServer:
         self.routes = {b"/": self.connected}
 
     def stop(self, poller=None):
+        if self.ec_continuous_enabled and set_ec_power is not None:
+            try:
+                set_ec_power(False)
+            except Exception as e:
+                print("Failed to switch off continuous EC power:", e)
+            self.ec_continuous_enabled = False
         try:
             if self.sock is not None:
                 self.sock.close()
@@ -505,6 +493,7 @@ class HTTPServer:
         return b"", headers
 
     def update_lights(self, params):
+        from local_time import TIMEZONES, valid_schedule_time
         _ensure_settings_loaded()
         # params are bytes → decode to str for parsing
         INT_KEYS = {b'morning', b'daylight', b'evening', b'off'}
@@ -534,8 +523,13 @@ class HTTPServer:
                         new_settings[key.decode()] = int(value)
                     except Exception:
                         return b"Invalid integer for %s" % key, b"HTTP/1.1 400 Bad Request\r\n"
+                elif key == b'timezone':
+                    zone = value.decode()
+                    if zone not in TIMEZONES:
+                        return b"Invalid time zone", b"HTTP/1.1 400 Bad Request\r\n"
+                    new_settings['timezone'] = zone
                 elif key in TIME_KEYS:
-                    if len(value) == 5 and value[2:3] == b':':
+                    if valid_schedule_time(value.decode()):
                         new_settings[key.decode()] = value.decode()
                     else:
                         return b"Invalid time for %s" % key, b"HTTP/1.1 400 Bad Request\r\n"
@@ -609,10 +603,12 @@ class HTTPServer:
         return b"", b"HTTP/1.1 200 OK\r\n"
 
     def configure_water_calibration(self, params):
+        _ensure_settings_loaded()
         from volume_http import configure
         return configure(params)
 
     def update_cal_point(self, params):
+        _ensure_settings_loaded()
         from volume_http import record
         return record(params)
 
@@ -621,6 +617,10 @@ class HTTPServer:
         headers = b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
         try:
             payload = dict(LightIntensities.settings)
+            from local_time import status as local_time_status
+            payload['clock'] = local_time_status(payload['timezone'])
+            payload["water_sensor_type"] = WaterCalibration.SENSOR_TYPE
+            payload["water_metering_enabled"] = True
             payload["water_max_volume_l"] = WaterCalibration.max_volume_l
             payload["water_calibration_point_count"] = WaterCalibration.point_count
             payload["water_calibration"] = WaterCalibration.to_serializable()
@@ -644,6 +644,13 @@ class HTTPServer:
 
     def _read_ec_live(self):
         _ensure_gpio_loaded()
+        if self.mode == "settings":
+            if not self.ec_continuous_enabled:
+                set_ec_power(True)
+                self.ec_continuous_enabled = True
+                utime.sleep_ms(EC_SETTLE_MS)
+            return read_ec_value(self._get_ec_adc())
+
         set_ec_power(True)
         try:
             utime.sleep_ms(EC_SETTLE_MS)
@@ -652,6 +659,7 @@ class HTTPServer:
             set_ec_power(False)
 
     def _read_water_live(self):
+        _ensure_settings_loaded()
         from volume_http import read_live
         return read_live()
 
@@ -659,6 +667,8 @@ class HTTPServer:
         _ensure_settings_loaded()
         _ensure_gpio_loaded()
         status = dict(ambient_status)
+        from local_time import status as local_time_status
+        status['clock'] = local_time_status(LightIntensities.settings['timezone'])
         try:
             raw = read_ambient_raw(self._get_ambient_adc())
             status["raw"] = raw
@@ -732,7 +742,17 @@ class HTTPServer:
 
         if callable(route):
             # call a function, which may or may not return a response
-            response = route(req.params)
+            try:
+                response = route(req.params)
+            except Exception as e:
+                print("HTTP route failed:", req.path, e)
+                if isinstance(e, ImportError):
+                    message = "Firmware module unavailable: {}. Upload all generated _fw_*.mpy files, then restart.".format(e)
+                else:
+                    message = "Device request failed: {}. Check the serial log.".format(e)
+                body = message.encode()
+                headers = b"HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/plain\r\n"
+                return uio.BytesIO(body), self._ensure_content_length(headers, body)
             body = response[0] or b""
             headers = response[1] or headers
             headers = self._ensure_content_length(headers, body)

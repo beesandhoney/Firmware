@@ -18,8 +18,98 @@
     "depth": 0
   },
   {
+    "fullPath": "/UPLOAD.md",
+    "name": "UPLOAD.md",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_app_main.mpy",
+    "name": "_fw_app_main.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_captive_http.mpy",
+    "name": "_fw_captive_http.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_captive_portal.mpy",
+    "name": "_fw_captive_portal.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_credentials.mpy",
+    "name": "_fw_credentials.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_gpio.mpy",
+    "name": "_fw_gpio.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_level_indicator.mpy",
+    "name": "_fw_level_indicator.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_local_time.mpy",
+    "name": "_fw_local_time.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_pump_cycle.mpy",
+    "name": "_fw_pump_cycle.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_shared_settings.mpy",
+    "name": "_fw_shared_settings.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_status_led.mpy",
+    "name": "_fw_status_led.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_volume_http.mpy",
+    "name": "_fw_volume_http.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/_fw_water_level.mpy",
+    "name": "_fw_water_level.mpy",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/app_main.py",
+    "name": "app_main.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
     "fullPath": "/boot.py",
     "name": "boot.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/build_firmware.py",
+    "name": "build_firmware.py",
     "isDir": false,
     "depth": 0
   },
@@ -60,8 +150,26 @@
     "depth": 0
   },
   {
+    "fullPath": "/dhcp_diagnostic.py",
+    "name": "dhcp_diagnostic.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
     "fullPath": "/ec_meter_test.py",
     "name": "ec_meter_test.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/firmware_build.json",
+    "name": "firmware_build.json",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/firmware_loader.py",
+    "name": "firmware_loader.py",
     "isDir": false,
     "depth": 0
   },
@@ -78,8 +186,26 @@
     "depth": 0
   },
   {
+    "fullPath": "/led_bar_diagnostic.py",
+    "name": "led_bar_diagnostic.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/led_bar_direct_test.py",
+    "name": "led_bar_direct_test.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
     "fullPath": "/level_indicator.py",
     "name": "level_indicator.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/local_time.py",
+    "name": "local_time.py",
     "isDir": false,
     "depth": 0
   },
@@ -92,6 +218,18 @@
   {
     "fullPath": "/microdot.py",
     "name": "microdot.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/pressuretest.py",
+    "name": "pressuretest.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/pump_cycle.py",
+    "name": "pump_cycle.py",
     "isDir": false,
     "depth": 0
   },
@@ -150,8 +288,68 @@
     "depth": 1
   },
   {
+    "fullPath": "/tests/test_ap_ipv4.py",
+    "name": "test_ap_ipv4.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_calibration_portal.py",
+    "name": "test_calibration_portal.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_captive_dns.py",
+    "name": "test_captive_dns.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_firmware_loader.py",
+    "name": "test_firmware_loader.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_http_recovery.py",
+    "name": "test_http_recovery.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
     "fullPath": "/tests/test_level_indicator.py",
     "name": "test_level_indicator.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_local_time.py",
+    "name": "test_local_time.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_pump_cycle.py",
+    "name": "test_pump_cycle.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_settings_requests.js",
+    "name": "test_settings_requests.js",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_water_calibration.py",
+    "name": "test_water_calibration.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/tests/test_water_timing.py",
+    "name": "test_water_timing.py",
     "isDir": false,
     "depth": 1
   },
@@ -164,6 +362,12 @@
   {
     "fullPath": "/traceback.py",
     "name": "traceback.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/ultrasonic_test.py",
+    "name": "ultrasonic_test.py",
     "isDir": false,
     "depth": 0
   },
@@ -182,12 +386,6 @@
   {
     "fullPath": "/web_server.py",
     "name": "web_server.py",
-    "isDir": false,
-    "depth": 0
-  },
-  {
-    "fullPath": "/wifi.creds",
-    "name": "wifi.creds",
     "isDir": false,
     "depth": 0
   }
