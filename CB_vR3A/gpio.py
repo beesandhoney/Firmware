@@ -22,16 +22,14 @@ EC_LOW_THRESHOLD = 300
 EC_HIGH_THRESHOLD = 2000
 FAN_ON_PERCENT = 50
 
-# (raw ADC count, reference conductivity in uS/cm).
-# GPIO voltages measured at these points were 340, 620, 940, 1630, 2247,
-# and 2325 mV respectively.
+# (measured millivolts, reference conductivity in uS/cm).
+# Calibration after the EC amplifier gain change.
 EC_CALIBRATION_POINTS = (
-    (256, 300.0),
-    (598, 580.0),
-    (980, 820.0),
-    (1840, 1368.0),
-    (2600, 2170.0),
-    (2699, 2720.0),
+    (505, 830.0),
+    (719, 1187.0),
+    (820, 1500.0),
+    (1274, 2716.0),
+    (1588, 3977.0),
 )
 
 def setup_adc():
@@ -53,38 +51,42 @@ def read_ambient_raw(adc):
         print("Failed to read ambient light ADC:", e)
         return None
 
-def raw_to_ec(raw):
-    """Convert an EC ADC count to uS/cm using piecewise linear calibration."""
+def millivolts_to_ec(millivolts):
+    """Convert an EC voltage in mV to uS/cm using piecewise linear calibration."""
     points = EC_CALIBRATION_POINTS
 
     # Extrapolate below the measured range using the first segment, but never
     # report a physically impossible negative conductivity.
-    if raw <= points[0][0]:
-        raw0, ec0 = points[0]
-        raw1, ec1 = points[1]
-        value = ec0 + (raw - raw0) * (ec1 - ec0) / (raw1 - raw0)
+    if millivolts <= points[0][0]:
+        mv0, ec0 = points[0]
+        mv1, ec1 = points[1]
+        value = ec0 + (millivolts - mv0) * (ec1 - ec0) / (mv1 - mv0)
         return max(0.0, value)
 
     for index in range(len(points) - 1):
-        raw0, ec0 = points[index]
-        raw1, ec1 = points[index + 1]
-        if raw <= raw1:
-            return ec0 + (raw - raw0) * (ec1 - ec0) / (raw1 - raw0)
+        mv0, ec0 = points[index]
+        mv1, ec1 = points[index + 1]
+        if millivolts <= mv1:
+            return ec0 + (millivolts - mv0) * (ec1 - ec0) / (mv1 - mv0)
 
-    # The analog output saturates above the final measured point, so values
-    # beyond it cannot be distinguished reliably.
+    # Do not extrapolate above the highest measured reference.
     return points[-1][1]
 
 
 def read_ec_value(adc):
     raw = adc.read()
-    ec_value = raw_to_ec(raw)
-    print("EC raw ADC: {}, calibrated: {:.1f} uS/cm".format(raw, ec_value))
+    if raw is None or raw <= 0 or raw >= 4095:
+        print("EC measurement unavailable: ADC at rail")
+        return None
+    millivolts = adc.read_uv() / 1000.0
+    ec_value = millivolts_to_ec(millivolts)
+    print("EC raw ADC: {}, voltage: {:.1f} mV, calibrated: {:.1f} uS/cm".format(raw, millivolts, ec_value))
     return ec_value
 
 ec_power_pin = Pin(EC_POWER_PIN, Pin.OUT)
 ec_power_pin.off()  # Keep EC inactive except during an explicitly scheduled reading.
 fan_pin = Pin(FAN_PIN, Pin.OUT)
+fan_pwm_percent = None
 mode_button_pin = Pin(MODE_BUTTON_PIN, Pin.IN, Pin.PULL_UP)
 on_off_dim_button_pin = Pin(ON_OFF_DIM_BUTTON_PIN, Pin.IN, Pin.PULL_UP)
 
@@ -112,7 +114,12 @@ def update_water_level_indicator(volume_l):
         level_indicator.clear()
         return 0
     try:
-        count = int((float(volume_l) * 8) / WaterCalibration.max_volume_l)
+        import water_config
+        capacity = water_config.calculate(None)['max_volume_l']
+        if capacity is None:
+            level_indicator.clear()
+            return 0
+        count = int((float(volume_l) * 8) / capacity)
         if volume_l > 0 and count < 1:
             count = 1
         count = max(0, min(8, count))
@@ -217,10 +224,17 @@ pwm_led_2 = None
 
 def _ensure_led_pwm():
     global pwm_led_1, pwm_led_2
-    if pwm_led_1 is None:
-        pwm_led_1 = PWM(pwm_led_1_pin, freq=5000)
-    if pwm_led_2 is None:
-        pwm_led_2 = PWM(pwm_led_2_pin, freq=5000)
+    if pwm_led_1 is None or pwm_led_2 is None:
+        import sys
+        probe = sys.modules.get('memory_probe')
+        if probe is not None:
+            probe.report('before lighting PWM creation')
+        if pwm_led_1 is None:
+            pwm_led_1 = PWM(pwm_led_1_pin, freq=5000)
+        if pwm_led_2 is None:
+            pwm_led_2 = PWM(pwm_led_2_pin, freq=5000)
+        if probe is not None:
+            probe.report('after lighting PWM creation')
 
 
 def led_pwm_off():
@@ -240,7 +254,7 @@ def led_pwm_off():
 
 
 def brightnessControl(duty_cycle):
-    global last_value  # Indicate that you are using the global variable
+    global last_value, fan_pwm_percent
     percent = int(duty_cycle)
     if percent > 100:
         percent = (percent * 100) // 1023
@@ -264,16 +278,21 @@ def brightnessControl(duty_cycle):
 
     if percent >= FAN_ON_PERCENT:
         fan_pin.on()
+        fan_pwm_percent = 100
     else:
         fan_pin.off()
+        fan_pwm_percent = 0
 
 
 # Initialize lazily so sensor failure does not prevent startup.
 water_sensor = None
 
 
-def read_water_raw(samples=20, delay_ms=5):
+def read_water_raw(samples=3, delay_ms=60):
     global water_sensor
+    import hardware_config
+    if not hardware_config.measurement_ready():
+        return None
     try:
         if water_sensor is None:
             from water_level import WaterLevelSensor
@@ -284,5 +303,5 @@ def read_water_raw(samples=20, delay_ms=5):
         return None
 
 
-def read_water_liters(samples=20, delay_ms=5):
+def read_water_liters(samples=3, delay_ms=60):
     return raw_to_liters(read_water_raw(samples, delay_ms))

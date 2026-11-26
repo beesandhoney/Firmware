@@ -6,16 +6,66 @@ Separate _fw_ names prevent uploaded .py sources from taking precedence over
 import gc
 import sys
 
+STORAGE = 'filesystem'
+BUILD_ID = None
+_frozen_modules = {}
+
+# Probe only the firmware's frozen module table. A file on the device cannot
+# impersonate this marker or silently override application modules in a ROM build.
+_saved_path = sys.path
+_cached_marker = sys.modules.pop('_grow_frozen_build', None)
+try:
+    sys.path = ['.frozen']
+    try:
+        import _grow_frozen_build
+    except ImportError:
+        if _cached_marker is not None:
+            sys.modules['_grow_frozen_build'] = _cached_marker
+    else:
+        STORAGE = 'frozen'
+        BUILD_ID = _grow_frozen_build.BUILD_ID
+finally:
+    sys.path = _saved_path
+del _saved_path
+del _cached_marker
+
 
 def load(name):
-    if name in sys.modules:
+    compiled_name = '_fw_' + name
+    if STORAGE == 'frozen':
+        owned = _frozen_modules.get(name)
+        if owned is not None:
+            if sys.modules.get(name) is owned and sys.modules.get(compiled_name) is owned:
+                return owned
+            raise ImportError('Frozen module cache changed: ' + name)
+        if name in sys.modules or compiled_name in sys.modules:
+            raise ImportError('Unverified cached firmware module: ' + name)
+    elif name in sys.modules:
         return sys.modules[name]
+    # The probe is preloaded by main. Never recursively load it here.
+    probe = sys.modules.get('memory_probe')
+    if probe is not None:
+        probe.report('before import', name)
     gc.collect()
+    if probe is not None:
+        probe.report('after pre-import GC', name)
+    previous_path = sys.path
     try:
-        module = __import__("_fw_" + name)
+        if STORAGE == 'frozen':
+            # Fail on a missing frozen module instead of loading old .mpy files.
+            sys.path = ['.frozen']
+        module = __import__(compiled_name)
     except ImportError:
-        print("Missing or incompatible _fw_{}.mpy; upload the generated firmware files.".format(name))
+        print("Firmware module unavailable:", name, "storage=", STORAGE)
         raise
+    finally:
+        sys.path = previous_path
+    if probe is not None:
+        probe.report('after import execution', name)
     sys.modules[name] = module
+    if STORAGE == 'frozen':
+        _frozen_modules[name] = module
     gc.collect()
+    if probe is not None:
+        probe.report('after post-import GC', name)
     return module

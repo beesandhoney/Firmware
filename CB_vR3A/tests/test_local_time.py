@@ -78,14 +78,15 @@ class LocalTimeTest(unittest.TestCase):
         finally:
             shared_settings.LightIntensities.settings = saved
 
-    def test_runtime_preserves_unsynced_fallback_and_uses_saved_minutes(self):
+    def test_runtime_uses_valid_local_minutes_and_keeps_unknown_clock_off(self):
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app_main.py').read_text())
         function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'timeControl')
         namespace = {'time_synced': False, 'LightIntensities': shared_settings.LightIntensities}
         exec(compile(ast.Module(body=[function], type_ignores=[]), 'main.py', 'exec'), namespace)
         control = namespace['timeControl']
-        self.assertEqual(control(5, 4)[0], shared_settings.LightIntensities.settings['morning'])
-        self.assertEqual(control(20, 19)[0], shared_settings.LightIntensities.settings['off'])
+        self.assertEqual(control(None, 4)[0], 0)
+        self.assertEqual(control(5, 4)[0], shared_settings.LightIntensities.settings['off'])
+        self.assertEqual(control(20, 19)[0], shared_settings.LightIntensities.settings['evening'])
         namespace['time_synced'] = True
         self.assertEqual(control(7 + 29 / 60, 7)[0], shared_settings.LightIntensities.settings['off'])
         self.assertEqual(control(7.5, 7)[0], shared_settings.LightIntensities.settings['morning'])

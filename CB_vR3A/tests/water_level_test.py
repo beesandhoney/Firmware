@@ -1,10 +1,8 @@
-"""Run on the ESP32 to check the pressure sensor independently."""
+"""Standalone ultrasonic reading test for the ESP32."""
 import utime
-from water_level import WATER_ADC_PIN, WaterLevelSensor, raw_to_depth_mm
-
+from water_level import WaterLevelSensor
 sensor = WaterLevelSensor()
-print("GZP6899A water level test: GPIO{}".format(WATER_ADC_PIN))
+print("Ultrasonic: TRIG GPIO27, ECHO GPIO33")
 while True:
-    raw = sensor.read_raw()
-    print("ADC:", raw, "Depth mm:", raw_to_depth_mm(raw))
+    print("Distance cm:", sensor.read_raw())
     utime.sleep_ms(500)

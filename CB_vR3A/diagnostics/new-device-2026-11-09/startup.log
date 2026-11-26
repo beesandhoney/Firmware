@@ -1,0 +1,933 @@
+9 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),booôets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x12 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:4200
+load:0x40078000,len:15236
+load:0x40080400,len:3332
+entry 0x400805a8
+Firmware build: portal-frozen-comparison-1
+FW_STORAGE frozen
+FW_SOURCE 0cb76aeb8a15187c4c3599197fafbfab27fdf46c7e72945712716e352583eb89
+MEM_BEGIN 556 startup-before-application
+stack: 1216 out of 15360
+GC: total: 56000, used: 4976, free: 51024, max new split: 102400
+ No. of 1-blocks: 60, 2-blocks: 21, max blk sz: 20, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 584 before import status_led
+stack: 1456 out of 15360
+GC: total: 56000, used: 5360, free: 50640, max new split: 102400
+ No. of 1-blocks: 63, 2-blocks: 28, max blk sz: 20, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 614 after pre-import GC status_led
+stack: 1456 out of 15360
+GC: total: 56000, used: 5040, free: 50960, max new split: 102400
+ No. of 1-blocks: 59, 2-blocks: 20, max blk sz: 20, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 655 after import execution status_led
+stack: 1456 out of 15360
+GC: total: 56000, used: 6640, free: 49360, max new split: 102400
+ No. of 1-blocks: 91, 2-blocks: 35, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 684 after post-import GC status_led
+stack: 1456 out of 15360
+GC: total: 56000, used: 6240, free: 49760, max new split: 102400
+ No. of 1-blocks: 80, 2-blocks: 28, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 714 before import credentials
+stack: 1456 out of 15360
+GC: total: 56000, used: 6512, free: 49488, max new split: 102400
+ No. of 1-blocks: 83, 2-blocks: 35, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 754 after pre-import GC credentials
+stack: 1456 out of 15360
+GC: total: 56000, used: 6240, free: 49760, max new split: 102400
+ No. of 1-blocks: 80, 2-blocks: 28, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 786 after import execution credentials
+stack: 1456 out of 15360
+GC: total: 56000, used: 7264, free: 48736, max new split: 102400
+ No. of 1-blocks: 100, 2-blocks: 37, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 814 after post-import GC credentials
+stack: 1456 out of 15360
+GC: total: 56000, used: 6976, free: 49024, max new split: 102400
+ No. of 1-blocks: 92, 2-blocks: 32, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 854 before import local_time
+stack: 1456 out of 15360
+GC: total: 56000, used: 7248, free: 48752, max new split: 102400
+ No. of 1-blocks: 95, 2-blocks: 39, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 884 after pre-import GC local_time
+stack: 1456 out of 15360
+GC: total: 56000, used: 6944, free: 49056, max new split: 102400
+ No. of 1-blocks: 92, 2-blocks: 31, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 925 after import execution local_time
+stack: 1456 out of 15360
+GC: total: 56000, used: 7600, free: 48400, max new split: 102400
+ No. of 1-blocks: 105, 2-blocks: 40, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 954 after post-import GC local_time
+stack: 1456 out of 15360
+GC: total: 56000, used: 7280, free: 48720, max new split: 102400
+ No. of 1-blocks: 99, 2-blocks: 33, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 984 before import hardware_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 7568, free: 48432, max new split: 102400
+ No. of 1-blocks: 101, 2-blocks: 41, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 1024 after pre-import GC hardware_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 7296, free: 48704, max new split: 102400
+ No. of 1-blocks: 98, 2-blocks: 34, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 1055 after import execution hardware_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 7920, free: 48080, max new split: 102400
+ No. of 1-blocks: 111, 2-blocks: 41, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 1084 after post-import GC hardware_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 7648, free: 48352, max new split: 102400
+ No. of 1-blocks: 107, 2-blocks: 33, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102492
+MEM_END
+MEM_BEGIN 1124 before import water_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 7936, free: 48064, max new split: 102400
+ No. of 1-blocks: 109, 2-blocks: 41, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1154 after pre-import GC water_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 7648, free: 48352, max new split: 102400
+ No. of 1-blocks: 107, 2-blocks: 33, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1195 after import execution water_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 8368, free: 47632, max new split: 102400
+ No. of 1-blocks: 121, 2-blocks: 41, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1224 after post-import GC water_config
+stack: 1456 out of 15360
+GC: total: 56000, used: 8064, free: 47936, max new split: 102400
+ No. of 1-blocks: 116, 2-blocks: 34, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1254 before import shared_settings
+stack: 1456 out of 15360
+GC: total: 56000, used: 8352, free: 47648, max new split: 102400
+ No. of 1-blocks: 118, 2-blocks: 42, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1294 after pre-import GC shared_settings
+stack: 1456 out of 15360
+GC: total: 56000, used: 8064, free: 47936, max new split: 102400
+ No. of 1-blocks: 116, 2-blocks: 34, max blk sz: 37, max free sz: 2921
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1328 after import execution shared_settings
+stack: 1456 out of 15360
+GC: total: 56000, used: 10320, free: 45680, max new split: 102400
+ No. of 1-blocks: 168, 2-blocks: 46, max blk sz: 37, max free sz: 2831
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1364 after post-import GC shared_settings
+stack: 1456 out of 15360
+GC: total: 56000, used: 10288, free: 45712, max new split: 102400
+ No. of 1-blocks: 164, 2-blocks: 45, max blk sz: 37, max free sz: 2819
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1394 before import level_indicator
+stack: 1456 out of 15360
+GC: total: 56000, used: 10576, free: 45424, max new split: 102400
+ No. of 1-blocks: 166, 2-blocks: 53, max blk sz: 37, max free sz: 2819
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1424 after pre-import GC level_indicator
+stack: 1456 out of 15360
+GC: total: 56000, used: 10288, free: 45712, max new split: 102400
+ No. of 1-blocks: 164, 2-blocks: 45, max blk sz: 37, max free sz: 2819
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1465 after import execution level_indicator
+stack: 1456 out of 15360
+GC: total: 56000, used: 11024, free: 44976, max new split: 102400
+ No. of 1-blocks: 180, 2-blocks: 54, max blk sz: 37, max free sz: 2805
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1494 after post-import GC level_indicator
+stack: 1456 out of 15360
+GC: total: 56000, used: 10672, free: 45328, max new split: 102400
+ No. of 1-blocks: 174, 2-blocks: 46, max blk sz: 37, max free sz: 2805
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1534 before import water_level
+stack: 1456 out of 15360
+GC: total: 56000, used: 10944, free: 45056, max new split: 102400
+ No. of 1-blocks: 177, 2-blocks: 53, max blk sz: 37, max free sz: 2805
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1564 after pre-import GC water_level
+stack: 1456 out of 15360
+GC: total: 56000, used: 10656, free: 45344, max new split: 102400
+ No. of 1-blocks: 175, 2-blocks: 45, max blk sz: 37, max free sz: 2805
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1605 after import execution water_level
+stack: 1456 out of 15360
+GC: total: 56000, used: 11360, free: 44640, max new split: 102400
+ No. of 1-blocks: 188, 2-blocks: 55, max blk sz: 37, max free sz: 2789
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1634 after post-import GC water_level
+stack: 1456 out of 15360
+GC: total: 56000, used: 11040, free: 44960, max new split: 102400
+ No. of 1-blocks: 179, 2-blocks: 49, max blk sz: 37, max free sz: 2784
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1664 before import temperature
+stack: 1456 out of 15360
+GC: total: 56000, used: 11312, free: 44688, max new split: 102400
+ No. of 1-blocks: 182, 2-blocks: 56, max blk sz: 37, max free sz: 2784
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1704 after pre-import GC temperature
+stack: 1456 out of 15360
+GC: total: 56000, used: 11008, free: 44992, max new split: 102400
+ No. of 1-blocks: 179, 2-blocks: 48, max blk sz: 37, max free sz: 2784
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1735 after import execution temperature
+stack: 1456 out of 15360
+GC: total: 56000, used: 11568, free: 44432, max new split: 102400
+ No. of 1-blocks: 187, 2-blocks: 55, max blk sz: 37, max free sz: 2771
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1774 after post-import GC temperature
+stack: 1456 out of 15360
+GC: total: 56000, used: 11328, free: 44672, max new split: 102400
+ No. of 1-blocks: 183, 2-blocks: 48, max blk sz: 37, max free sz: 2744
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1804 before import grow_ui
+stack: 1456 out of 15360
+GC: total: 56000, used: 11600, free: 44400, max new split: 102400
+ No. of 1-blocks: 186, 2-blocks: 55, max blk sz: 37, max free sz: 2744
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1834 after pre-import GC grow_ui
+stack: 1456 out of 15360
+GC: total: 56000, used: 11328, free: 44672, max new split: 102400
+ No. of 1-blocks: 183, 2-blocks: 48, max blk sz: 37, max free sz: 2744
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1875 after import execution grow_ui
+stack: 1456 out of 15360
+GC: total: 56000, used: 12096, free: 43904, max new split: 102400
+ No. of 1-blocks: 196, 2-blocks: 58, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1904 after post-import GC grow_ui
+stack: 1456 out of 15360
+GC: total: 56000, used: 11744, free: 44256, max new split: 102400
+ No. of 1-blocks: 191, 2-blocks: 49, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1934 before import volume_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 12016, free: 43984, max new split: 102400
+ No. of 1-blocks: 194, 2-blocks: 56, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 1974 after pre-import GC volume_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 11744, free: 44256, max new split: 102400
+ No. of 1-blocks: 191, 2-blocks: 49, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2004 after import execution volume_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 12160, free: 43840, max new split: 102400
+ No. of 1-blocks: 198, 2-blocks: 56, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2034 after post-import GC volume_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 11872, free: 44128, max new split: 102400
+ No. of 1-blocks: 194, 2-blocks: 49, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2074 before import pump_cycle
+stack: 1456 out of 15360
+GC: total: 56000, used: 12144, free: 43856, max new split: 102400
+ No. of 1-blocks: 197, 2-blocks: 56, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 24 16 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2104 after pre-import GC pump_cycle
+stack: 1456 out of 15360
+GC: total: 56000, used: 11872, free: 44128, max new split: 102400
+ No. of 1-blocks: 194, 2-blocks: 49, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2145 after import execution pump_cycle
+stack: 1456 out of 15360
+GC: total: 56000, used: 12400, free: 43600, max new split: 102400
+ No. of 1-blocks: 204, 2-blocks: 57, max blk sz: 37, max free sz: 2717
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2174 after post-import GC pump_cycle
+stack: 1456 out of 15360
+GC: total: 56000, used: 12208, free: 43792, max new split: 102400
+ No. of 1-blocks: 199, 2-blocks: 50, max blk sz: 37, max free sz: 2688
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2204 before import captive_portal
+stack: 1456 out of 15360
+GC: total: 56000, used: 12496, free: 43504, max new split: 102400
+ No. of 1-blocks: 201, 2-blocks: 58, max blk sz: 37, max free sz: 2688
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2244 after pre-import GC captive_portal
+stack: 1456 out of 15360
+GC: total: 56000, used: 12224, free: 43776, max new split: 102400
+ No. of 1-blocks: 198, 2-blocks: 51, max blk sz: 37, max free sz: 2688
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2279 after import execution captive_portal
+stack: 1456 out of 15360
+GC: total: 56000, used: 13984, free: 42016, max new split: 102400
+ No. of 1-blocks: 240, 2-blocks: 62, max blk sz: 37, max free sz: 2597
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2314 after post-import GC captive_portal
+stack: 1456 out of 15360
+GC: total: 56000, used: 13840, free: 42160, max new split: 102400
+ No. of 1-blocks: 231, 2-blocks: 62, max blk sz: 37, max free sz: 2597
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2344 before import captive_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 14128, free: 41872, max new split: 102400
+ No. of 1-blocks: 233, 2-blocks: 70, max blk sz: 37, max free sz: 2597
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2374 after pre-import GC captive_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 13840, free: 42160, max new split: 102400
+ No. of 1-blocks: 231, 2-blocks: 62, max blk sz: 37, max free sz: 2597
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2420 after import execution captive_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 15680, free: 40320, max new split: 102400
+ No. of 1-blocks: 280, 2-blocks: 65, max blk sz: 37, max free sz: 2481
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2445 after post-import GC captive_http
+stack: 1456 out of 15360
+GC: total: 56000, used: 15600, free: 40400, max new split: 102400
+ No. of 1-blocks: 275, 2-blocks: 65, max blk sz: 37, max free sz: 2481
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2484 before hardware_config.load
+stack: 1216 out of 15360
+GC: total: 56000, used: 15728, free: 40272, max new split: 102400
+ No. of 1-blocks: 276, 2-blocks: 72, max blk sz: 37, max free sz: 2481
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2526 after hardware_config.load
+stack: 1216 out of 15360
+GC: total: 56000, used: 16352, free: 39648, max new split: 102400
+ No. of 1-blocks: 283, 2-blocks: 80, max blk sz: 37, max free sz: 2465
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2554 before import app_main
+stack: 1456 out of 15360
+GC: total: 56000, used: 16736, free: 39264, max new split: 102400
+ No. of 1-blocks: 286, 2-blocks: 87, max blk sz: 37, max free sz: 2450
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2585 after pre-import GC app_main
+stack: 1456 out of 15360
+GC: total: 56000, used: 15696, free: 40304, max new split: 102400
+ No. of 1-blocks: 281, 2-blocks: 65, max blk sz: 37, max free sz: 2481
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2632 after import execution app_main
+stack: 1456 out of 15360
+GC: total: 56000, used: 18400, free: 37600, max new split: 102400
+ No. of 1-blocks: 339, 2-blocks: 70, max blk sz: 64, max free sz: 2276
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2665 after post-import GC app_main
+stack: 1456 out of 15360
+GC: total: 56000, used: 18256, free: 37744, max new split: 102400
+ No. of 1-blocks: 330, 2-blocks: 70, max blk sz: 64, max free sz: 2276
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2750 before status LED initialization
+stack: 1760 out of 15360
+GC: total: 56000, used: 18592, free: 37408, max new split: 102400
+ No. of 1-blocks: 332, 2-blocks: 77, max blk sz: 64, max free sz: 2276
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 2816 after status LED initialization
+stack: 1760 out of 15360
+GC: total: 56000, used: 19392, free: 36608, max new split: 102400
+ No. of 1-blocks: 351, 2-blocks: 85, max blk sz: 64, max free sz: 2276
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+Boot grace active for 4000 ms on GPIO0
+Hold BOOT button to pause startup
+Booting in NORMAL MODE
+Boot flag: WIFI PORTAL MODE
+MEM_BEGIN 12307 before WiFi startup
+stack: 1760 out of 15360
+GC: total: 56000, used: 19664, free: 36336, max new split: 102400
+ No. of 1-blocks: 353, 2-blocks: 75, max blk sz: 64, max free sz: 2227
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12337 before control modules
+stack: 3520 out of 15360
+GC: total: 56000, used: 18976, free: 37024, max new split: 102400
+ No. of 1-blocks: 341, 2-blocks: 72, max blk sz: 64, max free sz: 2276
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12364 before load gpio
+stack: 3520 out of 15360
+GC: total: 56000, used: 19248, free: 36752, max new split: 102400
+ No. of 1-blocks: 344, 2-blocks: 79, max blk sz: 64, max free sz: 2276
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12404 before import gpio
+stack: 3488 out of 15360
+GC: total: 56000, used: 19536, free: 36464, max new split: 102400
+ No. of 1-blocks: 347, 2-blocks: 86, max blk sz: 64, max free sz: 2265
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12435 after pre-import GC gpio
+stack: 3488 out of 15360
+GC: total: 56000, used: 19008, free: 36992, max new split: 102400
+ No. of 1-blocks: 342, 2-blocks: 72, max blk sz: 64, max free sz: 2276
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12469 after import execution gpio
+stack: 3488 out of 15360
+GC: total: 56000, used: 20576, free: 35424, max new split: 102400
+ No. of 1-blocks: 367, 2-blocks: 83, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12506 after post-import GC gpio
+stack: 3488 out of 15360
+GC: total: 56000, used: 20112, free: 35888, max new split: 102400
+ No. of 1-blocks: 358, 2-blocks: 75, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12534 after load gpio
+stack: 3520 out of 15360
+GC: total: 56000, used: 20352, free: 35648, max new split: 102400
+ No. of 1-blocks: 360, 2-blocks: 82, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12565 after control modules
+stack: 3520 out of 15360
+GC: total: 56000, used: 20112, free: 35888, max new split: 102400
+ No. of 1-blocks: 357, 2-blocks: 76, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12604 before AmbientLightController
+stack: 3280 out of 15360
+GC: total: 56000, used: 20288, free: 35712, max new split: 102400
+ No. of 1-blocks: 359, 2-blocks: 83, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12634 before ambient ADC creation
+stack: 3760 out of 15360
+GC: total: 56000, used: 20560, free: 35440, max new split: 102400
+ No. of 1-blocks: 362, 2-blocks: 90, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102492 102400 102308
+MEM_END
+MEM_BEGIN 12665 after ambient ADC creation
+stack: 3760 out of 15360
+GC: total: 56000, used: 20832, free: 35168, max new split: 98304
+ No. of 1-blocks: 365, 2-blocks: 97, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102292 98304 102292
+MEM_END
+MEM_BEGIN 12704 after AmbientLightController
+stack: 3280 out of 15360
+GC: total: 56000, used: 21184, free: 34816, max new split: 98304
+ No. of 1-blocks: 368, 2-blocks: 104, max blk sz: 64, max free sz: 2170
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 32 24 4
+MEM_NATIVE 5 113840 102292 98304 102292
+MEM_END
+Changing brightness to 0%
+Loaded WiFi credentials from ./config.json
+Portal build: dhcp-preserve-1
+Starting captive portal (AP+DNS+HTTP) mode= wifi_portal
+Hard resetting WLAN: portal start
+AP IPv4 already correct; preserving default DHCP startup
+AP mode configured: ('192.168.4.1', '255.255.255.0', '192.168.4.1', '0.0.0.0')
+AP SSID: GrowWiFiSetup
+AP security: open
+Portal URL: http://192.168.4.1/
+AP active: True
+AP configured SSID: GrowWiFiSetup
+AP configured channel: 1
+AP configured authmode: 0
+AP ready; starting HTTP server
+mem_free before HTTP start: 130048
+MEM_BEGIN 17668 portal
+stack: 2976 out of 15360
+GC: total: 56000, used: 20384, free: 35616, max new split: 94208
+ No. of 1-blocks: 367, 2-blocks: 75, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 98340 94208 98092
+MEM_END
+HTTP listening socket reserved before module load
+mem_free after HTTP load: 130016
+MEM_BEGIN 17711 portal
+stack: 2976 out of 15360
+GC: total: 56000, used: 20416, free: 35584, max new split: 94208
+ No. of 1-blocks: 367, 2-blocks: 76, max blk sz: 64, max free sz: 2179
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 97952 94208 97496
+MEM_END
+HTTP Server listening on ('0.0.0.0', 80)
+HTTP build: portal-routing-3
+Configured HTTP server mode= wifi_portal
+DNS disabled for pre-local-time comparison; open http://192.168.4.1/
+AP station count: 0
+MEM_BEGIN 17775 portal
+stack: 2640 out of 15360
+GC: total: 56000, used: 22256, free: 33744, max new split: 94208
+ No. of 1-blocks: 420, 2-blocks: 84, max blk sz: 64, max free sz: 2056
+MEM_NATIVE 0 240 4 0 4
+MEM_NATIVE 1 7288 4 0 4
+MEM_NATIVE 2 15072 4 0 4
+MEM_NATIVE 3 16648 4 0 4
+MEM_NATIVE 4 85936 4 0 4
+MEM_NATIVE 5 113840 97952 94208 97496
+MEM_END

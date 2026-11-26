@@ -1,9 +1,13 @@
 {
   "version": 1,
-  "syncId": "7ab1c386-8010-4d4c-b5ab-3b079197d990",
+  "syncId": "bf8b456b-f787-47f0-a69e-9343314e6222",
   "root": "/Users/jonasolsson/Documents/GIT/Firmware/CB_vR3A",
-  "generatedAt": 1791309844646,
+  "generatedAt": 1794210814653,
   "files": {
+    ".gitignore": {
+      "size": 34,
+      "mtime": 1794074493892
+    },
     "CONTRIBUTORS": {
       "size": 56,
       "mtime": 1781203933128
@@ -12,93 +16,129 @@
       "size": 1071,
       "mtime": 1781203933867
     },
+    "MEMORY_COMPARISON.md": {
+      "size": 7270,
+      "mtime": 1794126637283
+    },
+    "MEMORY_DIAGNOSIS.md": {
+      "size": 4581,
+      "mtime": 1794073873506
+    },
     "README.md": {
-      "size": 3560,
-      "mtime": 1790446197527
+      "size": 18933,
+      "mtime": 1793717085461
+    },
+    "STARTUP_CRASH_DIAGNOSIS.md": {
+      "size": 9573,
+      "mtime": 1794161227298
+    },
+    "UI_ACCEPTANCE.md": {
+      "size": 5697,
+      "mtime": 1793948920965
     },
     "UPLOAD.md": {
-      "size": 3179,
-      "mtime": 1790533911854
+      "size": 16212,
+      "mtime": 1794073873530
     },
     "_fw_app_main.mpy": {
-      "size": 12688,
-      "mtime": 1790533912271
+      "size": 14967,
+      "mtime": 1794158794871
     },
     "_fw_captive_http.mpy": {
-      "size": 11894,
-      "mtime": 1790533912270
+      "size": 15362,
+      "mtime": 1794158794871
     },
     "_fw_captive_portal.mpy": {
-      "size": 12501,
-      "mtime": 1790533912270
+      "size": 13230,
+      "mtime": 1794158794871
     },
     "_fw_credentials.mpy": {
       "size": 1748,
-      "mtime": 1790533912269
+      "mtime": 1794158794868
     },
     "_fw_gpio.mpy": {
-      "size": 3467,
-      "mtime": 1790533912270
+      "size": 3844,
+      "mtime": 1794158794871
+    },
+    "_fw_grow_ui.mpy": {
+      "size": 5461,
+      "mtime": 1794158794871
+    },
+    "_fw_hardware_config.mpy": {
+      "size": 1003,
+      "mtime": 1794158794869
     },
     "_fw_level_indicator.mpy": {
       "size": 698,
-      "mtime": 1790533912269
+      "mtime": 1794158794870
     },
     "_fw_local_time.mpy": {
-      "size": 1042,
-      "mtime": 1790533912269
+      "size": 1722,
+      "mtime": 1794158794869
+    },
+    "_fw_memory_probe.mpy": {
+      "size": 575,
+      "mtime": 1794158794868
     },
     "_fw_pump_cycle.mpy": {
       "size": 369,
-      "mtime": 1790533912269
+      "mtime": 1794158794871
     },
     "_fw_shared_settings.mpy": {
-      "size": 5572,
-      "mtime": 1790533912269
+      "size": 5680,
+      "mtime": 1794158794870
     },
     "_fw_status_led.mpy": {
       "size": 3929,
-      "mtime": 1790533912269
+      "mtime": 1794158794868
+    },
+    "_fw_temperature.mpy": {
+      "size": 499,
+      "mtime": 1794158794871
     },
     "_fw_volume_http.mpy": {
-      "size": 1535,
-      "mtime": 1790533912269
+      "size": 1318,
+      "mtime": 1794158794871
+    },
+    "_fw_water_config.mpy": {
+      "size": 3091,
+      "mtime": 1794158794870
     },
     "_fw_water_level.mpy": {
-      "size": 533,
-      "mtime": 1790533912269
+      "size": 782,
+      "mtime": 1794158794871
     },
     "app_main.py": {
-      "size": 29020,
-      "mtime": 1790533911851
+      "size": 34289,
+      "mtime": 1794158794562
     },
     "boot.py": {
       "size": 1114,
       "mtime": 1788241812118
     },
     "build_firmware.py": {
-      "size": 2251,
-      "mtime": 1790446067231
+      "size": 6455,
+      "mtime": 1794126723653
     },
     "captive_dns.py": {
       "size": 2741,
       "mtime": 1789444010918
     },
     "captive_http.py": {
-      "size": 28708,
-      "mtime": 1790445961957
+      "size": 36996,
+      "mtime": 1793998079551
     },
     "captive_portal.py": {
-      "size": 33421,
-      "mtime": 1789446116225
+      "size": 35473,
+      "mtime": 1794074494780
     },
     "config.json": {
       "size": 128,
       "mtime": 1779044545438
     },
     "connected.html": {
-      "size": 339,
-      "mtime": 1766161558532
+      "size": 11859,
+      "mtime": 1794158794874
     },
     "credentials.py": {
       "size": 4668,
@@ -108,25 +148,109 @@
       "size": 1447,
       "mtime": 1789444740955
     },
+    "diagnostics/startup-validation-2026-11-08/RESULTS.md": {
+      "size": 10323,
+      "mtime": 1794161568421
+    },
+    "diagnostics/startup-validation-2026-11-08/analyze_serial.py": {
+      "size": 2130,
+      "mtime": 1794158897984
+    },
+    "diagnostics/startup-validation-2026-11-08/backtrace-symbols.json": {
+      "size": 16792,
+      "mtime": 1794160796074
+    },
+    "diagnostics/startup-validation-2026-11-08/capture_serial.py": {
+      "size": 2536,
+      "mtime": 1794162531240
+    },
+    "diagnostics/startup-validation-2026-11-08/deployment-sha256.json": {
+      "size": 1851,
+      "mtime": 1794160459344
+    },
+    "diagnostics/startup-validation-2026-11-08/filesystem-cold-boot.checkpoints.json": {
+      "size": 1092938,
+      "mtime": 1794160800322
+    },
+    "diagnostics/startup-validation-2026-11-08/filesystem-physical-cold-boot.checkpoints.json": {
+      "size": 1070274,
+      "mtime": 1794161297941
+    },
+    "diagnostics/startup-validation-2026-11-08/filesystem-soft-reset-confirmed.checkpoints.json": {
+      "size": 120756,
+      "mtime": 1794160928664
+    },
+    "diagnostics/startup-validation-2026-11-08/filesystem-soft-reset.checkpoints.json": {
+      "size": 181116,
+      "mtime": 1794160811856
+    },
     "ec_meter_test.py": {
       "size": 3569,
       "mtime": 1788202569948
     },
+    "factory_calibration.py": {
+      "size": 16432,
+      "mtime": 1793557715192
+    },
     "firmware_build.json": {
-      "size": 2885,
-      "mtime": 1790533912272
+      "size": 4715,
+      "mtime": 1794158794874
     },
     "firmware_loader.py": {
-      "size": 598,
-      "mtime": 1789446052633
+      "size": 2402,
+      "mtime": 1794128555675
     },
     "gpio.py": {
-      "size": 8669,
-      "mtime": 1790533911850
+      "size": 9395,
+      "mtime": 1794158794562
+    },
+    "grow.css": {
+      "size": 11237,
+      "mtime": 1793948877435
+    },
+    "grow.js": {
+      "size": 19797,
+      "mtime": 1793948777215
+    },
+    "grow_ui.py": {
+      "size": 11396,
+      "mtime": 1793948740645
+    },
+    "hardware_config.py": {
+      "size": 1815,
+      "mtime": 1793557713327
+    },
+    "icons/brightness-svgrepo-com.svg": {
+      "size": 973,
+      "mtime": 1793472508693
+    },
+    "icons/moon-svgrepo-com.svg": {
+      "size": 1307,
+      "mtime": 1793472508692
+    },
+    "icons/plant-test-tube-svgrepo-com.svg": {
+      "size": 912,
+      "mtime": 1793472508693
+    },
+    "icons/shade-svgrepo-com.svg": {
+      "size": 1325,
+      "mtime": 1793472508692
+    },
+    "icons/sunrise-svgrepo-com.svg": {
+      "size": 446,
+      "mtime": 1793472508692
+    },
+    "icons/sunset-svgrepo-com.svg": {
+      "size": 448,
+      "mtime": 1793472508694
+    },
+    "icons/weather-temperature-svgrepo-com.svg": {
+      "size": 587,
+      "mtime": 1793472508693
     },
     "index.html": {
-      "size": 1688,
-      "mtime": 1766161558532
+      "size": 21208,
+      "mtime": 1794158794874
     },
     "led_bar_diagnostic.py": {
       "size": 1120,
@@ -141,12 +265,16 @@
       "mtime": 1777492069614
     },
     "local_time.py": {
-      "size": 2468,
-      "mtime": 1789443016003
+      "size": 3560,
+      "mtime": 1793948738851
     },
     "main.py": {
-      "size": 964,
-      "mtime": 1790533911853
+      "size": 1542,
+      "mtime": 1794128555675
+    },
+    "memory_probe.py": {
+      "size": 1814,
+      "mtime": 1794128585653
     },
     "microdot.py": {
       "size": 46415,
@@ -173,96 +301,72 @@
       "mtime": 1781120570855
     },
     "settings.html": {
-      "size": 30527,
-      "mtime": 1790446021472
+      "size": 59800,
+      "mtime": 1794158794873
     },
     "settings.json": {
       "size": 56,
       "mtime": 1766161558534
     },
     "shared_settings.py": {
-      "size": 14177,
-      "mtime": 1790446067232
+      "size": 14243,
+      "mtime": 1793948777214
     },
     "status_led.py": {
       "size": 10527,
       "mtime": 1787684196993
     },
-    "tests/Harware_test.py": {
-      "size": 3828,
-      "mtime": 1787629597323
+    "sunrise.svg": {
+      "size": 396,
+      "mtime": 1793246445868
     },
-    "tests/test_ap_ipv4.py": {
-      "size": 1578,
-      "mtime": 1789445496517
-    },
-    "tests/test_calibration_portal.py": {
-      "size": 6745,
-      "mtime": 1790446067234
-    },
-    "tests/test_captive_dns.py": {
-      "size": 2170,
-      "mtime": 1789444039298
-    },
-    "tests/test_firmware_loader.py": {
-      "size": 1774,
-      "mtime": 1789446116231
-    },
-    "tests/test_http_recovery.py": {
-      "size": 2776,
-      "mtime": 1789442249706
-    },
-    "tests/test_level_indicator.py": {
-      "size": 638,
-      "mtime": 1779038574083
-    },
-    "tests/test_local_time.py": {
-      "size": 5090,
-      "mtime": 1789446116225
-    },
-    "tests/test_pump_cycle.py": {
-      "size": 2152,
-      "mtime": 1788752279723
-    },
-    "tests/test_settings_requests.js": {
-      "size": 4146,
-      "mtime": 1790446067234
-    },
-    "tests/test_water_calibration.py": {
-      "size": 4832,
-      "mtime": 1790533911853
-    },
-    "tests/test_water_timing.py": {
-      "size": 3723,
-      "mtime": 1790533911852
-    },
-    "tests/water_level_test.py": {
-      "size": 369,
-      "mtime": 1790446197527
+    "temperature.py": {
+      "size": 1147,
+      "mtime": 1793472576200
     },
     "traceback.py": {
       "size": 671,
       "mtime": 1766161558534
     },
+    "ui_templates/connected.html": {
+      "size": 572,
+      "mtime": 1793718294869
+    },
+    "ui_templates/index.html": {
+      "size": 2596,
+      "mtime": 1793718463887
+    },
+    "ui_templates/settings.html": {
+      "size": 13461,
+      "mtime": 1793948777215
+    },
     "ultrasonic_test.py": {
       "size": 2506,
-      "mtime": 1788202570103
+      "mtime": 1791311248707
     },
     "volume_http.py": {
-      "size": 2700,
-      "mtime": 1790533911851
+      "size": 2615,
+      "mtime": 1793557715191
+    },
+    "water_config.py": {
+      "size": 6620,
+      "mtime": 1793452305791
     },
     "water_level.py": {
-      "size": 836,
-      "mtime": 1790445961004
+      "size": 1670,
+      "mtime": 1791311247660
     },
     "web_server.py": {
-      "size": 12909,
-      "mtime": 1790445961957
+      "size": 14556,
+      "mtime": 1793716910373
     },
     "wifi.creds": {
       "size": 24,
       "mtime": 1766161558534
+    },
+    "wifi.js": {
+      "size": 6142,
+      "mtime": 1793718463886
     }
   }
 }

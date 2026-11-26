@@ -61,6 +61,65 @@ def index(request):
     return send_file('settings.html')
 
 
+@app.route('/settings')
+@app.route('/garden')
+@app.route('/grow-settings')
+def garden_page(request):
+    return send_file('settings.html')
+
+
+@app.route('/grow.css')
+@app.route('/grow.js')
+def garden_asset(request):
+    name = request.path[1:]
+    return send_file(name, content_type='text/css' if name.endswith('.css') else 'application/javascript')
+
+
+@app.route('/icons/<name>')
+def garden_icon(request, name):
+    from grow_ui import ICON_FILES
+    if name not in [icon + '-svgrepo-com.svg' for icon in ICON_FILES]:
+        return Response('', status_code=404)
+    return send_file('icons/' + name, content_type='image/svg+xml')
+
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def garden_settings(request):
+    from grow_ui import settings, save_settings
+    try:
+        payload = settings() if request.method == 'GET' else save_settings(request.form)
+        if request.method == 'GET':
+            payload['portal_exit_available'] = False
+            payload['wifi_settings_available'] = False  # Provisioning belongs to CaptivePortal.
+        return Response(ujson.dumps(payload), headers={'Content-Type': 'application/json', 'Cache-Control': 'no-store'})
+    except ValueError as error:
+        return Response(ujson.dumps({'error': str(error)}), status_code=400, headers={'Content-Type': 'application/json'})
+    except OSError as error:
+        return Response(ujson.dumps({'error': str(error)}), status_code=500, headers={'Content-Type': 'application/json'})
+
+
+def _garden_ec():
+    set_ec_power(True)
+    try:
+        time.sleep_ms(200)
+        return read_ec_value(setup_adc())
+    finally:
+        set_ec_power(False)
+
+
+@app.route('/api/portal')
+def portal_metadata(request):
+    return Response(ujson.dumps({'main_available': True, 'exit_available': False,
+                                 'wifi_settings_available': False}),
+                    headers={'Content-Type': 'application/json', 'Cache-Control': 'no-store'})
+
+
+@app.route('/api/status')
+def garden_status(request):
+    from grow_ui import status
+    return Response(ujson.dumps(status(read_ec=_garden_ec)), headers={'Content-Type': 'application/json', 'Cache-Control': 'no-store'})
+
+
 @app.route('/generate_204')
 @app.route('/gen_204')
 @app.route('/hotspot-detect.html')
@@ -215,30 +274,15 @@ def current_settings(request):
         payload = dict(LightIntensities.settings)
         payload['clock'] = local_time_status(payload['timezone'])
         payload["water_sensor_type"] = WaterCalibration.SENSOR_TYPE
-        payload["water_metering_enabled"] = True
-        payload["water_max_volume_l"] = WaterCalibration.max_volume_l
-        payload["water_calibration_point_count"] = WaterCalibration.point_count
-        payload["water_calibration"] = WaterCalibration.to_serializable()
+        import hardware_config
+        payload["water_metering_enabled"] = hardware_config.installed()
+        payload["capabilities"] = dict(water_level=payload["water_metering_enabled"])
         payload["ambient"] = AmbientLightSettings.to_serializable()
         payload["ec"] = ECSettings.to_serializable()
         return Response(ujson.dumps(payload), headers=headers)
     except Exception as e:
         print("Failed to read settings:", e)
         return Response(ujson.dumps({'error': 'unable to read settings'}), status_code=500, headers=headers)
-
-
-@app.route('/configure_water_calibration')
-def configure_water_calibration(request):
-    from volume_http import configure
-    body, headers = configure(request.args)
-    return Response(body, status_code=int(headers.split()[1]))
-
-
-@app.route('/update_cal_point')
-def update_cal_point(request):
-    from volume_http import record
-    body, headers = record(request.args)
-    return Response(body, status_code=int(headers.split()[1]))
 
 
 @app.route('/water_level')

@@ -1,6 +1,11 @@
 {
-  "compiler": "MicroPython v1.28.0 on 2026-08-11; mpy-cross emitting mpy v6.3",
+  "compiler": "MicroPython v1.28.0 on 2026-11-24; mpy-cross emitting mpy v6.3",
   "modules": {
+    "memory_probe": {
+      "source_sha256": "afb48ca311de11f2e79e6366ecc258cee1f95701f8d8414ad08bc0ffb0447d4e",
+      "bytecode_sha256": "eb22cfbb36d544e746267bbd574881dd2b7e6738085527dbc3403a0b559628b7",
+      "bytes": 575
+    },
     "status_led": {
       "source_sha256": "2472ccfba51a3e5fd8d7cb7fafdce317950e883cb71e0c2e1629f5e71b9126b5",
       "bytecode_sha256": "e08017fc462f6c6b81ba25f10e7ab7ab9235678f945b1a7bd8246e85b300c284",
@@ -12,14 +17,24 @@
       "bytes": 1748
     },
     "local_time": {
-      "source_sha256": "4f73676460caf8ef25dd09003a55d2fc05c38d078a7d5445a0784e052cdffd99",
-      "bytecode_sha256": "fd1dbbd98e9bf5f30f19c2146262bb08d44b52d708e69bd7e1fcafa5da623c0b",
-      "bytes": 1042
+      "source_sha256": "b6608dfabe0d34816a9d3ace9d35615727186633017979e7f7adaff0a472bdef",
+      "bytecode_sha256": "cab4c14c6c11a47874de8c76379d97ccf657eaec7129fc0377aa7c2dd106f7c2",
+      "bytes": 1722
+    },
+    "hardware_config": {
+      "source_sha256": "0654e522c6a940c8bff02a58a01a2a1c0590d99e3c86823422483622af92109e",
+      "bytecode_sha256": "0a7415f40f06bb1fbc67bbb0dfefd1d01babba3e16caec9f80e9bd494edb5282",
+      "bytes": 1003
+    },
+    "water_config": {
+      "source_sha256": "a2aa0e70d837286cb4dce415353212b2be8db2c02784735951ad6c19714412f9",
+      "bytecode_sha256": "6b4c814481bc4bdfd802d804f6cc91fa25e95a7b4436c5cba84a2be8231b0706",
+      "bytes": 3091
     },
     "shared_settings": {
-      "source_sha256": "8a3e7b01e9a76ac7678ca9e9c9fc7ea1c580c1b2faac2610932d59f9e4612ec0",
-      "bytecode_sha256": "c83084608f78f66130a830c2d72f80e87b5340aa11db4e352027c11d84393491",
-      "bytes": 5572
+      "source_sha256": "1629529f0cc4a8ac0cab24a238654761a8e01ebccca6c82d759f902b0e995438",
+      "bytecode_sha256": "0f00d94fb04b948181b5280b6a33eb79938ed631a2c033b97ff84a505818565d",
+      "bytes": 5681
     },
     "level_indicator": {
       "source_sha256": "d51a8fa212a7d0459d638ab42452e41fd9b3af322e1e04772bf51ae530fc8996",
@@ -27,14 +42,24 @@
       "bytes": 698
     },
     "water_level": {
-      "source_sha256": "055c88270430f294859bb9cba46f6afe3af37f2a43bf6eecdf5e875dd5bcfc64",
-      "bytecode_sha256": "82f35f04ff696df5ddd1760aed6440878506bc6e4333ac310c69556b79206b0b",
-      "bytes": 533
+      "source_sha256": "c01051bf70ee8e057b8dcc0ee6c91f070c359f934d8f063440866877ba6ce5b7",
+      "bytecode_sha256": "32ab5c303625903ede3fbccf5e6995f496502a556ea6d6e8403bf8244849c3cc",
+      "bytes": 782
+    },
+    "temperature": {
+      "source_sha256": "c3bbc4772879536fcbf683e98fb5d16b76192316da3260ad3c696784799e5d37",
+      "bytecode_sha256": "c57a521c4828263ab1f741968b993282c5f6dabb612e7faa8482d6e5b053e789",
+      "bytes": 499
+    },
+    "grow_ui": {
+      "source_sha256": "2d15d9878a0c5dbcb99ca119bb197f5b6f969286dca544799ee5d732995096c8",
+      "bytecode_sha256": "7e51cde73aa7cbe30e8335e9589db3aa242cd15bc924a66dabfa959ab313984a",
+      "bytes": 5461
     },
     "volume_http": {
-      "source_sha256": "493800aec4d5168fd09ce774eccf632868e7a4e1dc39de420f47028cf85007b8",
-      "bytecode_sha256": "c395ba016e4ef6877f9e2045b2a8660eb72a523d69223e1b4829211beb98c172",
-      "bytes": 1535
+      "source_sha256": "f87caa1b245cad680c67603afc7075b0f82e04889eef49338a872f67de991915",
+      "bytecode_sha256": "d618ff341bf90a86b144c65195fa115053e0b99d038b33214595694618c9c784",
+      "bytes": 1318
     },
     "pump_cycle": {
       "source_sha256": "603b4fc14356d7216fc4ce6d4139f96ac6186563c128943ff31c75ebc44624f2",
@@ -42,24 +67,46 @@
       "bytes": 369
     },
     "captive_portal": {
-      "source_sha256": "6d398aa80dc4d28724689858bfc4426ae3c6ec05ba203ed5fe9101084a7d12b8",
-      "bytecode_sha256": "a5ca47406f35176b933151d97bd85c84437097f71bf1473c6a820f2c54bbd245",
-      "bytes": 12501
+      "source_sha256": "8ab766fc6dc75d9c0ca3d78a7a0a82fd31e2971be02a0c265417b37d78333e50",
+      "bytecode_sha256": "c58ea4e5f0d2a9a46cc058a93ea700bb653465887d6f3f855bc97ac8cdf75b22",
+      "bytes": 13230
     },
     "captive_http": {
-      "source_sha256": "748da8e184f027a0709a2c6afc8e6c3321af393e49f6077dec7e2be0e2f3bb20",
-      "bytecode_sha256": "698915c763282b496e437ee369b5bcadfd51bfe855eb60ef2b8b35d2c4c9be3f",
-      "bytes": 11894
+      "source_sha256": "ffb6bb82c928142aee2a5174af01f39947064f1f36a518e95346fd1ccd893de9",
+      "bytecode_sha256": "adff8c6725ddc53906543a9c0b0415e9d3c5c63cb610a61d6031dfeb599efb6f",
+      "bytes": 15362
     },
     "gpio": {
-      "source_sha256": "3ed1f2d9f42828e888fbffe3cd171f8c7d2d2df439f5d570fdebfca114247904",
-      "bytecode_sha256": "e292cee66d247e509919b977dad4392448b58559dedbef717711ced59d0c120a",
-      "bytes": 3467
+      "source_sha256": "30fbe80565b04459811aa48c3f3500bebfcd79aff72c13557c1af00f513c2a3e",
+      "bytecode_sha256": "7969d2e9b72ab733014811abac039cecbac455d2c5928cc53b8ff4e620604211",
+      "bytes": 3891
     },
     "app_main": {
-      "source_sha256": "bb5acc3e0b8478d8a80d1fb5e390ba6d34a967e1388d3e70ec3ac10e0150cbcc",
-      "bytecode_sha256": "f4066ae69ed92fc220e1171df72691e20c37e7fb09526af6144f6fe6f4015e5e",
-      "bytes": 12688
+      "source_sha256": "bf9670058338cdd8bdd231e5df511bd381a19c7059a6c2322ffe0e242d990027",
+      "bytecode_sha256": "f9b619efa894542d9766362c0850d780aed1aaa9e93edb73a2bd07b4c74671f5",
+      "bytes": 14967
+    }
+  },
+  "web_pages": {
+    "settings.html": {
+      "sha256": "817be0edf22ea32aa77de44936161c8521b3c460d1a30423c1e85542008dd60b",
+      "bytes": 59801
+    },
+    "index.html": {
+      "sha256": "f025b145cf9f1364efcdfb3d861e26c37899140fdc4c86d56e7c9ee29b5ac491",
+      "bytes": 21208
+    },
+    "connected.html": {
+      "sha256": "0ebb39c7e37a9389316e73f0c5b4611abb763158554f0712917978a4c19b4855",
+      "bytes": 11859
+    }
+  },
+  "bootstrap": {
+    "main.py": {
+      "sha256": "01d13e8bd0d15348cf7cc9af2ae9ba9d4550777ed6863a01172295732d92a3c6"
+    },
+    "firmware_loader.py": {
+      "sha256": "13a49efacf4bc53c34e164dab265b1ca1fb66925543816acd6a2be7f3f8a8bb8"
     }
   }
 }

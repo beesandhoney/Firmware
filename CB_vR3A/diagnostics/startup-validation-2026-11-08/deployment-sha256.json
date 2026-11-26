@@ -1,0 +1,22 @@
+{
+  "main.py": "01d13e8bd0d15348cf7cc9af2ae9ba9d4550777ed6863a01172295732d92a3c6",
+  "firmware_loader.py": "13a49efacf4bc53c34e164dab265b1ca1fb66925543816acd6a2be7f3f8a8bb8",
+  "firmware_build.json": "5803eea25ecf904e571c2eb5ce5faca67a85e70b82ff1ab66024604f01d91db8",
+  "_fw_memory_probe.mpy": "eb22cfbb36d544e746267bbd574881dd2b7e6738085527dbc3403a0b559628b7",
+  "_fw_status_led.mpy": "e08017fc462f6c6b81ba25f10e7ab7ab9235678f945b1a7bd8246e85b300c284",
+  "_fw_credentials.mpy": "cb7e0384820cf3645e13c25e484ef5c91c8b24017449458e2fff5387c55edcd7",
+  "_fw_local_time.mpy": "cab4c14c6c11a47874de8c76379d97ccf657eaec7129fc0377aa7c2dd106f7c2",
+  "_fw_hardware_config.mpy": "0a7415f40f06bb1fbc67bbb0dfefd1d01babba3e16caec9f80e9bd494edb5282",
+  "_fw_water_config.mpy": "6b4c814481bc4bdfd802d804f6cc91fa25e95a7b4436c5cba84a2be8231b0706",
+  "_fw_shared_settings.mpy": "9dc69175ef512fe61bf7eb272a7d450d7a2aa69452e7b75580411682001479ab",
+  "_fw_level_indicator.mpy": "792829dbb9b459561fa65b55d727234154920a70684e1a7a236897de67322ea5",
+  "_fw_water_level.mpy": "32ab5c303625903ede3fbccf5e6995f496502a556ea6d6e8403bf8244849c3cc",
+  "_fw_temperature.mpy": "a48a21863fc89c894afdc2c8d69cde63b6803ddc9a19b909d801326e0b911a90",
+  "_fw_grow_ui.mpy": "7e51cde73aa7cbe30e8335e9589db3aa242cd15bc924a66dabfa959ab313984a",
+  "_fw_volume_http.mpy": "d618ff341bf90a86b144c65195fa115053e0b99d038b33214595694618c9c784",
+  "_fw_pump_cycle.mpy": "ca142c5d31715c4f4968322b504c40154cb6e525469c775ba8afa5128465bd32",
+  "_fw_captive_portal.mpy": "c58ea4e5f0d2a9a46cc058a93ea700bb653465887d6f3f855bc97ac8cdf75b22",
+  "_fw_captive_http.mpy": "adff8c6725ddc53906543a9c0b0415e9d3c5c63cb610a61d6031dfeb599efb6f",
+  "_fw_gpio.mpy": "97de26d5c3132ad092cc97a7153c816e478b6f425619cf61efa2583fde61f102",
+  "_fw_app_main.mpy": "f9b619efa894542d9766362c0850d780aed1aaa9e93edb73a2bd07b4c74671f5"
+}

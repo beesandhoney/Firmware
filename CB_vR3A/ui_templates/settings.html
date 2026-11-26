@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#F5F7F3">
+    <title>Grow · My Garden</title>
+    <link rel="stylesheet" href="/grow.css">
+    <script src="/grow.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#garden">Skip to My Garden</a>
+    <div class="page">
+        <header class="topbar">
+            <a class="brand" href="/garden" aria-label="Grow home"><span class="brand-mark" aria-hidden="true"></span>grow<span class="brand-dot">.</span></a>
+            <span class="connection" id="connection" role="status"><span class="dot" aria-hidden="true"></span><span id="connection-text">Connecting</span></span>
+        </header>
+        <main>
+            <nav class="portal-nav" id="garden-nav" aria-label="Garden navigation"><a class="suggestion-button" href="/settings">Settings</a><button type="button" class="suggestion-button" id="exit-portal">Exit Portal Mode</button></nav>
+            <nav class="portal-nav" id="settings-nav" aria-label="Settings navigation" hidden><a id="back-settings" href="/settings">Back to Settings</a><a href="/garden">Back to My Garden</a></nav>
+            <section id="settings-menu" aria-labelledby="menu-heading" hidden>
+                <div class="section-heading"><div><h1 id="menu-heading">Settings</h1><p class="subtitle">Choose what you would like to configure.</p></div></div>
+                <div class="settings-grid menu-grid"><a id="wifi-nav" class="setting-card menu-card" href="/wifi"><img src="/icons/plant-test-tube-svgrepo-com.svg" alt="" width="28" height="28"><h2>Wi-Fi Settings</h2><p class="help">Connect your Grow to your Wi-Fi network.</p></a><a class="setting-card menu-card" href="/grow-settings"><img src="/icons/sunrise-svgrepo-com.svg" alt="" width="28" height="28"><h2>Grow Settings</h2><p class="help">Lighting schedules, nutrient alerts and your garden routine.</p></a></div>
+            </section>
+            <section id="portal-complete" class="setting-card" role="status" hidden><h1>Portal closed</h1><p>Your Grow controller is running normally. Use the device's setup control to reopen the portal.</p></section>
+            <dialog id="exit-confirm" aria-labelledby="exit-heading"><h2 id="exit-heading">Exit Portal Mode?</h2><p>The configuration portal will close. Your Grow controller will continue operating normally.</p><p id="exit-unsaved" hidden>Your unsaved changes will be discarded.</p><div class="portal-nav"><button type="button" class="suggestion-button" id="exit-cancel">Cancel</button><button type="button" class="save-button" id="exit-confirm-button">Exit Portal</button></div><p id="exit-error" role="alert"></p></dialog>
+            <section id="garden" aria-labelledby="garden-heading">
+                <div class="section-heading"><div><p class="eyebrow">A little nature, closer to home</p><h1 id="garden-heading">My Garden</h1><p id="garden-summary" class="subtitle">Checking on your plants…</p></div><span class="live-label">LIVE OVERVIEW</span></div>
+                <p id="connection-error" class="notice error" role="alert" hidden>Connection lost. Check your device’s Wi-Fi connection. Retrying automatically.</p>
+                <div class="garden-grid">
+                    <article class="status-card lighting-card" id="lighting-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><img id="lighting-icon" src="/icons/brightness-svgrepo-com.svg" alt="" width="26" height="26"></span><h2>Lighting</h2></div>
+                        <div class="measurement" id="lighting-value">--</div>
+                        <p class="detail">Light brightness <span id="lighting-brightness">Unavailable</span></p><p class="detail">Fan PWM <span id="fan-pwm">Unavailable</span></p><p class="detail" id="lighting-next"></p><p class="state-text" id="lighting-status">Waiting for device</p><p class="detail" id="lighting-detail">Your daily light rhythm</p>
+                    </article>
+                    <article class="status-card" id="water-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><span class="water-icon" aria-hidden="true"><span id="water-icon-fill"></span></span></span><h2>Water</h2></div>
+                        <div class="measurement"><span id="water-value">--</span><span class="unit">%</span></div>
+                        <p class="state-text" id="water-status">Waiting for device</p><p class="detail" id="water-detail">Water for healthy roots</p>
+                        <div class="water-track" aria-hidden="true"><div id="water-fill"></div></div>
+                    </article>
+                    <article class="status-card" id="nutrients-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><img src="/icons/plant-test-tube-svgrepo-com.svg" alt="" width="26" height="26"></span><h2>Nutrients</h2></div>
+                        <div class="measurement"><span id="nutrients-value">--</span><span class="unit">mS/cm</span></div>
+                        <p class="state-text" id="nutrients-status">Waiting for device</p><p class="detail" id="nutrients-detail">Your nutrient balance</p>
+                    </article>
+                    <article class="status-card" id="temperature-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><img src="/icons/weather-temperature-svgrepo-com.svg" alt="" width="26" height="26"></span><h2>Temperature</h2></div>
+                        <div class="measurement"><span id="temperature-value">--</span><span class="unit">°C</span></div>
+                        <p class="state-text" id="temperature-status">Waiting for device</p><p class="detail">Measured at your garden</p>
+                    </article>
+                </div>
+                <p id="clock-warning" class="notice warning" hidden>Time unavailable. The lighting schedule is waiting for time synchronization.</p>
+                <div class="overview-footer"><span id="local-time">Waiting for local time</span><span>Refreshes every 5 seconds</span></div>
+            </section>
+            <section id="settings" class="settings-section" hidden aria-labelledby="settings-heading">
+                <div class="section-heading"><div><p class="eyebrow">Make it yours</p><h1 id="settings-heading" class="section-title">Grow Settings</h1><p class="subtitle">A routine that helps your garden thrive.</p></div></div>
+                <form id="settings-form">
+                    <fieldset id="settings-fields" disabled>
+                        <legend class="sr-only">Garden settings</legend>
+                        <div class="settings-grid">
+                            <section class="setting-card" aria-labelledby="timezone-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">01</span><h3 id="timezone-heading">Time zone</h3></div>
+                                <p class="help">Keep your garden in time with your day. Daylight saving changes are automatic.</p>
+                                <label for="timezone">Local time zone</label>
+                                <select id="timezone" name="timezone" required>
+                                    <option value="Europe/Stockholm">Europe/Stockholm</option>
+                                    <option value="Europe/Lisbon">Europe/Lisbon</option>
+                                    <option value="Europe/London">Europe/London</option>
+                                </select>
+                            </section>
+                            <section class="setting-card" aria-labelledby="schedule-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">02</span><h3 id="schedule-heading">Lighting schedule</h3></div>
+                                <p class="help">Give your plants a regular balance of light and rest.</p>
+                                <div class="time-grid">
+<div><h4>Morning</h4><label for="morning-start">Starts at</label><input id="morning-start" type="time" step="60" required>
+<label for="morning-brightness">Brightness <output id="morning-percent">0%</output></label><input id="morning-brightness" type="range" min="0" max="100" step="1">
+</div>
+<div><h4>Day</h4><label for="day-start">Starts at</label><input id="day-start" type="time" step="60" required>
+<label for="day-brightness">Brightness <output id="day-percent">0%</output></label><input id="day-brightness" type="range" min="0" max="100" step="1">
+</div>
+<div><h4>Evening</h4><label for="evening-start">Starts at</label><input id="evening-start" type="time" step="60" required>
+<label for="evening-brightness">Brightness <output id="evening-percent">0%</output></label><input id="evening-brightness" type="range" min="0" max="100" step="1">
+</div>
+<div><h4>Night</h4><label for="night-start">Starts at</label><input id="night-start" type="time" step="60" required>
+<p>Brightness OFF (0%)</p>
+</div></div>
+                                <p id="schedule-duration" class="duration">Enter times in 24-hour format (HH:MM).</p>
+                            </section>
+                            <section class="setting-card" aria-labelledby="ambient-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">03</span><h3 id="ambient-heading">Ambient light sensor</h3><img class="heading-icon" src="/icons/shade-svgrepo-com.svg" alt="" width="26" height="26"></div>
+                                <p class="help">Automatically adjust lighting based on room brightness, within your lighting schedule.</p>
+                                <label class="switch-row" for="ambient-enabled"><span id="ambient-label">Enabled</span><span class="switch"><input id="ambient-enabled" name="ambient_enabled" type="checkbox" role="switch"><span class="switch-track" aria-hidden="true"></span></span></label>
+                            </section>
+                            <section class="setting-card" aria-labelledby="alerts-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">04</span><h3 id="alerts-heading">Nutrient alerts</h3></div>
+                                <p class="help">Set the nutrient concentration range for your plants.</p>
+                                <div class="plant-guide">
+                                    <label for="plant-ec">Plant EC guide</label>
+                                    <select id="plant-ec" aria-describedby="plant-guidance"><option value="">Choose a plant (optional)</option></select>
+                                    <div id="plant-suggestion" aria-live="polite" hidden>
+                                        <p id="plant-range-title"></p><p id="plant-range" class="plant-range"></p>
+                                    </div>
+                                    <button id="use-plant-range" class="suggestion-button" type="button" disabled>Use suggested range</button>
+                                    <p id="plant-guidance" class="help">Suggested ranges are starting points for established plants. You can set your own alerts, including for a mixed reservoir.</p>
+                                    <p id="plant-range-limit" class="help" hidden>This suggestion exceeds the device’s supported alert range. Adjust the values before saving.</p>
+                                </div>
+                                <div class="time-grid">
+                                    <div><label for="ec-low">Low EC alert</label><div class="input-unit"><input id="ec-low" name="ec_alarm_low" type="number" inputmode="decimal" min="0" max="2.72" step="0.001" required aria-describedby="ec-units"><span>mS/cm</span></div></div>
+                                    <div><label for="ec-high">High EC alert</label><div class="input-unit"><input id="ec-high" name="ec_alarm_high" type="number" inputmode="decimal" min="0" max="2.72" step="0.001" required aria-describedby="ec-units"><span>mS/cm</span></div></div>
+                                </div>
+                                <p class="help">EC measures the overall concentration of dissolved substances in your water. Recommended nutrient levels depend on plant type, growth stage and growing conditions.</p>
+                                <p id="ec-supported-range" class="help">Supported alert range: 0–2.72 mS/cm.</p>
+                                <span id="ec-units" class="sr-only">Nutrient concentration in millisiemens per centimetre. Low must be less than high.</span>
+                            </section>
+                        </div>
+                    </fieldset>
+                    <div class="save-row"><div><p id="settings-status" role="status" aria-live="polite">Loading saved settings…</p><p class="help">Changes take effect when you save.</p></div><button type="submit" class="save-button" id="save-button" disabled>Save settings<span aria-hidden="true">↗</span></button></div>
+                </form>
+            </section>
+        </main>
+        <footer class="page-footer"><span>grow<span class="brand-dot">.</span> <span class="footer-motto">Small garden. Everyday joy.</span></span><a id="wifi-link" href="/settings">Settings</a></footer>
+    </div>
+</body>
+</html>

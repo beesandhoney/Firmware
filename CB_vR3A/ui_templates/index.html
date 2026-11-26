@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F5F7F3"><title>Grow · Wi-Fi settings</title>
+<link rel="stylesheet" href="/grow.css"><script src="/wifi.js" defer></script>
+</head>
+<body><div class="page setup-page">
+<header class="topbar"><span class="brand"><span class="brand-mark" aria-hidden="true"></span>grow<span class="brand-dot">.</span></span></header>
+<main>
+<nav class="portal-nav" aria-label="Setup navigation"><a id="back-settings" href="/settings">Back to Settings</a><a id="back-garden" href="/garden">Back to My Garden</a></nav>
+<div class="section-heading"><div><p class="eyebrow">Your garden, connected</p><h1>Connect your Grow</h1><p class="subtitle">Let's get your garden connected.</p></div></div>
+<section class="setting-card" aria-labelledby="wifi-heading">
+<div class="setting-title"><h2 id="wifi-heading">Wi-Fi settings</h2><img class="heading-icon" src="/icons/plant-test-tube-svgrepo-com.svg" alt="" width="26" height="26"></div>
+<noscript><p class="notice error">JavaScript is required to list networks and connect. Enable it and reload this page.</p></noscript>
+<div id="wifi-result" class="notice" role="status" aria-live="polite"><h3 id="wifi-result-title">Wi-Fi setup</h3><p id="wifi-status">Choose a network or enter its name. Connection results appear here.</p></div>
+<form id="wifi-form">
+<fieldset id="wifi-fields">
+<label for="wifi-network">Available Wi-Fi networks</label><select id="wifi-network"><option value="">Enter a network name below</option></select>
+<button id="scan-networks" class="suggestion-button" type="button">Rescan</button>
+<p id="scan-status" class="help" role="status">Loading the network scanner… If this message remains, refresh the page and check that wifi.js was uploaded.</p>
+<label for="wifi-ssid">Network name</label><input id="wifi-ssid" name="ssid" type="text" maxlength="32" required autocomplete="off" autocapitalize="none" spellcheck="false">
+<label class="password-label" for="wifi-password">Wi-Fi password</label><input id="wifi-password" name="password" type="password" maxlength="63" autocomplete="new-password" aria-describedby="password-help">
+<p id="password-help" class="help">Leave the password empty only for an open network.</p>
+<button id="wifi-connect" class="save-button" type="submit">Connect</button>
+</fieldset></form>
+
+</section></main>
+<footer class="page-footer"><span>grow<span class="brand-dot">.</span></span><span>Small garden. Everyday joy.</span></footer>
+</div></body></html>

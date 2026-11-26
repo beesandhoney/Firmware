@@ -39,6 +39,8 @@ debug("main.py import started")
 
 # State Definitions
 COSYMODE = 1
+# Manual mode ends only when the mode button returns to the schedule or on restart.
+MANUAL_OVERRIDE_ENDS = 'mode_change_or_restart'
 TIMECONTROL = 2
 SETTINGS = 3
 
@@ -58,12 +60,14 @@ current_water_volume = None  # Cached calibrated volume for UI / alerts
 SETTINGS_AP = None  # Keep a reference so GC doesn't drop the AP object
 
 runtime_initialized = False
+portal_lighting_active = False
 pump_pin = None
 pump_cycle = None
 pump_state = PUMP_OFF  # Keep track of the pump's state
 sensor_lock = None  # Created after Wi-Fi startup.
 ec_adc = None
 ec_active = False  # True only while the EC probe is powered.
+current_ec_ms = None
 current_ec_value = None  # Cached EC value for alarms and RGB status indication
 current_base_brightness = 0  # latest requested brightness before ALS overrides
 ambient_controller = None
@@ -79,8 +83,15 @@ ON_OFF_DIM_BUTTON_PIN = 17
 BOOT_GRACE_MS = 4000
 BOOT_POLL_MS = 50
 NTP_HOSTS = ("pool.ntp.org", "time.google.com", "time.cloudflare.com")
+# NIST publishes these numeric endpoints for clients with DNS problems:
+# https://tf.nist.gov/tf-cgi/servers.cgi (verified 2026-11-06).
+NTP_FALLBACK_IPS = ("129.6.15.28", "132.163.96.1")
+NTP_TIMEOUT_S = 2
 NTP_RETRY_INTERVAL_S = 30
-ENABLE_STA_HTTP_SERVER = False
+ntp_dns_failed = False
+ntp_attempt_index = 0
+next_ntp_retry_ms = None
+ENABLE_STA_HTTP_SERVER = True
 ALS_STATUS_THRESHOLD = 1500
 MODE_DEBOUNCE_MS = 50
 DEVICE_PORTAL_PRESS_MS = 2000
@@ -142,7 +153,9 @@ class AmbientLightController:
 
     def __init__(self):
         debug("creating AmbientLightController")
+        portal._print_network_heap('before ambient ADC creation')
         self.adc = gpio.setup_ambient_adc()
+        portal._print_network_heap('after ambient ADC creation')
         self.window = []
         self.filtered = None
         self.mode = "UNKNOWN"
@@ -233,16 +246,20 @@ class AmbientLightController:
                 target = 0
                 ambient_change = True
 
+        # Ambient dimming can reduce an ON level, never raise it or override night.
+        target = min(base_brightness, target)
         return self._apply_brightness(target, now, ambient_change)
 
 
 def current_hour():
-    """Use local minutes after sync; preserve the pre-sync RTC behavior."""
-    if not time_synced:
-        return utime.localtime()[3]
-    from local_time import localtime
-    current = localtime(LightIntensities.settings['timezone'])
+    """Use a valid RTC in the configured zone, also during an Internet outage."""
+    from local_time import localtime, status
+    zone = LightIntensities.settings['timezone']
+    if not status(zone)['local_time']:
+        return None
+    current = localtime(zone)
     return current[3] + current[4] / 60.0
+
 
 def start_settings_ap():
     import network
@@ -403,6 +420,7 @@ def service_startup_controls():
     the asyncio main loop exists.
     """
     service_pump()
+    service_portal_lighting()
     startup_mode_button.update()
     if long_press_detector:
         long_press_detector.update()
@@ -411,24 +429,70 @@ def service_startup_controls():
 
 
 def sync_time_once(attempt_index):
-    """One synchronous NTP attempt; DNS/network waits block runtime tasks."""
+    """One bounded UDP attempt; bypass a failed resolver on the next retry.
+
+    DNS itself has a platform-controlled timeout, independent of UDP timeout.
+    Periodically retry DNS to allow recovery without changing DHCP settings.
+    """
+    global ntp_dns_failed
     started_ms = utime.ticks_ms()
-    host = NTP_HOSTS[attempt_index % len(NTP_HOSTS)]
+    use_fallback = ntp_dns_failed and attempt_index % 4 != 0
+    hosts = NTP_FALLBACK_IPS if use_fallback else NTP_HOSTS
+    host = hosts[attempt_index % len(hosts)]
     try:
         gc.collect()
         ntptime.host = host
-        print("NTP sync attempt {} via {}".format(attempt_index + 1, host))
+        ntptime.timeout = NTP_TIMEOUT_S
+        print("NTP sync attempt {} via {}{}".format(
+            attempt_index + 1, host, " (DNS bypass)" if use_fallback else ""))
         ntptime.settime()
+        ntp_dns_failed = False
         print("NTP sync OK")
         return True
-    except OSError as e:
-        err = e.args[0] if e.args else e
+    except (OSError, MemoryError) as e:
+        err = 12 if isinstance(e, MemoryError) else (e.args[0] if e.args else e)
         print("NTP sync failed via {} (OSError: {})".format(host, err))
+        if isinstance(err, int) and (err <= -2 or err == 12):
+            # MicroPython getaddrinfo errors are negative; ESP32 -202 is
+            # EAI_NONAME, commonly returned after DNS requests time out.
+            ntp_dns_failed = True
+            if err == 12:
+                print("NTP allocation failed (ENOMEM); next retry will bypass DNS")
+                try:
+                    print("NTP Python heap free:", gc.mem_free())
+                    portal._print_network_heap()
+                except Exception:
+                    pass
+            else:
+                print("NTP hostname lookup failed; next retry will bypass DNS")
+            try:
+                print("NTP STA network (IP, mask, gateway, DNS):", portal.sta_if.ifconfig())
+            except Exception:
+                pass
+        print("NTP retry in {} seconds".format(NTP_RETRY_INTERVAL_S))
         return False
     finally:
         if WATER_DEBUG:
             print("TIMING: NTP blocked runtime for {} ms".format(
                 utime.ticks_diff(utime.ticks_ms(), started_ms)))
+
+
+def sync_time_before_http():
+    """Use the available startup heap before reserving the HTTP listener.
+
+    At most one hostname attempt and one different numeric endpoint; failed
+    startup attempts share the runtime retry deadline instead of retrying hot.
+    """
+    global time_synced, ntp_attempt_index, next_ntp_retry_ms
+    load_runtime_modules()
+    print("Synchronizing time before HTTP startup")
+    time_synced = sync_time_once(ntp_attempt_index)
+    ntp_attempt_index += 1
+    if not time_synced and ntp_dns_failed:
+        service_startup_controls()
+        time_synced = sync_time_once(ntp_attempt_index)
+        ntp_attempt_index += 1
+    next_ntp_retry_ms = utime.ticks_add(utime.ticks_ms(), NTP_RETRY_INTERVAL_S * 1000)
 
 
 def init_pump():
@@ -455,7 +519,7 @@ async def pump_control():
 
         
 async def measure_ec():
-    global ec_active, current_ec_value
+    global ec_active, current_ec_value, current_ec_ms
     debug("measure_ec task started; interval={}ms, window={}ms".format(EC_MEASURE_INTERVAL_MS, EC_MEASURE_WINDOW_MS))
     last_measure_ms = utime.ticks_ms() - EC_MEASURE_INTERVAL_MS
     while True:
@@ -482,6 +546,7 @@ async def measure_ec():
                 debug("EC measurement window complete")
 
             current_ec_value = ec_value
+            current_ec_ms = utime.ticks_ms()
 
             low_lim = ECSettings.settings.get("ec_low_alarm_us", 0)
             high_lim = ECSettings.settings.get("ec_high_alarm_us", 999999)
@@ -541,21 +606,23 @@ def cosyLightControl():
     return COSY_LIGHT_LEVEL
 
 
-def load_runtime_modules():
-    global gpio, ntptime, asyncio
+def load_control_modules():
+    """Load synchronous lighting dependencies without NTP or the async runtime."""
+    global gpio
     global LightIntensities, AmbientLightSettings, ECSettings
     global load_all_settings_from_file, update_ambient_status
 
     if gpio is not None:
         return
 
-    debug("loading runtime modules")
+    debug("loading control modules")
     gc.collect()
+    portal._print_network_heap('before control modules')
 
     from firmware_loader import load
+    portal._print_network_heap('before load gpio')
     gpio_mod = load("gpio")
-    import ntptime as ntptime_mod
-    import uasyncio as asyncio_mod
+    portal._print_network_heap('after load gpio')
     from shared_settings import (
         LightIntensities as LightIntensities_mod,
         AmbientLightSettings as AmbientLightSettings_mod,
@@ -565,13 +632,28 @@ def load_runtime_modules():
     )
 
     gpio = gpio_mod
-    ntptime = ntptime_mod
-    asyncio = asyncio_mod
     LightIntensities = LightIntensities_mod
     AmbientLightSettings = AmbientLightSettings_mod
     ECSettings = ECSettings_mod
     load_all_settings_from_file = load_all_settings_from_file_mod
     update_ambient_status = update_ambient_status_mod
+    gc.collect()
+    portal._print_network_heap('after control modules')
+
+
+def load_runtime_modules():
+    global ntptime, asyncio
+    load_control_modules()
+    if ntptime is None:
+        portal._print_network_heap('before import ntptime')
+        import ntptime as ntptime_mod
+        portal._print_network_heap('after import ntptime')
+        ntptime = ntptime_mod
+    if asyncio is None:
+        portal._print_network_heap('before import uasyncio')
+        import uasyncio as asyncio_mod
+        portal._print_network_heap('after import uasyncio')
+        asyncio = asyncio_mod
 
 
 def init_runtime_controls():
@@ -610,44 +692,50 @@ def init_runtime_hardware():
 
     init_pump()
 
+    portal._print_network_heap('before asyncio lock')
     sensor_lock = asyncio.Lock()
+    portal._print_network_heap('after asyncio lock')
     debug("creating EC ADC")
+    portal._print_network_heap('before EC ADC')
     ec_adc = gpio.setup_adc()
+    portal._print_network_heap('after EC ADC')
     debug("EC ADC ready")
 
+    portal._print_network_heap('before settings file')
     LightIntensities.settings = load_settings_from_file()
+    portal._print_network_heap('after settings file')
+    portal._print_network_heap('before AmbientLightController')
     ambient_controller = AmbientLightController()
+    portal._print_network_heap('after AmbientLightController')
     current_base_brightness = LightIntensities.settings.get("off", 0)
     hour = current_hour()
+    portal._print_network_heap('before runtime buttons')
     init_runtime_controls()
+    portal._print_network_heap('after runtime buttons')
     runtime_initialized = True
     debug("runtime hardware initialized; base brightness={}".format(current_base_brightness))
 
 def timeControl(hour, oldHour):
-    if time_synced:
-        from local_time import schedule_phase
-        phase = schedule_phase(LightIntensities.settings, int(round(hour * 60)))
-        return LightIntensities.settings[phase], hour != oldHour
-    # Legacy fallback until the existing NTP synchronization succeeds.
-    update = False
-    brightness = LightIntensities.settings['off']
-    if hour == 5:
-        brightness = LightIntensities.settings['morning']
-        message = "morning"
-    elif 5 < hour < 17:
-        brightness = LightIntensities.settings['daylight']
-        message = "daylight"
-    elif 17 <= hour < 19:
-        brightness = LightIntensities.settings['evening']
-        message = "evening"
-    else:
-        brightness = LightIntensities.settings['off']
-        message = "off"
+    if hour is None:
+        return 0, oldHour is not None
+    from local_time import schedule_phase
+    phase = schedule_phase(LightIntensities.settings, int(round(hour * 60)))
+    return (0 if phase == 'off' else LightIntensities.settings[phase]), hour != oldHour
 
-    if oldHour != hour:
-        print(message)
-        update = True
-    return brightness, update
+
+def service_portal_lighting():
+    """Continue local lighting control while the synchronous portal is open."""
+    global ambient_controller, current_base_brightness
+    if not portal_lighting_active or runtime_initialized:
+        return
+    load_control_modules()
+    if ambient_controller is None:
+        portal._print_network_heap('before AmbientLightController')
+        ambient_controller = AmbientLightController()
+        portal._print_network_heap('after AmbientLightController')
+    current_base_brightness = cosyLightControl() if state == COSYMODE else timeControl(current_hour(), oldHour)[0]
+    ambient_controller.tick(current_base_brightness)
+
 
 state = TIMECONTROL
 
@@ -694,11 +782,11 @@ def reboot_clean(reason="mode change"):
 
 # This callback is used by the lightweight captive_http settings server.
 def exit_settings_callback():
-    print("Settings saved, rebooting to normal mode...")
-    prepare_for_mode_reset("exit settings")
-    reboot_clean("normal mode")
+    """Request portal-only shutdown; keep outputs, STA and controller state intact."""
+    print("Closing portal; continuing normal operation")
+    portal.request_exit()
 
-    
+
 def enter_device_portal_callback():
     print("Button >=2s: request Device Portal")
     if not set_mode_flag(WIFI_PORTAL_FLAG_FILE):
@@ -722,24 +810,26 @@ def report_runtime_delay(label, started_ms):
 async def main_logic():
     global oldHour, state, in_settings_mode, time_synced, last_in_settings_mode, current_base_brightness
     debug("main_logic task started")
-    ntp_attempt_index = 0
-    next_ntp_retry_ms = 0
+    global ntp_attempt_index, next_ntp_retry_ms
+    if next_ntp_retry_ms is None:
+        next_ntp_retry_ms = utime.ticks_ms()
+    import hardware_config
     next_water_ms = utime.ticks_ms()
     last_water_ms = None
 
     while True:
         now_water = utime.ticks_ms()
-        if utime.ticks_diff(now_water, next_water_ms) >= 0:
+        if hardware_config.installed() is True and utime.ticks_diff(now_water, next_water_ms) >= 0:
             from volume_http import read_live
             water = read_live()
             finished_ms = utime.ticks_ms()
             if WATER_DEBUG:
                 gap_ms = (utime.ticks_diff(finished_ms, last_water_ms)
                           if last_water_ms is not None else None)
-                print("WATER: ADC={} depth={} mm volume={} L capacity={} L LED_command={}/8 calibration={} gap={} ms read={} ms".format(
+                print("WATER: distance={} cm depth={} mm volume={} L capacity={} L LED_command={}/8 calibration={} gap={} ms read={} ms error={}".format(
                     water["raw"], water["depth_mm"], water["volume_l"],
                     water["max_volume_l"], water["led_count"], water["calibration_state"], gap_ms,
-                    utime.ticks_diff(finished_ms, now_water)))
+                    utime.ticks_diff(finished_ms, now_water), water.get("configuration_error")))
             last_water_ms = finished_ms
             next_water_ms = utime.ticks_add(finished_ms, 500)
         controls_started_ms = utime.ticks_ms()
@@ -805,9 +895,13 @@ async def main_logic():
 
 
 def run():
+    global portal_lighting_active
+    portal_lighting_active = True
     import time
     debug("run() entered")
+    portal._print_network_heap('before status LED initialization')
     status_led.initialize()
+    portal._print_network_heap('after status LED initialization')
     time.sleep_ms(500)
     debug("boot grace starting")
     wait_for_boot_hold()
@@ -826,7 +920,10 @@ def run():
         # allow HTTP handler to reset back to normal mode
         portal.exit_callback = exit_settings_callback
         portal.service_callback = service_startup_controls
-        if not portal.captive_portal(mode="settings"):
+        portal._print_network_heap('before settings WiFi portal')
+        wifi_ready = portal.captive_portal(mode="settings")
+        portal._print_network_heap('after settings WiFi portal')
+        if not wifi_ready and not portal.portal_closed:
             print("Settings portal failed to start")
             reboot_clean("settings portal failed")
     else:
@@ -848,31 +945,40 @@ def run():
         debug("starting portal; force_ap={}".format(force_ap))
         portal.exit_callback = exit_settings_callback
         portal.service_callback = service_startup_controls
+        portal._print_network_heap('before WiFi startup')
         wifi_ready = portal.start(force_ap=force_ap)
+        portal._print_network_heap('after WiFi startup')
         debug("portal.start returned")
 
-        if force_ap and not wifi_ready:
+        if force_ap and not wifi_ready and not portal.portal_closed:
             print("Forced Device Portal failed; rebooting instead of starting runtime")
             reboot_clean("Device Portal startup failed")
 
-        if wifi_ready and ENABLE_STA_HTTP_SERVER:
+        if wifi_ready:
+            sync_time_before_http()
+
+        if wifi_ready and ENABLE_STA_HTTP_SERVER and not portal.portal_closed:
             portal.start_sta_server()
         elif wifi_ready:
             print("STA HTTP server disabled; use mode button for settings portal")
         else:
             print("WiFi startup did not complete; continuing offline without HTTP server")
 
-        init_runtime_hardware()
-        status_led.set_operation_started()
-        status_led.set_wifi_connected(wifi_ready)
+    portal._print_network_heap('before runtime hardware')
+    init_runtime_hardware()
+    portal._print_network_heap('after runtime hardware')
+    status_led.set_operation_started()
+    status_led.set_wifi_connected(wifi_ready)
 
-        loop = asyncio.get_event_loop()
-        debug("scheduling tasks")
-        loop.create_task(supervise_task("main_logic", main_logic()))
-        loop.create_task(supervise_task("pump_control", pump_control()))
-        loop.create_task(supervise_task("measure_ec", measure_ec()))
-        debug("starting event loop")
-        loop.run_forever()
+    loop = asyncio.get_event_loop()
+    portal._print_network_heap("before task creation")
+    debug("scheduling tasks")
+    loop.create_task(supervise_task("main_logic", main_logic()))
+    loop.create_task(supervise_task("pump_control", pump_control()))
+    loop.create_task(supervise_task("measure_ec", measure_ec()))
+    portal._print_network_heap("after task creation")
+    debug("starting event loop")
+    loop.run_forever()
 
 
 if __name__ == "__main__":

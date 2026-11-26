@@ -11,13 +11,14 @@ ReqInfo = namedtuple("ReqInfo", ["type", "path", "params", "host"])
 
 import gc
 
-REQUEST_READ_TIMEOUT_S = 0.4
+REQUEST_READ_TIMEOUT_S = 1.0
 RESPONSE_CHUNK_SIZE = 536
-HTTP_LISTEN_BACKLOG = 1
-RESPONSE_WRITE_RETRIES = 5
+HTTP_LISTEN_BACKLOG = 6
+RESPONSE_WRITE_RETRIES = 300
 RESPONSE_RETRY_DELAY_MS = 10
-RESPONSE_CLOSE_GRACE_MS = 25
+RESPONSE_CLOSE_GRACE_MS = 50
 EC_SETTLE_MS = 200
+MAX_REQUEST_BODY = 2048
 
 LightIntensities = None
 AmbientLightSettings = None
@@ -135,7 +136,8 @@ def unquote(string):
 
 class HTTPServer:
     def __init__(self, poller, local_ip, mode="wifi", exit_callback=None,
-                 portal_status_getter=None, listen_sock=None):
+                 portal_status_getter=None, listen_sock=None, networks_getter=None,
+                 memory_reporter=None):
         self.name = "HTTP Server"
         self.sock = listen_sock
         gc.collect()
@@ -153,10 +155,8 @@ class HTTPServer:
                 stage = "listen"
                 self.sock.listen(HTTP_LISTEN_BACKLOG)
                 stage = "timeout"
-                try:
-                    self.sock.settimeout(0.25)
-                except Exception:
-                    self.sock.setblocking(False)
+                # serve_once supplies any requested idle delay explicitly.
+                self.sock.setblocking(False)
         except Exception as e:
             print("HTTP server socket init failed at {}: {}".format(stage, e))
             try:
@@ -175,21 +175,35 @@ class HTTPServer:
         self.exit_callback = exit_callback
         self.portal_status_getter = portal_status_getter
         self.mode = mode
+        self.networks_getter = networks_getter
+        self.memory_reporter = memory_reporter
+        self.main_available = True
+        self._exit_pending = False
+        self._exit_sent_ms = None
         self.retry_requested = False
         self.ec_adc = None
         self.ec_continuous_enabled = False
         self.ambient_adc = None
         self.routes = {
-            b"/": b"./settings.html" if mode in ("settings", "sta") else self.portal_home,
+            b"/": b"./settings.html",
+            b"/garden": b"./settings.html",
+            b"/wifi.js": b"./wifi.js",
+            b"/api/portal": self.api_portal,
+            b"/api/networks": self.api_networks,
+            b"/api/wifi": self.api_wifi,
+            b"/api/portal/exit": self.exit_settings,
             b"/settings": b"./settings.html",
+            b"/grow-settings": b"./settings.html",
+            b"/grow.css": b"./grow.css",
+            b"/grow.js": b"./grow.js",
+            b"/api/settings": self.api_settings,
+            b"/api/status": self.api_status,
             b"/wifi": b"./index.html",
             b"/login": self.login,
             b"/retry_wifi": self.retry_wifi,
             b"/reset_wifi": self.reset_wifi,
             b"/update_settings": self.update_lights,
             b"/update_lights": self.update_lights,
-            b"/configure_water_calibration": self.configure_water_calibration,
-            b"/update_cal_point": self.update_cal_point,
             b"/exit_settings": self.exit_settings,
             b"/current_settings": self.current_settings,
             b"/adc_value": self.adc_value,
@@ -202,8 +216,12 @@ class HTTPServer:
             b"/ncsi.txt": self.redirect_root,
             b"/redirect": self.redirect_root,
         }
+        for icon in ('moon', 'shade', 'sunrise', 'brightness', 'plant-test-tube', 'weather-temperature', 'sunset'):
+            path = ('icons/' + icon + '-svgrepo-com.svg').encode()
+            self.routes[b'/' + path] = b'./' + path
 
         self.ssid = None
+        print('HTTP build: portal-routing-3')
 
     def serve_once(self, idle_ms=250):
         client_sock = None
@@ -219,6 +237,7 @@ class HTTPServer:
             return True
 
         try:
+            self._response_path = b'<unparsed>'
             response_sent = self.handle_blocking(client_sock)
             if response_sent:
                 # Let lwIP queue the final TCP segment before close().
@@ -231,11 +250,15 @@ class HTTPServer:
         finally:
             try:
                 client_sock.close()
-            except Exception:
-                pass
+            except Exception as e:
+                # A queued response does not prove the connection was released.
+                # Retain visibility of failed close operations under low memory.
+                print('HTTP close failed: path={} errno={}'.format(
+                    self._response_path, e.args[0] if e.args else None))
             gc.collect()
 
     def handle_blocking(self, client_sock):
+        self._response_path = b'<unparsed>'
         try:
             client_sock.settimeout(REQUEST_READ_TIMEOUT_S)
         except Exception:
@@ -256,22 +279,39 @@ class HTTPServer:
         if not data:
             return
 
+        # Read the small form body even when TCP splits it after the headers.
+        try:
+            head, received = data.split(b"\r\n\r\n", 1)
+            length = 0
+            for line in head.split(b"\r\n")[1:]:
+                if line.lower().startswith(b"content-length:"):
+                    length = int(line.split(b":", 1)[1].strip())
+            if not 0 <= length <= MAX_REQUEST_BODY:
+                raise ValueError('Request body too large')
+            while len(received) < length:
+                chunk = client_sock.recv(min(512, length - len(received)))
+                if not chunk:
+                    raise ValueError('Incomplete request body')
+                received += chunk
+            data = head + b"\r\n\r\n" + received[:length]
+        except (ValueError, OSError):
+            return self.write_blocking(client_sock, uio.BytesIO(b'Invalid request body'),
+                                      self._ensure_content_length(b'HTTP/1.1 400 Bad Request\r\n', b'Invalid request body'))
+
         try:
             req = self.parse_request(data)
         except Exception as e:
             print("HTTP bad request:", e)
             return
-        if not self.is_valid_req(req):
-            headers = (
-                b"HTTP/1.1 307 Temporary Redirect\r\n"
-                b"Location: http://%s/\r\n" % self.local_ip
-            )
-            body = uio.BytesIO(b"")
-            headers = self._ensure_content_length(headers, b"")
-        else:
-            body, headers = self.get_response(req)
+        # Only the explicit captive-network probe routes redirect to the portal.
+        # Missing browser icons/assets must not trigger another full HTML transfer.
+        body, headers = self.get_response(req)
 
+        # Log only the route, never query strings or submitted credentials.
+        self._response_path = req.path
         response_sent = self.write_blocking(client_sock, body, headers)
+        if response_sent and req.path in (b'/api/portal/exit', b'/exit_settings') and req.type == b'POST' and self._exit_sent_ms is None:
+            self._exit_sent_ms = utime.ticks_ms()
         if not response_sent:
             print("HTTP response delivery failed for", req.path)
         return response_sent
@@ -304,9 +344,11 @@ class HTTPServer:
         return headers
 
     def _file_headers(self, path):
+        extension = path.rsplit('.', 1)[-1]
+        content_type = {'svg': b'image/svg+xml', 'css': b'text/css', 'js': b'application/javascript'}.get(extension, b'text/html')
         headers = (
             b"HTTP/1.1 200 OK\r\n"
-            b"Content-Type: text/html\r\n"
+            b"Content-Type: " + content_type + b"; charset=utf-8\r\n"
             b"Cache-Control: no-store\r\n"
             b"Connection: close\r\n"
         )
@@ -315,6 +357,20 @@ class HTTPServer:
         except Exception:
             pass
         return headers
+
+    def _log_send_event(self, event, code):
+        print("HTTP TX: path={} event={} errno={} sent={} elapsed_ms={}".format(
+            getattr(self, '_response_path', b'<unknown>'), event, code,
+            self._response_bytes,
+            utime.ticks_diff(utime.ticks_ms(), self._response_started_ms)))
+        # Snapshot both heaps at the first stall, before changing memory with GC.
+        if event in ('backpressure', 'no-progress'):
+            reporter = getattr(self, 'memory_reporter', None)
+            if reporter:
+                try:
+                    reporter('HTTP first send stall')
+                except Exception:
+                    pass  # Diagnostics must not interrupt socket cleanup.
 
     def _write_all_blocking(self, client_sock, data):
         if not data:
@@ -325,29 +381,53 @@ class HTTPServer:
         retries = 0
         while offset < total:
             try:
-                written = client_sock.write(view[offset:])
+                # send() reports partial progress. Stream write() may time out after
+                # sending part of the buffer without reporting that byte count.
+                written = client_sock.send(view[offset:])
             except OSError as e:
-                if self.is_transient_socket_error(e):
+                code = e.args[0] if e.args else None
+                # A reset/aborted/broken connection cannot recover by sleeping.
+                # Keep the existing retry budget only for temporary send stalls.
+                if code in (uerrno.EAGAIN, getattr(uerrno, 'EWOULDBLOCK', 11),
+                            getattr(uerrno, 'ETIMEDOUT', 116), 116):
+                    if not self._response_stalled:
+                        self._response_stalled = True
+                        self._log_send_event('backpressure', code)
                     retries += 1
                     if retries >= RESPONSE_WRITE_RETRIES:
-                        print("HTTP write retry limit at {}/{} bytes".format(offset, total))
+                        self._log_send_event('retry-limit', code)
                         return False
                     utime.sleep_ms(RESPONSE_RETRY_DELAY_MS)
                     continue
-                raise
+                self._log_send_event('socket-error', code)
+                return False
             if not written:
+                if not self._response_stalled:
+                    self._response_stalled = True
+                    self._log_send_event('no-progress', written)
                 retries += 1
                 if retries >= RESPONSE_WRITE_RETRIES:
-                    print("HTTP write stalled at {}/{} bytes".format(offset, total))
+                    self._log_send_event('retry-limit', written)
                     return False
                 utime.sleep_ms(RESPONSE_RETRY_DELAY_MS)
                 continue
             offset += written
+            self._response_bytes += written
             retries = 0
         return True
 
     def write_blocking(self, client_sock, body, headers):
+        self._response_started_ms = utime.ticks_ms()
+        self._response_bytes = 0
+        self._response_stalled = False
+        print('HTTP TX: start path={}'.format(getattr(self, '_response_path', b'<unknown>')))
         try:
+            # Bound each send and retry partial writes while lwIP drains its queue.
+            # The short request-read timeout must not become the response deadline.
+            try:
+                client_sock.setblocking(False)
+            except AttributeError:
+                pass
             headers = self._ensure_connection_close(headers)
             if not self._write_all_blocking(client_sock, headers + b"\r\n"):
                 return False
@@ -357,6 +437,7 @@ class HTTPServer:
                     break
                 if not self._write_all_blocking(client_sock, chunk):
                     return False
+            self._log_send_event('complete', None)
             return True
         finally:
             try:
@@ -369,7 +450,8 @@ class HTTPServer:
 
         self.local_ip = new_ip.encode()
         self.ssid = new_ssid
-        self.routes = {b"/": self.connected}
+        self.main_available = True
+        self.routes[b"/"] = b"./settings.html"
 
     def stop(self, poller=None):
         if self.ec_continuous_enabled and set_ec_power is not None:
@@ -389,23 +471,57 @@ class HTTPServer:
     def parse_request(self, req):
         """parse a raw HTTP request to get items of interest"""
 
-        req_lines = req.split(b"\r\n")
+        head, _, body = req.partition(b"\r\n\r\n")
+        req_lines = head.split(b"\r\n")
         req_type, full_path, http_ver = req_lines[0].split(b" ")
         path = full_path.split(b"?")
         base_path = path[0]
         query = path[1] if len(path) > 1 else None
         query_params = {}
+        if req_type == b'POST':
+            if len(body) > MAX_REQUEST_BODY:
+                raise ValueError('Request body too large')
+            if not any(line.lower().startswith(b'content-type: application/x-www-form-urlencoded') for line in req_lines):
+                raise ValueError('Unsupported request content type')
+            query = body
         if query:
             for param in query.split(b"&"):
                 if b"=" in param:
                     key, val = param.split(b"=", 1)
                 else:
                     key, val = param, b""
-                query_params[unquote(key)] = unquote(val)
+                query_params[unquote(key.replace(b"+", b" "))] = unquote(val.replace(b"+", b" "))
         hosts = [line.split(b": ")[1] for line in req_lines if b"Host:" in line]
         host = hosts[0] if hosts else self.local_ip
 
         return ReqInfo(req_type, base_path, query_params, host)
+
+    def api_settings(self, params, method):
+        _ensure_settings_loaded()
+        from firmware_loader import load
+        ui = load('grow_ui')
+        status = b'200 OK'
+        try:
+            if method == b'GET':
+                payload = ui.settings()
+            elif method == b'POST':
+                payload = ui.save_settings(params)
+            else:
+                status, payload = b'405 Method Not Allowed', {'error': 'Use GET or POST.'}
+        except ValueError as error:
+            status, payload = b'400 Bad Request', {'error': str(error)}
+        except OSError as error:
+            status, payload = b'500 Internal Server Error', {'error': str(error)}
+        return ujson.dumps(payload).encode(), b'HTTP/1.1 ' + status + b'\r\nContent-Type: application/json\r\nCache-Control: no-store\r\n'
+
+    def api_status(self, params, method):
+        if method != b'GET':
+            return b'{"error":"Use GET."}', b'HTTP/1.1 405 Method Not Allowed\r\nContent-Type: application/json\r\n'
+        _ensure_settings_loaded()
+        from firmware_loader import load
+        ui = load('grow_ui')
+        payload = ui.status(self._read_ec_live, self._read_water_live)
+        return ujson.dumps(payload).encode(), b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\n'
 
     def login(self, params):
         ssid = unquote(params.get(b"ssid", None))
@@ -587,30 +703,52 @@ class HTTPServer:
                 pass
             return b"Failed to update settings", b"HTTP/1.1 500 Internal Server Error\r\n"
 
-    def exit_settings(self, params):
-        # Invoke caller-provided callback or reset
-        if self.exit_callback:
-            try:
-                self.exit_callback()
-                return b"", b"HTTP/1.1 200 OK\r\n"
-            except Exception as e:
-                print("exit_settings callback failed:", e)
+    def _json(self, payload, status=b'200 OK'):
+        return ujson.dumps(payload).encode(), b'HTTP/1.1 ' + status + b'\r\nContent-Type: application/json\r\nCache-Control: no-store\r\n'
+
+    def api_portal(self, params, method):
+        if method != b'GET':
+            return self._json({'error': 'Use GET.'}, b'405 Method Not Allowed')
+        payload = self.portal_status_getter() if self.portal_status_getter else {}
+        payload.update(main_available=self.main_available, exit_available=True)
+        return self._json(payload)
+
+    def api_networks(self, params, method):
+        if method != b'GET':
+            return self._json({'error': 'Use GET.'}, b'405 Method Not Allowed')
         try:
-            import machine
-            machine.reset()
+            if self.networks_getter is None:
+                raise OSError('Network scanner unavailable')
+            networks = self.networks_getter()
+            if not isinstance(networks, list):
+                raise ValueError('Invalid scan result')
+            return self._json({'networks': networks})
+        except Exception as error:
+            print('Wi-Fi scan failed:', error)
+            return self._json({'error': 'Network scan failed. Retry or enter the network name.'}, b'503 Service Unavailable')
+
+    def api_wifi(self, params, method):
+        if method != b'POST':
+            return self._json({'error': 'Use POST.'}, b'405 Method Not Allowed')
+        ssid, password = params.get(b'ssid', b''), params.get(b'password', b'')
+        if not ssid or len(ssid) > 32 or (password and not 8 <= len(password) <= 63):
+            return self._json({'error': 'Enter a network name and an 8–63 character password, or leave it empty for an open network.'}, b'400 Bad Request')
+        try:
+            _get_creds_class()(ssid=ssid, password=password).write()
         except Exception:
-            pass
-        return b"", b"HTTP/1.1 200 OK\r\n"
+            return self._json({'error': 'Could not save Wi-Fi credentials. Please retry.'}, b'500 Internal Server Error')
+        self.retry_requested = True
+        return self._json({'message': 'Connecting to Wi-Fi…'}, b'202 Accepted')
 
-    def configure_water_calibration(self, params):
-        _ensure_settings_loaded()
-        from volume_http import configure
-        return configure(params)
+    def exit_settings(self, params, method):
+        if method != b'POST':
+            return self._json({'error': 'Use POST after confirming exit.'}, b'405 Method Not Allowed')
+        self._exit_pending = True
+        return self._json({'message': 'Portal closed', 'closing': True})
 
-    def update_cal_point(self, params):
-        _ensure_settings_loaded()
-        from volume_http import record
-        return record(params)
+    def exit_due(self):
+        # Start the grace period only after the response has reached the socket.
+        return self._exit_sent_ms is not None and utime.ticks_diff(utime.ticks_ms(), self._exit_sent_ms) >= 2000
 
     def current_settings(self, params):
         _ensure_settings_loaded()
@@ -620,10 +758,9 @@ class HTTPServer:
             from local_time import status as local_time_status
             payload['clock'] = local_time_status(payload['timezone'])
             payload["water_sensor_type"] = WaterCalibration.SENSOR_TYPE
-            payload["water_metering_enabled"] = True
-            payload["water_max_volume_l"] = WaterCalibration.max_volume_l
-            payload["water_calibration_point_count"] = WaterCalibration.point_count
-            payload["water_calibration"] = WaterCalibration.to_serializable()
+            import hardware_config
+            payload["water_metering_enabled"] = hardware_config.installed()
+            payload["capabilities"] = dict(water_level=payload["water_metering_enabled"])
             payload["ambient"] = AmbientLightSettings.to_serializable()
             payload["ec"] = ECSettings.to_serializable()
             return ujson.dumps(payload).encode(), headers
@@ -726,7 +863,7 @@ class HTTPServer:
 
     def connected(self, params):
         headers = b"HTTP/1.1 200 OK\r\n"
-        body = open("./connected.html", "rb").read() % (self.ssid, self.local_ip)
+        body = open("./connected.html", "rb").read()
         return body, headers
 
     def get_response(self, req):
@@ -743,7 +880,7 @@ class HTTPServer:
         if callable(route):
             # call a function, which may or may not return a response
             try:
-                response = route(req.params)
+                response = route(req.params, req.type) if req.path.startswith(b'/api/') or req.path == b'/exit_settings' else route(req.params)
             except Exception as e:
                 print("HTTP route failed:", req.path, e)
                 if isinstance(e, ImportError):

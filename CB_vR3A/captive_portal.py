@@ -51,6 +51,9 @@ class CaptivePortal:
         self.ap_if = None
         self.portal_mode = "wifi"
         self.exit_callback = None
+        self.portal_closed = False
+        self.exit_requested = False
+        self.connection_pending = False
 
         if essid is None:
             essid = b"Growlight"
@@ -80,9 +83,14 @@ class CaptivePortal:
         self._station_status_supported = None
 
     def _status_snapshot(self):
+        connected = self._is_sta_connected_with_ip()
         return {
             "state": self.state,
             "last_error": self.last_error or "NONE",
+            "connected": connected,
+            "connecting": self.connection_pending or bool(self.http_server and self.http_server.retry_requested),
+            "ssid": self._as_text(self.creds.ssid) if self.creds.ssid else "",
+            "ip": self.sta_if.ifconfig()[0] if connected else None,
         }
 
     def _service(self):
@@ -177,11 +185,9 @@ class CaptivePortal:
             except Exception as e:
                 print("Portal socket SO_REUSEADDR skipped:", e)
             listen_sock.bind(("0.0.0.0", 80))
-            listen_sock.listen(1)
-            try:
-                listen_sock.settimeout(0.25)
-            except Exception:
-                listen_sock.setblocking(False)
+            listen_sock.listen(6)
+            # Runtime polling must never wait for an incoming connection.
+            listen_sock.setblocking(False)
             print("HTTP listening socket reserved before module load")
 
             from captive_http import HTTPServer
@@ -198,6 +204,8 @@ class CaptivePortal:
                 exit_callback=self.exit_callback,
                 portal_status_getter=self._status_snapshot,
                 listen_sock=listen_sock,
+                networks_getter=self.scan_networks,
+                memory_reporter=self._print_network_heap,
             )
             listen_sock = None  # HTTPServer now owns the socket.
             print("Configured HTTP server mode=", mode)
@@ -559,12 +567,10 @@ class CaptivePortal:
             raise RuntimeError("AP IPv4 configuration did not apply")
         self.local_ip = self.AP_IP
 
-    def _print_network_heap(self):
-        # Report native memory directly; gc.mem_free() includes Python capacity.
+    def _print_network_heap(self, context="portal"):
         try:
-            import esp32
-            print("Network heap (total, free, largest, minimum):",
-                  esp32.idf_heap_info(esp32.HEAP_DATA))
+            from firmware_loader import load
+            load('memory_probe').report(context)
         except Exception as e:
             print("Network heap diagnostics unavailable:", e)
 
@@ -686,29 +692,76 @@ class CaptivePortal:
     def _background_sta_retry_due(self):
         return False
 
-    def _attempt_sta_from_ap(self):
+    def scan_networks(self):
+        if self.connection_pending:
+            raise OSError('Connection attempt in progress; retry scan shortly')
+        if not self._ensure_sta():
+            raise OSError('STA unavailable')
+        self.sta_if.active(True)
+        names = set()
+        for row in self.sta_if.scan():
+            try:
+                name = row[0].decode('utf-8') if isinstance(row[0], bytes) else row[0]
+                if name:
+                    names.add(name)
+            except UnicodeError:
+                pass
+        return sorted(names)
+
+    def request_exit(self):
+        self.exit_requested = True
+
+    def close_portal(self):
+        self.connection_pending = False
+        self.cleanup(keep_sta=True)
+        self.portal_closed = True
+        status_led.set_config_portal(False)
+        status_led.set_wifi_connected(self._is_sta_connected_with_ip())
+
+    def _begin_portal_connection(self):
         self.creds.load(quiet=True)
-        if not self.creds.is_valid():
-            print("AP retry skipped: no valid credentials")
-            return False
+        self.last_error = None
+        try:
+            if not self.creds.is_valid() or not self._ensure_sta():
+                raise ValueError('Invalid credentials')
+            self.sta_if.active(True)
+            self.sta_if.disconnect()
+            self.sta_if.connect(self.creds.ssid, self.creds.password)
+            self.connection_pending = True
+            self._connection_started_ms = time.ticks_ms()
+        except Exception:
+            self.last_error = self.FAIL_OTHER
+            self.connection_pending = False
 
-        if not self._ssid_exists(force=True):
-            self.last_error = self.FAIL_NO_SSID
-            print("AP retry failed: {}".format(self.last_error))
-            return False
-
-        ok, failure = self._connect_attempt(
-            attempt_idx=self.FAST_RETRY_COUNT,
-            force_scan=True,
-            keep_ap=True,
-        )
-        if not ok:
-            self.last_error = failure
-            print("AP retry failed: {}".format(self.last_error))
-            self.start_access_point()
-            return False
-        print("AP retry succeeded")
-        return True
+    def _service_portal_connection(self):
+        if not self.connection_pending:
+            return
+        if self._is_sta_connected_with_ip():
+            self.connection_pending = False
+            self.state = self.STATE_STA_CONNECTED
+            self.last_error = None
+            try:
+                self.creds.update_last_success(time.time())
+            except Exception:
+                pass
+            status_led.set_wifi_connected(True)
+            if self.http_server:
+                self.http_server.main_available = True
+                self.http_server.routes[b'/'] = b'./settings.html'
+        elif time.ticks_diff(time.ticks_ms(), self._connection_started_ms) >= self.STA_CONNECT_TIMEOUT * 1000:
+            self.connection_pending = False
+            self.last_error = self.FAIL_TIMEOUT
+            try:
+                if self.sta_if.status() == network.STAT_WRONG_PASSWORD:
+                    self.last_error = self.FAIL_AUTH
+            except Exception:
+                pass
+            # Stop ESP-IDF's background association retries before another scan.
+            # Leaving a timed-out attempt running can make scan() return no SSIDs.
+            try:
+                self.sta_if.disconnect()
+            except Exception:
+                pass
 
     def _start_portal_network(self, mode):
         if not self.start_access_point():
@@ -741,6 +794,7 @@ class CaptivePortal:
         print("Portal build: dhcp-preserve-1")
         print("Starting captive portal (AP+DNS+HTTP) mode=", mode)
         self.portal_mode = mode
+        self.portal_closed = self.exit_requested = False
         self.state = self.STATE_AP_PORTAL_ACTIVE
         status_led.set_wifi_connected(False)
         status_led.set_config_portal(True)
@@ -774,33 +828,14 @@ class CaptivePortal:
                 if self.http_server is None:
                     time.sleep_ms(50)
 
-                manual_retry = self.http_server.consume_retry_request() if self.http_server else False
-                if manual_retry:
-                    print("Manual/POST login retry requested")
-                    self._last_scan_ms = 0
-
-                if mode == "settings":
-                    if manual_retry:
-                        if self._attempt_sta_from_ap():
-                            print("Connected to WiFi from settings mode")
-                            if self.exit_callback:
-                                self.exit_callback()
-                                return True
-                            break
-                    continue
-
-                # Save&Connect flow: changed credentials trigger immediate retry.
-                creds_sig = self._credentials_sig()
-                creds_changed = creds_sig != self._ap_creds_sig
-                if creds_changed:
-                    self._ap_creds_sig = creds_sig
-                    self._last_scan_ms = 0
-
-                if creds_changed or manual_retry or self._background_sta_retry_due():
-                    self._ap_last_bg_retry_ms = time.ticks_ms()
-                    if self._attempt_sta_from_ap():
-                        print("Connected to WiFi from AP portal")
-                        break
+                if self.exit_requested or (self.http_server and self.http_server.exit_due()):
+                    if self.exit_callback:
+                        self.exit_callback()
+                    self.close_portal()
+                    return self._is_sta_connected_with_ip()
+                if self.http_server and self.http_server.consume_retry_request():
+                    self._begin_portal_connection()
+                self._service_portal_connection()
 
         except KeyboardInterrupt:
             print("Captive portal stopped")
@@ -813,7 +848,17 @@ class CaptivePortal:
         return self._is_sta_connected_with_ip()
 
     def poll_http(self, timeout_ms=0):
+        if self.portal_closed:
+            return
+        if self.http_server and self.http_server.exit_due():
+            if self.exit_callback:
+                self.exit_callback()
+            self.close_portal()
+            return
         self._poll_once(timeout_ms, mode="sta")
+        if self.http_server and self.http_server.consume_retry_request():
+            self._begin_portal_connection()
+        self._service_portal_connection()
 
     def start_sta_server(self):
         if not self._is_sta_connected_with_ip():

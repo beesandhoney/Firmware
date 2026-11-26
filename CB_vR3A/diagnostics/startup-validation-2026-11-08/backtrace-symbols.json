@@ -1,0 +1,866 @@
+[
+  {
+    "pc": "0x40095111",
+    "sp": "0x3ffce110",
+    "functions": [
+      "panic_abort+0xd"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/esp_system/panic.c",
+        "line": 469
+      }
+    ]
+  },
+  {
+    "pc": "0x400950dd",
+    "sp": "0x3ffce130",
+    "functions": [
+      "esp_system_abort+0x5"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/esp_system/port/esp_system_chip.c",
+        "line": 87
+      }
+    ]
+  },
+  {
+    "pc": "0x4009a96e",
+    "sp": "0x3ffce150",
+    "functions": [
+      "abort+0x7e"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/newlib/src/abort.c",
+        "line": 38
+      }
+    ]
+  },
+  {
+    "pc": "0x40082f9b",
+    "sp": "0x3ffce1c0",
+    "functions": [
+      "lock_acquire_generic+0x2f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/newlib/src/locks.c",
+        "line": 77
+      }
+    ]
+  },
+  {
+    "pc": "0x4008308d",
+    "sp": "0x3ffce200",
+    "functions": [
+      "_lock_acquire_recursive+0x9"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/newlib/src/locks.c",
+        "line": 174
+      }
+    ]
+  },
+  {
+    "pc": "0x4020698f",
+    "sp": "0x3ffce220",
+    "functions": [
+      "uart_write+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/esp_driver_uart/src/uart_vfs.c",
+        "line": 236
+      }
+    ]
+  },
+  {
+    "pc": "0x4020bb27",
+    "sp": "0x3ffce250",
+    "functions": [
+      "esp_vfs_write+0x63",
+      "_write_r+0x63"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/vfs/vfs.c",
+        "line": 982
+      }
+    ]
+  },
+  {
+    "pc": "0x4000bd83",
+    "sp": "0x3ffce270",
+    "functions": []
+  },
+  {
+    "pc": "0x4000182a",
+    "sp": "0x3ffce290",
+    "functions": [
+      "write+0xe"
+    ]
+  },
+  {
+    "pc": "0x400dbb31",
+    "sp": "0x3ffce2b0",
+    "functions": [
+      "console_write+0x11"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/esp_vfs_console/vfs_console.c",
+        "line": 83
+      }
+    ]
+  },
+  {
+    "pc": "0x4020bb27",
+    "sp": "0x3ffce2d0",
+    "functions": [
+      "esp_vfs_write+0x63",
+      "_write_r+0x63"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/vfs/vfs.c",
+        "line": 982
+      }
+    ]
+  },
+  {
+    "pc": "0x4000bd83",
+    "sp": "0x3ffce2f0",
+    "functions": []
+  },
+  {
+    "pc": "0x4000117d",
+    "sp": "0x3ffce310",
+    "functions": [
+      "__swrite+0x2d"
+    ]
+  },
+  {
+    "pc": "0x400592fe",
+    "sp": "0x3ffce330",
+    "functions": [
+      "__sflush_r+0x11e"
+    ]
+  },
+  {
+    "pc": "0x4005937a",
+    "sp": "0x3ffce350",
+    "functions": []
+  },
+  {
+    "pc": "0x40058ca4",
+    "sp": "0x3ffce370",
+    "functions": []
+  },
+  {
+    "pc": "0x401f6dfb",
+    "sp": "0x3ffce390",
+    "functions": [
+      "__sfputc_r+0x2b"
+    ],
+    "source_lines": [
+      {
+        "file": "/builds/idf/crosstool-NG/.build/xtensa-esp-elf/build/build-libc-nano/xtensa-esp-elf/esp32/no-rtti/newlib/nano-vfprintf.c",
+        "line": 399
+      }
+    ]
+  },
+  {
+    "pc": "0x401f6e17",
+    "sp": "0x3ffce3b0",
+    "functions": [
+      "__sfputs_r+0x13"
+    ],
+    "source_lines": [
+      {
+        "file": "/builds/idf/crosstool-NG/.build/xtensa-esp-elf/build/build-libc-nano/xtensa-esp-elf/esp32/no-rtti/newlib/nano-vfprintf.c",
+        "line": 428
+      }
+    ]
+  },
+  {
+    "pc": "0x401f6f05",
+    "sp": "0x3ffce3d0",
+    "functions": [
+      "_vfiprintf_r+0xb9",
+      "_vfprintf_r+0xb9"
+    ],
+    "source_lines": [
+      {
+        "file": "/builds/idf/crosstool-NG/.build/xtensa-esp-elf/build/build-libc-nano/xtensa-esp-elf/esp32/no-rtti/newlib/nano-vfprintf.c",
+        "line": 528
+      }
+    ]
+  },
+  {
+    "pc": "0x401f3b35",
+    "sp": "0x3ffce480",
+    "functions": [
+      "vprintf+0x1d",
+      "viprintf+0x1d"
+    ],
+    "source_lines": [
+      {
+        "file": "/builds/idf/crosstool-NG/.build/xtensa-esp-elf/build/build-libc-nano/xtensa-esp-elf/esp32/no-rtti/newlib/vprintf.c",
+        "line": 34
+      }
+    ]
+  },
+  {
+    "pc": "0x4009a757",
+    "sp": "0x3ffce4b0",
+    "functions": [
+      "esp_log+0x3b"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/log/src/log.c",
+        "line": 43
+      }
+    ]
+  },
+  {
+    "pc": "0x4017fd2e",
+    "sp": "0x3ffce510",
+    "functions": [
+      "adc_oneshot_new_unit+0x86"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/esp-idf-v5.0/components/esp_adc/adc_oneshot.c",
+        "line": 95
+      }
+    ]
+  },
+  {
+    "pc": "0x4013321c",
+    "sp": "0x3ffce560",
+    "functions": [
+      "madc_init_helper+0x28"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/ports/esp32/machine_adc.c",
+        "line": 191
+      }
+    ]
+  },
+  {
+    "pc": "0x401332db",
+    "sp": "0x3ffce590",
+    "functions": [
+      "mp_machine_adc_make_new+0x63"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/ports/esp32/machine_adc.c",
+        "line": 222
+      }
+    ]
+  },
+  {
+    "pc": "0x40104669",
+    "sp": "0x3ffce5c0",
+    "functions": [
+      "type_call+0x25"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objtype.c",
+        "line": 1060
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffce5e0",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x40085775",
+    "sp": "0x3ffce600",
+    "functions": [
+      "mp_execute_bytecode+0xe39"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 984
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffce6a0",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffce700",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x4010665b",
+    "sp": "0x3ffce720",
+    "functions": [
+      "mp_call_method_n_kw+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 732
+      }
+    ]
+  },
+  {
+    "pc": "0x40085816",
+    "sp": "0x3ffce740",
+    "functions": [
+      "mp_execute_bytecode+0xeda"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 1069
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffce7e0",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffce840",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x4010665b",
+    "sp": "0x3ffce860",
+    "functions": [
+      "mp_call_method_n_kw+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 732
+      }
+    ]
+  },
+  {
+    "pc": "0x40104a5b",
+    "sp": "0x3ffce880",
+    "functions": [
+      "mp_obj_instance_make_new+0xeb"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objtype.c",
+        "line": 351
+      }
+    ]
+  },
+  {
+    "pc": "0x40104669",
+    "sp": "0x3ffce8e0",
+    "functions": [
+      "type_call+0x25"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objtype.c",
+        "line": 1060
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffce900",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x40085775",
+    "sp": "0x3ffce920",
+    "functions": [
+      "mp_execute_bytecode+0xe39"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 984
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffce9c0",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffcea10",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x40085775",
+    "sp": "0x3ffcea30",
+    "functions": [
+      "mp_execute_bytecode+0xe39"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 984
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffcead0",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffceb20",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x4010665b",
+    "sp": "0x3ffceb40",
+    "functions": [
+      "mp_call_method_n_kw+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 732
+      }
+    ]
+  },
+  {
+    "pc": "0x40085816",
+    "sp": "0x3ffceb60",
+    "functions": [
+      "mp_execute_bytecode+0xeda"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 1069
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffcec00",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffcec30",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x4010665b",
+    "sp": "0x3ffcec50",
+    "functions": [
+      "mp_call_method_n_kw+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 732
+      }
+    ]
+  },
+  {
+    "pc": "0x40085816",
+    "sp": "0x3ffcec70",
+    "functions": [
+      "mp_execute_bytecode+0xeda"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 1069
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffced10",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffced80",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x4010665b",
+    "sp": "0x3ffceda0",
+    "functions": [
+      "mp_call_method_n_kw+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 732
+      }
+    ]
+  },
+  {
+    "pc": "0x40085816",
+    "sp": "0x3ffcedc0",
+    "functions": [
+      "mp_execute_bytecode+0xeda"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 1069
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffcee60",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffceed0",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x4010665b",
+    "sp": "0x3ffceef0",
+    "functions": [
+      "mp_call_method_n_kw+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 732
+      }
+    ]
+  },
+  {
+    "pc": "0x40085816",
+    "sp": "0x3ffcef10",
+    "functions": [
+      "mp_execute_bytecode+0xeda"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 1069
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffcefb0",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffcefe0",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x4010665b",
+    "sp": "0x3ffcf000",
+    "functions": [
+      "mp_call_method_n_kw+0x1f"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 732
+      }
+    ]
+  },
+  {
+    "pc": "0x40085816",
+    "sp": "0x3ffcf020",
+    "functions": [
+      "mp_execute_bytecode+0xeda"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 1069
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffcf0c0",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffcf0f0",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x40085775",
+    "sp": "0x3ffcf110",
+    "functions": [
+      "mp_execute_bytecode+0xe39"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/vm.c",
+        "line": 984
+      }
+    ]
+  },
+  {
+    "pc": "0x400febc3",
+    "sp": "0x3ffcf1b0",
+    "functions": [
+      "fun_bc_call+0xab"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/objfun.c",
+        "line": 294
+      }
+    ]
+  },
+  {
+    "pc": "0x40106591",
+    "sp": "0x3ffcf210",
+    "functions": [
+      "mp_call_function_n_kw+0x2d"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 716
+      }
+    ]
+  },
+  {
+    "pc": "0x401065a6",
+    "sp": "0x3ffcf230",
+    "functions": [
+      "mp_call_function_0+0xe"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/py/runtime.c",
+        "line": 690
+      }
+    ]
+  },
+  {
+    "pc": "0x40116e7a",
+    "sp": "0x3ffcf250",
+    "functions": [
+      "parse_compile_execute+0xe6"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/shared/runtime/pyexec.c",
+        "line": 137
+      }
+    ]
+  },
+  {
+    "pc": "0x401171b7",
+    "sp": "0x3ffcf2e0",
+    "functions": [
+      "pyexec_file_if_exists+0x53"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/shared/runtime/pyexec.c",
+        "line": 737
+      }
+    ]
+  },
+  {
+    "pc": "0x400f6c2e",
+    "sp": "0x3ffcf310",
+    "functions": [
+      "mp_task+0xe2"
+    ],
+    "source_lines": [
+      {
+        "file": "/home/micropython/micropython-autobuild/ports/esp32/main.c",
+        "line": 162
+      }
+    ]
+  }
+]

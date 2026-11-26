@@ -1,742 +1,514 @@
-<!DOCTYPE html>
-<html>
-
+<!doctype html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Grow Light Settings</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#F5F7F3">
+    <title>Grow · My Garden</title>
+    <style data-grow-style="shared">:root{color-scheme:light;--bg:#F5F7F3;--ink:#26332B;--muted:#778078;--green:#477A5A;--line:#dfe6dc;--warning:#D9A441;--error:#C95B50;--soft:#edf3e9}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:15px;line-height:1.5}button,input,select{font:inherit}a{color:var(--green);text-underline-offset:4px}button,a,input,select{-webkit-tap-highlight-color:transparent}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #719c60;outline-offset:4px}[hidden]{display:none!important}.page{max-width:1100px;margin:auto;padding:0 40px}.topbar{height:104px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:32px;font-weight:750;letter-spacing:-1.7px;text-decoration:none;min-height:44px}.brand-dot{color:var(--green)}.brand-mark{width:26px;height:23px;position:relative;margin-right:2px}.brand-mark:before,.brand-mark:after{content:"";position:absolute;background:var(--green);width:13px;height:19px;border-radius:2px 12px;transform:rotate(-15deg);left:0;top:0}.brand-mark:after{left:13px;top:5px;transform:scaleX(-1) rotate(-15deg);height:15px}.connection{display:flex;align-items:center;gap:8px;background:#e7eee1;color:#3d6245;padding:8px 13px;border-radius:30px;font-size:12px;font-weight:600}.dot{width:6px;height:6px;background:currentColor;border-radius:50%}.connection[data-state=error]{background:#f8eae6;color:var(--error)}main{padding-top:40px}.section-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}.eyebrow{text-transform:uppercase;letter-spacing:1.7px;font-size:10px;font-weight:750;color:var(--green);margin:0 0 7px}h1,.section-title{font-size:38px;line-height:1.2;letter-spacing:-1.3px;font-weight:600;margin:0 0 9px}.subtitle{margin:0;color:var(--muted);font-size:14px}.live-label{font-size:10px;letter-spacing:1.6px;color:var(--muted);display:flex;align-items:center;gap:8px}.live-label:before{content:"";width:6px;height:6px;background:var(--green);border-radius:50%}.garden-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.status-card{position:relative;padding:22px 20px 26px;border-radius:18px;background:#fff;border:1px solid #e3e9df;min-height:222px;box-shadow:0 3px 8px #26332b03}.lighting-card{background:#e9f0e1;border-color:#dee7d5}.card-heading{display:flex;align-items:center;gap:10px;margin-bottom:22px}.card-heading h2{font-size:13px;font-weight:600;margin:0}.icon-tile{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:12px;background:#f1f5ee;flex-shrink:0}.lighting-card .icon-tile{background:#dce7d3}img{object-fit:contain;flex-shrink:0}.measurement{display:flex;align-items:baseline;gap:5px;font-size:36px;font-weight:550;letter-spacing:-1px;line-height:1.15;font-variant-numeric:tabular-nums}.unit{font-size:15px;letter-spacing:0;color:var(--muted);font-weight:450}.state-text{margin:8px 0 0;font-size:13px;color:var(--green);font-weight:650}.detail{font-size:11px;color:var(--muted);margin:5px 0 0;min-height:17px}.status-card[data-state=warning] .state-text{color:var(--warning)}.status-card[data-state=error] .state-text{color:var(--error)}.status-card[data-state=error]{border-color:#ead4cd}.water-track{height:4px;border-radius:4px;background:#edf2ea;margin-top:12px;overflow:hidden}.water-track div{background:#82a47d;height:100%;width:0;transition:width .4s}.water-icon{height:24px;width:19px;border:1.7px solid var(--green);border-radius:3px 3px 7px 7px;position:relative;overflow:hidden}.water-icon span{position:absolute;bottom:0;left:0;right:0;background:#9eb89a;height:0;transition:height .4s}.overview-footer{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:11px;margin-top:17px}.settings-section{border-top:1px solid var(--line);margin-top:37px;padding-top:34px}.section-title{font-size:30px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}fieldset{border:0;padding:0;margin:0;min-width:0}.setting-card{padding:24px;border:1px solid #e1e7dc;border-radius:18px;background:#fff}.setting-title{display:flex;align-items:center;gap:10px}.section-number{font-size:10px;color:#899783;letter-spacing:.5px;border:1px solid #e2e8dd;border-radius:50%;width:23px;height:23px;display:flex;align-items:center;justify-content:center}.setting-title h3{font-size:16px;margin:0;font-weight:600;letter-spacing:-.2px}.heading-icon{margin-left:auto}.help{color:var(--muted);font-size:12px;line-height:1.6;margin:10px 0 20px}.setting-card label{display:block;font-size:12px;font-weight:600;margin-bottom:8px}.setting-card input:not([type=checkbox]),select{height:47px;width:100%;border-radius:9px;border:1px solid #d9e1d3;background:#f9fbf7;color:var(--ink);padding:10px 12px;min-width:0;font-size:15px;font-variant-numeric:tabular-nums}.time-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.setting-card .icon-label{display:flex;align-items:center;gap:7px}.time-grid .icon-label+input{font-size:19px;letter-spacing:1px}.duration{font-size:12px;margin:14px 0 0;color:var(--green);background:#f1f5eb;padding:9px 12px;border-radius:7px}.input-unit{position:relative}.input-unit input{padding-right:61px!important}.input-unit span{position:absolute;right:10px;top:15px;font-size:11px;color:var(--muted);pointer-events:none}.setting-card .switch-row{display:flex;align-items:center;justify-content:space-between;min-height:48px;margin:0;background:#f8faf5;border:1px solid #e3e9de;border-radius:10px;padding:3px 12px}.switch{width:48px;height:44px;position:relative}.switch input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;margin:0;z-index:1}.switch-track{position:absolute;top:9px;left:0;width:47px;height:26px;background:#b1bbac;border-radius:25px;transition:background .2s}.switch-track:before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px #0002;transition:transform .2s}.switch input:checked+.switch-track{background:var(--green)}.switch input:checked+.switch-track:before{transform:translateX(21px)}.switch input:focus-visible+.switch-track{outline:3px solid #719c60;outline-offset:4px}.save-row{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:24px}.save-row p{margin:0}.save-row #settings-status{font-size:13px;font-weight:600}.save-row .help{margin-top:4px;font-size:11px}.save-row [data-state=error]{color:var(--error)}.save-button{display:flex;justify-content:space-between;align-items:center;gap:50px;border:0;border-radius:11px;padding:15px 22px;min-height:50px;color:white;background:var(--green);font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}.save-button:hover{background:#3a654a}.save-button:disabled{opacity:.5;cursor:wait}.save-button span{font-size:20px;font-weight:400}fieldset:disabled{opacity:.65}.notice{padding:12px 16px;border-radius:10px;font-size:13px;margin:0 0 18px}.notice.warning{background:#fcf3df;color:#795516;margin:16px 0 0}.notice.error{background:#f8eae6;color:var(--error)}.page-footer{border-top:1px solid var(--line);margin-top:38px;padding:22px 0 28px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}.page-footer>span{font-weight:650;font-size:18px;letter-spacing:-.5px}.footer-motto{font-weight:400;font-size:11px;letter-spacing:0;margin-left:14px}.page-footer a{min-height:44px;display:flex;align-items:center;font-size:12px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.skip-link{position:absolute;left:16px;top:-80px;background:white;padding:12px;z-index:5}.skip-link:focus{top:10px}
+@media(max-width:820px){.page{padding:0 24px}.garden-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.status-card{min-height:210px}.measurement{font-size:35px}.settings-grid{grid-template-columns:1fr}.setting-card{padding:22px}.topbar{height:84px}}
+@media(max-width:460px){.page{padding:0 18px}.topbar{height:76px}main{padding-top:28px}h1{font-size:34px}.section-heading{margin-bottom:22px}.eyebrow{font-size:9px;letter-spacing:1.2px}.live-label{display:none}.garden-grid{gap:12px}.status-card{padding:16px 14px 18px;min-height:205px}.card-heading{gap:8px;margin-bottom:20px}.card-heading h2{font-size:12px}.icon-tile{width:32px;height:32px;border-radius:10px}.measurement{font-size:32px}.unit{font-size:12px}.detail{font-size:10px}.overview-footer{font-size:10px;flex-wrap:wrap}.settings-section{margin-top:28px;padding-top:28px}.setting-card{padding:19px}.time-grid{gap:12px}.save-row{flex-direction:column;align-items:stretch;gap:15px}.save-button{width:100%;justify-content:center;gap:20px}.footer-motto{display:none}.input-unit input{padding-left:9px!important;padding-right:51px!important}.input-unit span{right:8px;font-size:10px}.connection{font-size:11px;padding:7px 11px}.setting-title h3{font-size:15px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #f4f5f7;
-            margin: 0;
-        }
+[hidden] { display: none !important; }
 
-        .page {
-            max-width: 480px;
-            margin: 24px auto 40px;
-            padding: 0 12px;
-        }
+.plant-guide{margin-bottom:20px}.plant-guide #plant-range-title{font-size:12px;margin:14px 0 4px}.plant-range{font-size:24px;font-weight:600;color:var(--green);margin:0 0 14px;font-variant-numeric:tabular-nums}.suggestion-button{border:1px solid var(--green);border-radius:9px;background:var(--soft);color:var(--green);padding:10px 16px;min-height:44px;margin-top:12px;font-weight:600;cursor:pointer}.suggestion-button:disabled{opacity:.5;cursor:default}.plant-guide .help{margin:10px 0 0}#plant-range-limit{color:var(--warning)}
 
-        .card {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 16px 18px 20px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        }
+.portal-nav{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin:0 0 24px}.portal-nav a{min-height:44px;display:inline-flex;align-items:center}.portal-nav .suggestion-button{margin:0}.setup-page{max-width:640px}.setup-page main{padding-top:24px}.setup-page h1{font-size:32px}.setup-page h2{font-size:18px}.setup-page form{margin-top:24px}.password-label{margin-top:18px}.setup-page .save-button{width:100%;justify-content:center}.setup-page #wifi-status{margin:20px 0 0}dialog{max-width:440px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:18px;padding:24px;background:#fff;color:var(--ink)}dialog::backdrop{background:#26332b66}dialog h2{margin-top:0}dialog .portal-nav{margin-bottom:0}#exit-error{color:var(--error)}
 
-        h1,
-        h2 {
-            margin: 0 0 12px;
-        }
+.menu-card{display:block;text-decoration:none;color:var(--ink)}.menu-card h2{font-size:20px}.menu-card:hover{border-color:var(--green)}.menu-card .help{margin-bottom:0}
 
-        h1 {
-            font-size: 22px;
-        }
+.notice.success{background:#e7eee1;color:#345d42}#wifi-result{margin-top:20px}#wifi-result h3{margin:0 0 6px;font-size:16px}#wifi-result #wifi-status{margin:0;padding:0;background:transparent;color:inherit}
 
-        h2 {
-            font-size: 18px;
-            margin-top: 18px;
-        }
+.setting-card input[type=range]{padding:0;accent-color:var(--green);border:0;background:transparent}.time-grid h4{margin:0 0 12px}.time-grid input[type=time]{margin-bottom:12px}.time-grid output{float:right;color:var(--green)}.lighting-card .measurement{font-size:28px;overflow-wrap:anywhere}
+</style>
+    <script>const GROW_ICON_URLS = {"weather-temperature-svgrepo-com.svg": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KCjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+Cjxzdmcgd2lkdGg9IjgwMHB4IiBoZWlnaHQ9IjgwMHB4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+Cgo8ZGVmcz4KCjxzdHlsZT4uY2xzLTEsLmNscy0ye2ZpbGw6bm9uZTtzdHJva2U6IzQ3N0E1QTtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLXdpZHRoOjEuNXB4O30uY2xzLTF7ZmlsbC1ydWxlOmV2ZW5vZGQ7fTwvc3R5bGU+Cgo8L2RlZnM+Cgo8ZyBpZD0iaWMtd2VhdGhlci10ZW1wZXJhdHVyZSI+Cgo8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNSwxM1Y1QTMsMywwLDAsMCw5LDV2OGE1LDUsMCwxLDAsNiwwWiIvPgoKPGNpcmNsZSBjbGFzcz0iY2xzLTIiIGN4PSIxMiIgY3k9IjE3IiByPSIyIi8+Cgo8bGluZSBjbGFzcz0iY2xzLTIiIHgxPSIxMiIgeTE9IjkiIHgyPSIxMiIgeTI9IjE1Ii8+Cgo8L2c+Cgo8L3N2Zz4=", "sunset-svgrepo-com.svg": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNNiAxMkw1IDExTTE4IDEyTDE5IDExTTMgMThIMjFNNSAyMUgxOU03IDE4QzcgMTUuMjM4NiA5LjIzODU4IDEzIDEyIDEzQzE0Ljc2MTQgMTMgMTcgMTUuMjM4NiAxNyAxOE0xMiAzVjEwTTEyIDEwTDE1IDdNMTIgMTBMOSA3IiBzdHJva2U9IiM0NzdBNUEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPg==", "moon-svgrepo-com.svg": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+Cjxzdmcgd2lkdGg9IjgwMHB4IiBoZWlnaHQ9IjgwMHB4IiB2aWV3Qm94PSItNSAwIDMyIDMyIiB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbG5zOnNrZXRjaD0iaHR0cDovL3d3dy5ib2hlbWlhbmNvZGluZy5jb20vc2tldGNoL25zIj4KICAgIAogICAgPHRpdGxlPm1vb248L3RpdGxlPgogICAgPGRlc2M+Q3JlYXRlZCB3aXRoIFNrZXRjaCBCZXRhLjwvZGVzYz4KICAgIDxkZWZzPgoKPC9kZWZzPgogICAgPGcgaWQ9IlBhZ2UtMSIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc2tldGNoOnR5cGU9Ik1TUGFnZSI+CiAgICAgICAgPGcgaWQ9Ikljb24tU2V0IiBza2V0Y2g6dHlwZT0iTVNMYXllckdyb3VwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNTczLjAwMDAwMCwgLTgyNy4wMDAwMDApIiBmaWxsPSIjNDc3QTVBIj4KICAgICAgICAgICAgPHBhdGggZD0iTTU4Ny4yMyw4NTcgQzU4Mi4yODcsODU2LjY0MSA1NzUuMDQ3LDg1MC43MzIgNTc1LjA0Nyw4NDMgQzU3NS4wNDcsODM1LjI2OSA1ODIuMTMyLDgyOS40MzQgNTg3LjIzLDgyOSBDNTg4Ljc2NCw4MjguODcgNTg3Ljk1Myw4MjguODc1IDU4OS4zNzIsODI5IEM1ODYuMDM1LDgzMS4xMDQgNTgyLjIxNiw4MzYuOTYyIDU4Mi4yMTYsODQzIEM1ODIuMjE2LDg0OS4wMzggNTg0Ljk5NCw4NTQuNjE5IDU4OS4zNzIsODU3IEM1ODguMDI0LDg1Ny4xMjUgNTg4LjY5OCw4NTcuMTA2IDU4Ny4yMyw4NTcgTDU4Ny4yMyw4NTcgWiBNNTg0LjI1Niw4NDMgQzU4NC4yNTYsODM2LjEgNTg4LjczNSw4MzAuMjM2IDU5NSw4MjcuOTkxIEM1OTMuMjQzLDgyNy4zNjEgNTkxLjM1Myw4MjcgNTg5LjM3Miw4MjcgQzU4MC4zMyw4MjcgNTczLDgzNC4xNjQgNTczLDg0MyBDNTczLDg1MS44MzcgNTgwLjMzLDg1OSA1ODkuMzcyLDg1OSBDNTkxLjM1Myw4NTkgNTkzLjI0Myw4NTguNjM5IDU5NSw4NTguMDA5IEM1ODguNzM1LDg1NS43NjQgNTg0LjI1Niw4NDkuOTAxIDU4NC4yNTYsODQzIEw1ODQuMjU2LDg0MyBaIiBpZD0ibW9vbiIgc2tldGNoOnR5cGU9Ik1TU2hhcGVHcm91cCI+Cgo8L3BhdGg+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=", "plant-test-tube-svgrepo-com.svg": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojNDc3QTVBO3N0cm9rZS1taXRlcmxpbWl0OjEwO3N0cm9rZS13aWR0aDoxLjkxcHg7fTwvc3R5bGU+PC9kZWZzPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTEzLjkxLDE1LjgyVjExLjA1SDEwLjA5djQuNzdMNi41OCwyMC4yYTEuNDQsMS40NCwwLDAsMC0uMzEuODloMEExLjQyLDEuNDIsMCwwLDAsNy42OSwyMi41aDguNjJhMS40MiwxLjQyLDAsMCwwLDEuNDItMS40MWgwYTEuNDQsMS40NCwwLDAsMC0uMzEtLjg5WiIvPjxsaW5lIGNsYXNzPSJjbHMtMSIgeDE9IjguMTgiIHkxPSIxMS4wNSIgeDI9IjE1LjgyIiB5Mj0iMTEuMDUiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNS44MiwxLjVoMS45MWEwLDAsMCwwLDEsMCwwdjFhMy44MiwzLjgyLDAsMCwxLTMuODIsMy44MkgxMmEwLDAsMCwwLDEsMCwwdi0xQTMuODIsMy44MiwwLDAsMSwxNS44MiwxLjVaIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNi4yNywyLjQ1SDguMThBMy44MiwzLjgyLDAsMCwxLDEyLDYuMjd2MWEwLDAsMCwwLDEsMCwwSDEwLjA5QTMuODIsMy44MiwwLDAsMSw2LjI3LDMuNDF2LTFBMCwwLDAsMCwxLDYuMjcsMi40NVoiLz48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIxMiIgeTE9IjExLjA1IiB4Mj0iMTIiIHkyPSI2LjI3Ii8+PC9zdmc+", "brightness-svgrepo-com.svg": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGZpbGw9IiM0NzdBNUEiIGQ9Ik0xMi41IDUuOGMtLjE2OCAwLS4zMzQuMDEzLS41LjAyNVYyaDF2My44MzdjLS4xNjctLjAxMi0uMzMxLS4wMzctLjUtLjAzN3pNMTIgMTkuMTc1VjIzaDF2LTMuODM3Yy0uMTY3LjAxMi0uMzMxLjAzNy0uNS4wMzctLjE2OCAwLS4zMzQtLjAxMy0uNS0uMDI1em03LjItNi42NzVjMCAuMTY4LS4wMTMuMzM0LS4wMjUuNUgyM3YtMWgtMy44MzFjLjAxMi4xNjYuMDMuMzMyLjAzLjV6TTUuODM3IDEySDJ2MWgzLjg0NGMtLjAxMi0uMTY3LS4wNDQtLjMzLS4wNDQtLjUgMC0uMTcuMDI1LS4zMzMuMDM3LS41em0xMS43MzYtMy44NjZsMi43MDUtMi43MDUtLjcwNy0uNzA3LTIuNzAyIDIuNzAyYTYuNjg3IDYuNjg3IDAgMCAxIC43MDQuNzF6TTQuNzIyIDE5LjU3bC43MDcuNzA3IDIuNzI5LTIuNzI5YTYuNzQgNi43NCAwIDAgMS0uNzEzLS43em0xMi4xMjgtMi4wMTRsMi43MjEgMi43MjEuNzA3LS43MDctMi43Mi0yLjcyYTYuNjUzIDYuNjUzIDAgMCAxLS43MDguNzA2ek04LjEzMiA3LjQyNUw1LjQzIDQuNzIybC0uNzA3LjcwNyAyLjcwNCAyLjcwNGE2LjY3MiA2LjY3MiAwIDAgMSAuNzA2LS43MDh6TTE3LjggMTIuNWE1LjMgNS4zIDAgMSAxLTIuMzM3LTQuMzk1QTUuMjgyIDUuMjgyIDAgMCAxIDE3LjggMTIuNXptLS45ODUgMGE0LjMxNSA0LjMxNSAwIDEgMC00LjMxNSA0LjMxNSA0LjMyIDQuMzIgMCAwIDAgNC4zMTUtNC4zMTV6Ii8+PHBhdGggZmlsbD0ibm9uZSIgZD0iTTAgMGgyNHYyNEgweiIvPjwvc3ZnPg==", "shade-svgrepo-com.svg": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KCjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiAgd2lkdGg9IjgwMHB4IgoJIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+CgkubGluZXNhbmRhbmdsZXNfZWVue2ZpbGw6IzQ3N0E1QTt9Cgkuc3Qwe2ZpbGw6IzQ3N0E1QTt9Cjwvc3R5bGU+CjxnIGlkPSJMQUJFTFMiPgo8L2c+CjxnIGlkPSJVcGxvYWRlZCB0byBzdmdyZXBvLmNvbSI+Cgk8cGF0aCBjbGFzcz0ibGluZXNhbmRhbmdsZXNfZWVuIiBkPSJNMjUuNjIzLDE2LjIyOEMyNS44NjEsMTUuNTI3LDI2LDE0Ljc4MSwyNiwxNGMwLTMuODYtMy4xNC03LTctNwoJCWMtMy4yMDIsMC01LjkwNCwyLjE2My02LjczMyw1LjEwM2MtMi43LDAuNDQzLTQuOTQ1LDIuMzE5LTUuODQ3LDQuOTNDMy45MzYsMTcuMzIxLDIsMTkuNDM5LDIsMjJjMCwyLjc1NywyLjI0Myw1LDUsNWgxNQoJCWMzLjMwOSwwLDYtMi42OTEsNi02QzI4LDE5LjA1MywyNy4wNjQsMTcuMzI1LDI1LjYyMywxNi4yMjh6IE0xOSw5YzIuNzU3LDAsNSwyLjI0Myw1LDVjMCwwLjQ0Ni0wLjA2OCwwLjg3NC0wLjE4LDEuMjg0CgkJQzIzLjI0NiwxNS4xMDEsMjIuNjM1LDE1LDIyLDE1Yy0wLjc1MywwLTEuNTAxLDAuMTQ4LTIuMjA3LDAuNDMyYy0xLjIwNS0xLjg1OS0zLjE4Ny0zLjEwMi01LjM4NS0zLjM3NAoJCUMxNS4xNjgsMTAuMjY2LDE2LjkzNCw5LDE5LDl6IE0yMiwyNUg3Yy0xLjY1NCwwLTMtMS4zNDYtMy0zczEuMzQ2LTMsMi45NTYtMy4wMDFsMS4wMDYsMC4wNTJsMC4xODgtMC44MDYKCQlDOC43MzQsMTUuNzQ2LDEwLjkzNCwxNCwxMy41LDE0YzIuMTIzLDAsNC4wNzgsMS4yNDgsNC45NzksMy4xNzlsMC40NzYsMS4wMThsMC45NTYtMC41OUMyMC41NjMsMTcuMjA0LDIxLjI2NiwxNywyMiwxNwoJCWMyLjIwNiwwLDQsMS43OTQsNCw0UzI0LjIwNiwyNSwyMiwyNXogTTIwLDVoLTJWM2gyVjV6IE0zMCwxM3YyaC0ydi0ySDMweiBNMjYuMDcxLDguMzQzbC0xLjQxNC0xLjQxNGwxLjQxNC0xLjQxNGwxLjQxNCwxLjQxNAoJCUwyNi4wNzEsOC4zNDN6IE0xMS45MjksOC4zNDNsLTEuNDE0LTEuNDE0bDEuNDE0LTEuNDE0bDEuNDE0LDEuNDE0TDExLjkyOSw4LjM0M3oiLz4KPC9nPgo8L3N2Zz4=", "sunrise-svgrepo-com.svg": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMTBWM00xMiAzTDkgNk0xMiAzTDE1IDZNNiAxMkw1IDExTTE4IDEyTDE5IDExTTMgMThIMjFNNSAyMUgxOU03IDE4QzcgMTUuMjM4NiA5LjIzODU4IDEzIDEyIDEzQzE0Ljc2MTQgMTMgMTcgMTUuMjM4NiAxNyAxOCIgc3Ryb2tlPSIjNDc3QTVBIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4="};
+'use strict';
+let portalClosed = false;
+let pageView = 'garden';
+let viewVersion = 0;
+let pageLeaving = false;
+let exitConfirmOpen = false;
+let settingsLoaded = false;
+let saving = false;
+let polling = false;
+let dirty = false;
+let pollTimer;
+let liveStatusPromise = Promise.resolve();
+const $ = id => document.getElementById(id);
+const finite = value => typeof value === 'number' && Number.isFinite(value);
 
-        .help {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 10px;
-        }
+// SW-SPEC-EC-001: local reference data, independent of saved alarm settings.
+const PLANT_EC_GUIDE = [
+    {name: 'Lettuce', min: 0.8, max: 1.4},
+    {name: 'Basil', min: 1.0, max: 1.6},
+    {name: 'Mint', min: 1.2, max: 2.0},
+    {name: 'Parsley', min: 1.2, max: 2.0},
+    {name: 'Coriander / Cilantro', min: 1.0, max: 1.8},
+    {name: 'Spinach', min: 1.8, max: 2.3},
+    {name: 'Kale', min: 1.2, max: 2.0},
+    {name: 'Pak choi', min: 1.5, max: 2.0},
+    {name: 'Strawberry', min: 1.2, max: 1.8},
+    {name: 'Tomato', min: 2.0, max: 3.5},
+    {name: 'Cucumber', min: 1.7, max: 2.5},
+    {name: 'Sweet pepper', min: 1.8, max: 2.8},
+    {name: 'Chili / Habanero', min: 1.8, max: 3.0},
+    {name: 'Eggplant', min: 2.0, max: 3.0}
+];
+let ecMaxMs = 3.977;
+function selectedPlant() {
+    return PLANT_EC_GUIDE.find(plant => plant.name === $('plant-ec').value);
+}
+function updatePlantGuide() {
+    const plant = selectedPlant();
+    $('plant-suggestion').hidden = !plant;
+    $('use-plant-range').disabled = !plant;
+    $('plant-range-title').textContent = plant ? 'Suggested EC for ' + plant.name : '';
+    $('plant-range').textContent = plant ? plant.min.toFixed(1) + ' – ' + plant.max.toFixed(1) + ' mS/cm' : '';
+    $('plant-range-limit').hidden = !plant || plant.max <= ecMaxMs;
+}
+function initPlantGuide() {
+    PLANT_EC_GUIDE.forEach(plant => {
+        const option = document.createElement('option');
+        option.value = plant.name;
+        option.textContent = plant.name;
+        $('plant-ec').appendChild(option);
+    });
+    $('plant-ec').addEventListener('change', updatePlantGuide);
+    $('use-plant-range').addEventListener('click', applyPlantRange);
+    updatePlantGuide();
+}
+function markUnsaved() {
+    dirty = true;
+    $('settings-status').textContent = 'You have unsaved changes.';
+    $('settings-status').dataset.state = 'good';
+}
+function applyPlantRange() {
+    const plant = selectedPlant();
+    if (!plant || !settingsLoaded || saving) return;
+    $('ec-low').value = plant.min.toFixed(1);
+    $('ec-high').value = plant.max.toFixed(1);
+    markUnsaved();
+}
 
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px 12px;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            font-size: 14px;
-        }
-
-        label {
-            margin-bottom: 3px;
-        }
-
-        input {
-            padding: 6px 8px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-
-        .intensity-row {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr;
-            gap: 8px;
-            margin-bottom: 6px;
-        }
-
-        .btn {
-            margin-top: 14px;
-            width: 100%;
-            padding: 8px 0;
-            border: none;
-            border-radius: 5px;
-            background: #0077ff;
-            color: #fff;
-            font-size: 15px;
-        }
-
-        .btn:active {
-            transform: translateY(1px);
-        }
-
-        .ec-card {
-            margin-top: 16px;
-            text-align: left;
-        }
-
-        .ec-value,
-        .water-value {
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .ec-unit,
-        .water-unit {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .status {
-            margin-top: 6px;
-            color: #555;
-            font-size: 12px;
-        }
-
-        .btn-secondary {
-            background: #f0f1f3;
-            color: #222;
-            border: 1px solid #d0d3d8;
-        }
-
-        .cal-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px 12px;
-            margin-top: 8px;
-        }
-
-        .cal-row-label {
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            color: #555;
-        }
-
-        .status-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px 10px;
-            font-size: 14px;
-            margin-top: 6px;
-        }
-
-        .guidance {
-            background: #f8fafc;
-            border: 1px solid #e0e6ed;
-            border-radius: 8px;
-            padding: 10px 12px;
-            font-size: 13px;
-            line-height: 1.35;
-        }
-
-        .guidance h3 {
-            margin: 0 0 6px;
-            font-size: 15px;
-        }
-
-        .guidance ul {
-            margin: 6px 0 0;
-            padding-left: 18px;
-        }
-
-        .guidance li {
-            margin-bottom: 4px;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="page">
-
-        <!-- Light settings form -->
-        <form action="/update_lights" method="GET">
-            <div class="card">
-                <h1>Light Settings</h1>
-
-                <h2>Schedule</h2>
-                <div class="field">
-                    <label for="timezone">Time Zone</label>
-                    <select id="timezone" name="timezone">
-                        <option value="Europe/Stockholm">Europe/Stockholm</option>
-                        <option value="Europe/Lisbon">Europe/Lisbon</option>
-                        <option value="Europe/London">Europe/London</option>
-                    </select>
-                </div>
-                <div class="help">Current local time: <span id="local-time">--</span></div>
-                <div class="help">All schedule times use the selected time zone, with automatic daylight saving.</div>
-                <div class="help">
-                    Morning → Daylight → Evening are used in order.
-                    “Lights off” is when all lights go to the Off / Night intensity.
-                </div>
-
-                <div class="grid-2">
-                    <div class="field">
-                        <label for="t_morning_start">Light ON / Morning starts at</label>
-                        <input id="t_morning_start" name="t_morning_start" type="time">
-                    </div>
-
-                    <div class="field">
-                        <label for="t_day_start">Daylight starts at</label>
-                        <input id="t_day_start" name="t_day_start" type="time">
-                    </div>
-
-                    <div class="field">
-                        <label for="t_evening_start">Evening starts at</label>
-                        <input id="t_evening_start" name="t_evening_start" type="time">
-                    </div>
-
-                    <div class="field">
-                        <label for="t_lights_off">Light OFF at</label>
-                        <input id="t_lights_off" name="t_lights_off" type="time">
-                    </div>
-                </div>
-
-                <h2>Intensity (%)</h2>
-                <div class="intensity-row">
-                    <label for="morning">Morning</label>
-                    <input id="morning" name="morning" type="number" min="0" max="100" step="1">
-                </div>
-                <div class="intensity-row">
-                    <label for="daylight">Daylight</label>
-                    <input id="daylight" name="daylight" type="number" min="0" max="100" step="1">
-                </div>
-                <div class="intensity-row">
-                    <label for="evening">Evening</label>
-                    <input id="evening" name="evening" type="number" min="0" max="100" step="1">
-                </div>
-                <div class="intensity-row">
-                    <label for="off">Off / Night</label>
-                    <input id="off" name="off" type="number" min="0" max="100" step="1">
-                </div>
-
-                <h2>EC alarms (µS/cm)</h2>
-                <div class="help">
-                    Select plant + stage to pre-fill recommended limits. You can still adjust manually.
-                </div>
-                <div class="grid-2">
-                    <div class="field">
-                        <label for="plant_category">Plant category</label>
-                        <select id="plant_category" name="plant_category"></select>
-                    </div>
-                    <div class="field">
-                        <label for="plant_stage">Growth stage</label>
-                        <select id="plant_stage" name="plant_stage"></select>
-                    </div>
-                    <div class="field">
-                        <label for="ec_low_alarm_us">Low alarm (µS/cm)</label>
-                        <input id="ec_low_alarm_us" name="ec_low_alarm_us" type="number" min="0" max="10000" step="10">
-                    </div>
-                    <div class="field">
-                        <label for="ec_high_alarm_us">High alarm (µS/cm)</label>
-                        <input id="ec_high_alarm_us" name="ec_high_alarm_us" type="number" min="0" max="10000" step="10">
-                    </div>
-                </div>
-
-                <div class="guidance">
-                    <h3>EC guidance (µS/cm)</h3>
-                    <div>(Approximate values at ~25 °C. Start low and increase gradually.)</div>
-                    <ul>
-                        <li>Seedlings / clones: 300–700</li>
-                        <li>Herbs (basil, parsley): 800–1400</li>
-                        <li>Leafy greens (lettuce, spinach): 900–1600</li>
-                        <li>Chili / pepper — Vegetative: 1000–1500; Flowering/Fruiting: 1500–2200</li>
-                        <li>Fruiting plants (tomato, cucumber) — Vegetative: 1500–2200; Flowering/Fruiting: 2200–3500</li>
-                        <li>Strawberry — Vegetative: 900–1400; Flowering/Fruiting: 1200–1800</li>
-                        <li>Ornamental flowering plants — Vegetative: 1000–1500; Flowering: 1400–2000</li>
-                    </ul>
-                    <div style="margin-top:6px;">Tip: Leaf burn → EC too high. Pale growth → EC too low.</div>
-                </div>
-
-                <h2>Ambient light control</h2>
-                <div class="help">
-                    Phototransistor on GPIO34 dims or turns lights off when ambient light is high.
-                </div>
-
-                <div class="grid-2">
-                    <div class="field">
-                        <label for="als_enabled">Ambient control</label>
-                        <select id="als_enabled" name="als_enabled">
-                            <option value="1">Enabled</option>
-                            <option value="0">Disabled</option>
-                        </select>
-                    </div>
-
-                    <div class="field">
-                        <label for="als_control_mode">Control mode</label>
-                        <select id="als_control_mode" name="als_control_mode">
-                            <option value="DIM">Dim</option>
-                            <option value="OFF">Off</option>
-                        </select>
-                    </div>
-
-                    <div class="field">
-                        <label for="als_threshold_on">T_ON (ADC)</label>
-                        <input id="als_threshold_on" name="als_threshold_on" type="number" min="0" max="4095" step="1">
-                    </div>
-
-                    <div class="field">
-                        <label for="als_threshold_dim">T_DIM/OFF (ADC)</label>
-                        <input id="als_threshold_dim" name="als_threshold_dim" type="number" min="0" max="4095" step="1">
-                    </div>
-
-                    <div class="field">
-                        <label for="als_filter_window">Filter window (samples)</label>
-                        <input id="als_filter_window" name="als_filter_window" type="number" min="1" max="20" step="1">
-                    </div>
-
-                    <div class="field">
-                        <label for="als_sample_interval_ms">Sample interval (ms)</label>
-                        <input id="als_sample_interval_ms" name="als_sample_interval_ms" type="number" min="100" max="10000" step="50">
-                    </div>
-
-                    <div class="field">
-                        <label for="als_dim_level">LED dim level (%)</label>
-                        <input id="als_dim_level" name="als_dim_level" type="number" min="0" max="100" step="1">
-                    </div>
-
-                    <div class="field">
-                        <label for="als_ramp_rate_ms">Ramp rate (ms)</label>
-                        <input id="als_ramp_rate_ms" name="als_ramp_rate_ms" type="number" min="50" max="2000" step="50">
-                    </div>
-
-                    <div class="field">
-                        <label for="als_fault_action">Sensor fault action</label>
-                        <select id="als_fault_action" name="als_fault_action">
-                            <option value="normal">Keep requested brightness</option>
-                            <option value="dim">Force dim level</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button class="btn" type="submit">Update light settings</button>
-                <div id="settings-status" class="status"></div>
-            </div>
-        </form>
-        <button class="btn btn-secondary" onclick="exitSettings()">Exit Settings</button>
-
-        <div class="card ec-card">
-            <h2>EC value</h2>
-            <span class="ec-value" id="ec-value">--</span>
-            <span class="ec-unit">µS/cm</span>
-            <div id="ec-status" class="status"></div>
-        </div>
-
-        <div class="card ec-card">
-            <h2>Liquid volume</h2>
-            <span class="water-value" id="water-volume">--</span>
-            <span class="water-unit">L</span>
-            <div>Depth: <span id="water-depth">--</span> mm · ADC: <span id="water-raw">--</span></div>
-            <div id="water-status" class="status"></div>
-            <h3>Four-point volume calibration</h3>
-            <p>Set the usable tank capacity, then record empty, one-third, two-thirds, and full. Keep the pressure tube in its installed position and wait for the water to settle before each reading. Each point is saved immediately.</p>
-            <label for="water-capacity">Full tank volume (L)</label>
-            <input id="water-capacity" type="number" min="0.1" max="10000" step="0.001" value="10">
-            <button class="btn" type="button" onclick="startWaterCalibration()">Start / reset calibration</button>
-            <div id="water-points"></div>
-            <div id="water-calibration-status" class="status"></div>
-            <p>The LED bar shows calibrated volume from empty to full. Depth uses the measured sensor conversion (ADC − 65.7) / 5.59; volume uses your four saved readings.</p>
-        </div>
-
-        <div class="card ec-card">
-            <h2>Ambient light</h2>
-            <div class="status-row">
-                <div>Raw ADC: <span id="als-raw">--</span></div>
-                <div>Filtered: <span id="als-filtered">--</span></div>
-            </div>
-            <div class="status-row">
-                <div>Mode: <span id="als-mode">--</span></div>
-                <div>Fault: <span id="als-fault">--</span></div>
-            </div>
-            <div id="als-status" class="status"></div>
-        </div>
-
-    </div>
-
-    <script>
-        const PLANT_GUIDANCE = {
-            seedlings: { stages: ['default'], ranges: { default: [300, 700] } },
-            herbs: { stages: ['default'], ranges: { default: [800, 1400] } },
-            leafy: { stages: ['default'], ranges: { default: [900, 1600] } },
-            chili: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [1000, 1500], flowering: [1500, 2200] } },
-            fruiting: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [1500, 2200], flowering: [2200, 3500] } },
-            strawberry: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [900, 1400], flowering: [1200, 1800] } },
-            ornamental: { stages: ['vegetative', 'flowering'], ranges: { vegetative: [1000, 1500], flowering: [1400, 2000] } },
-        };
-        const PLANT_LABELS = {
-            seedlings: 'Seedlings / clones',
-            herbs: 'Herbs',
-            leafy: 'Leafy greens',
-            chili: 'Chili / pepper',
-            fruiting: 'Fruiting plants',
-            strawberry: 'Strawberry',
-            ornamental: 'Ornamental flowering plants'
-        };
-        const STAGE_LABELS = {
-            default: 'General',
-            vegetative: 'Vegetative',
-            flowering: 'Flowering / Fruiting'
-        };
-        let liveStatusInFlight = false;
-        let liveStatusPromise = Promise.resolve();
-        let settingsMutationInFlight = false;
-
-        function populateSettingsForm(settings) {
-            const mapping = [
-                'timezone',
-                't_morning_start',
-                't_day_start',
-                't_evening_start',
-                't_lights_off',
-                'morning',
-                'daylight',
-                'evening',
-                'off'
-            ];
-
-            mapping.forEach((key) => {
-                const input = document.getElementById(key);
-                if (input && settings[key] !== undefined) {
-                    input.value = settings[key];
-                }
-            });
-
-        }
-
-        function initPlantSelectors() {
-            const catSelect = document.getElementById('plant_category');
-            const stageSelect = document.getElementById('plant_stage');
-            catSelect.innerHTML = '';
-            Object.keys(PLANT_GUIDANCE).forEach((key) => {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = PLANT_LABELS[key] || key;
-                catSelect.appendChild(opt);
-            });
-            catSelect.addEventListener('change', () => {
-                updateStageOptions();
-                suggestEcRange();
-            });
-            stageSelect.addEventListener('change', suggestEcRange);
-            updateStageOptions();
-        }
-
-        function updateStageOptions() {
-            const cat = document.getElementById('plant_category').value;
-            const stageSelect = document.getElementById('plant_stage');
-            const stages = (PLANT_GUIDANCE[cat] && PLANT_GUIDANCE[cat].stages) || ['default'];
-            stageSelect.innerHTML = '';
-            stages.forEach((stage) => {
-                const opt = document.createElement('option');
-                opt.value = stage;
-                opt.textContent = STAGE_LABELS[stage] || stage;
-                stageSelect.appendChild(opt);
-            });
-        }
-
-        function suggestEcRange() {
-            const cat = document.getElementById('plant_category').value;
-            const stage = document.getElementById('plant_stage').value;
-            const guidance = PLANT_GUIDANCE[cat];
-            if (!guidance) return;
-            const range = guidance.ranges[stage] || guidance.ranges.default;
-            if (!range) return;
-            document.getElementById('ec_low_alarm_us').value = range[0];
-            document.getElementById('ec_high_alarm_us').value = range[1];
-        }
-
-        function populateEcSettings(ec) {
-            const data = ec || {};
-            initPlantSelectors();
-            if (data.plant_category) {
-                document.getElementById('plant_category').value = data.plant_category;
-                updateStageOptions();
+function request(url, options = {}) {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    let timeout;
+    const deadline = new Promise((_, reject) => {
+        timeout = setTimeout(() => {
+            if (controller) controller.abort();
+            reject(new Error('Connection timed out. Please try again.'));
+        }, 8000);
+    });
+    const operation = Promise.resolve().then(() => fetch(url, Object.assign({}, options, {
+        cache: 'no-store', signal: controller ? controller.signal : undefined
+    }))).then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'The device could not complete the request.');
+        return data;
+    });
+    return Promise.race([operation, deadline]).finally(() => clearTimeout(timeout));
+}
+function setState(card, state) { $(card + '-card').dataset.state = state; }
+function durationText(minutes) {
+    const hours = Math.floor(minutes / 60), remainder = minutes % 60;
+    return remainder ? hours + ' h ' + remainder + ' min' : hours + ' hours';
+}
+function scheduleMinutes(value) {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? Number(value.slice(0, 2)) * 60 + Number(value.slice(3)) : null;
+}
+function updateDuration() {
+    const phases = ['morning', 'day', 'evening', 'night'];
+    const starts = phases.map(phase => scheduleMinutes($(phase + '-start').value));
+    const durations = starts.map((start, i) => (starts[(i + 1) % 4] - start + 1440) % 1440);
+    const valid = starts.every(value => value !== null) && durations.every(value => value > 0) && durations.reduce((a,b) => a+b, 0) === 1440;
+    $('schedule-duration').textContent = valid ? 'Morning → Day → Evening → Night · Repeats every 24 hours' : 'Choose distinct times in Morning, Day, Evening, Night order over 24 hours.';
+    phases.slice(0, 3).forEach(phase => $(phase + '-percent').textContent = $(phase + '-brightness').value + '%');
+    $('ambient-label').textContent = $('ambient-enabled').checked ? 'Enabled' : 'Disabled';
+}
+function populateSettings(data) {
+    $('timezone').value = data.timezone;
+    ['morning', 'day', 'evening', 'night'].forEach(phase => {
+        $(phase + '-start').value = data.lighting[phase].start;
+        if (phase !== 'night') $(phase + '-brightness').value = data.lighting[phase].brightness_percent;
+    });
+    $('ambient-enabled').checked = data.ambient_enabled === true;
+    $('ec-low').value = data.ec_alarm_low === undefined ? data.ec_low_ms : data.ec_alarm_low;
+    $('ec-high').value = data.ec_alarm_high === undefined ? data.ec_high_ms : data.ec_alarm_high;
+    if (finite(data.ec_max_ms)) ecMaxMs = data.ec_max_ms;
+    $('ec-low').max = $('ec-high').max = ecMaxMs;
+    $('ec-supported-range').textContent = 'Supported alert range: 0–' + ecMaxMs + ' mS/cm.';
+    updatePlantGuide();
+    updateDuration();
+}
+async function loadSettings() {
+    try {
+        const data = await request('/api/settings');
+        $('wifi-link').hidden = false;
+        $('wifi-nav').hidden = data.wifi_settings_available === false;
+        $('exit-portal').hidden = data.portal_exit_available === false;
+        if (!dirty) populateSettings(data);
+        settingsLoaded = true;
+        $('settings-fields').disabled = false;
+        $('save-button').disabled = false;
+        $('settings-status').textContent = 'Your saved garden routine.';
+        $('settings-status').dataset.state = 'good';
+        return true;
+    } catch (error) {
+        $('settings-status').textContent = 'Could not load settings. Reconnecting…';
+        $('settings-status').dataset.state = 'error';
+        return false;
+    }
+}
+function markConnected() {
+    $('connection').dataset.state = 'good';
+    $('connection-text').textContent = 'Connected to Grow';
+    $('connection-error').hidden = true;
+}
+function renderStatus(data) {
+    if (!data || !data.lighting || !data.water || !data.nutrients || !data.temperature || !data.clock) {
+        throw new Error('Incomplete device response.');
+    }
+    const light = data.lighting, water = data.water, nutrients = data.nutrients, temperature = data.temperature;
+    const clock = data.clock;
+    $('connection').dataset.state = 'good';
+    $('connection-text').textContent = 'Connected to Grow';
+    $('connection-error').hidden = true;
+    $('clock-warning').hidden = !!clock.local_time;
+    $('local-time').textContent = clock.local_time ? clock.local_time.slice(11, 16) + ' · ' + clock.timezone : 'Local time unavailable';
+    $('lighting-value').textContent = ['morning', 'day', 'evening', 'night'].includes(light.phase) ? light.phase[0].toUpperCase() + light.phase.slice(1) : 'Unavailable';
+    $('lighting-brightness').textContent = finite(light.brightness_percent) ? light.brightness_percent + '%' : 'Unavailable';
+    $('fan-pwm').textContent = data.fan && finite(data.fan.pwm_percent) ? data.fan.pwm_percent + '%' : 'Unavailable';
+    $('lighting-next').textContent = light.next_phase && light.next_transition ? 'Next: ' + light.next_phase[0].toUpperCase() + light.next_phase.slice(1) + ' at ' + light.next_transition : '';
+    const lightIcon = (light.on === false ? 'moon' : 'brightness') + '-svgrepo-com.svg';
+    $('lighting-icon').src = typeof GROW_ICON_URLS !== 'undefined' ? GROW_ICON_URLS[lightIcon] : '/icons/' + lightIcon;
+    let detail = 'Scheduled lighting', label = 'Following your schedule';
+    let lightState = 'good';
+    if (light.on !== true && light.on !== false) { label = 'Status unavailable'; detail = 'Waiting for the light controller'; lightState = 'error'; }
+    else if (light.mode === 'manual') { label = 'Manual lighting'; detail = light.override_ends === 'mode_change_or_restart' ? 'Until you switch back or restart' : 'Controlled by your device’s manual mode'; }
+    else if (!light.clock_valid) { label = 'Time not synchronized'; detail = 'Waiting for a reliable local time'; lightState = 'warning'; }
+    else if (!light.active) { label = 'Lighting paused'; detail = 'The device is starting up'; lightState = 'warning'; }
+    else if (light.ambient_adjusted) { label = 'Adjusted for room brightness'; detail = 'Your daily schedule stays the same'; }
+    else if (light.next_switch) { label = (light.next_switch.on ? 'Starts at ' : 'Until ') + light.next_switch.time; }
+    $('lighting-status').textContent = label;
+    $('lighting-detail').textContent = detail;
+    setState('lighting', lightState);
+    const waterEnabled = !data.capabilities || data.capabilities.water_level !== false;
+    $('water-card').hidden = !waterEnabled;
+    const waterValid = ['good', 'low'].includes(water.status) && finite(water.fill_percent) && finite(water.volume_l);
+    $('water-value').textContent = waterValid ? Math.round(water.fill_percent) : '--';
+    $('water-status').textContent = waterValid ? water.status === 'low' ? 'Low water' : 'Good' : water.status === 'out_of_range' ? 'Outside operating range' : 'Sensor unavailable';
+    $('water-detail').textContent = waterValid ? water.volume_l.toFixed(1) + ' litres in your reservoir' : 'Water level cannot be confirmed';
+    const fill = waterValid ? Math.min(100, Math.max(0, water.fill_percent)) + '%' : '0%';
+    $('water-fill').style.width = fill;
+    $('water-icon-fill').style.height = fill;
+    setState('water', waterValid ? water.status === 'low' ? 'warning' : 'good' : 'error');
+    const nutrientValid = finite(nutrients.value_ms) && ['optimal', 'low', 'high'].includes(nutrients.status);
+    $('nutrients-value').textContent = nutrientValid ? nutrients.value_ms.toFixed(2) : '--';
+    $('nutrients-status').textContent = nutrientValid ? {optimal: 'Optimal', low: 'Low nutrients', high: 'High nutrients'}[nutrients.status] : 'Sensor unavailable';
+    $('nutrients-detail').textContent = nutrientValid ? {optimal: 'Within your chosen range', low: 'Below your chosen range', high: 'Above your chosen range'}[nutrients.status] : 'Nutrient level cannot be confirmed';
+    setState('nutrients', nutrientValid ? nutrients.status === 'optimal' ? 'good' : 'warning' : 'error');
+    const temperatureValid = finite(temperature.value_c) && temperature.status === 'valid';
+    $('temperature-value').textContent = temperatureValid ? temperature.value_c.toFixed(1) : '--';
+    $('temperature-status').textContent = temperatureValid ? 'Current temperature' : 'Sensor unavailable';
+    setState('temperature', temperatureValid ? 'good' : 'error');
+    const needsCare = (waterEnabled && (!waterValid || water.status === 'low')) || !nutrientValid || nutrients.status !== 'optimal' || !temperatureValid || lightState !== 'good';
+    $('garden-summary').textContent = needsCare ? 'Your garden needs a little attention.' : 'Your plants are growing.';
+}
+function connectionLost() {
+    $('connection').dataset.state = 'error';
+    $('connection-text').textContent = 'Connection lost';
+    $('connection-error').hidden = false;
+    $('garden-summary').textContent = 'Waiting to reconnect to your garden.';
+    ['lighting', 'water', 'nutrients', 'temperature'].forEach(card => {
+        $(card + '-value').textContent = '--';
+        $(card + '-status').textContent = 'Connection lost';
+        setState(card, 'error');
+    });
+    $('lighting-detail').textContent = 'Lighting status unavailable';
+    $('lighting-brightness').textContent = $('fan-pwm').textContent = 'Unavailable';
+    $('lighting-next').textContent = '';
+    $('water-detail').textContent = 'Water level unavailable';
+    $('nutrients-detail').textContent = 'Nutrient level unavailable';
+    $('water-fill').style.width = '0%';
+    $('water-icon-fill').style.height = '0%';
+    $('local-time').textContent = 'Device time unavailable';
+    $('clock-warning').hidden = true;
+}
+function loadLiveStatus() {
+    if (portalClosed || pageLeaving || exitConfirmOpen || document.hidden || polling || saving) return liveStatusPromise;
+    polling = true;
+    const version = viewVersion, view = pageView;
+    liveStatusPromise = (async () => {
+        try {
+            if (view === 'garden') {
+                const data = await request('/api/status');
+                if (version === viewVersion && !pageLeaving && !exitConfirmOpen && !portalClosed) renderStatus(data);
+            } else if (view === 'grow-settings' && !settingsLoaded) {
+                if (await loadSettings()) markConnected();
+            } else {
+                await request('/api/portal');
+                if (version === viewVersion && !pageLeaving && !exitConfirmOpen && !portalClosed) markConnected();
             }
-            if (data.plant_stage) {
-                document.getElementById('plant_stage').value = data.plant_stage;
-            }
-            if (data.ec_low_alarm_us !== undefined) {
-                document.getElementById('ec_low_alarm_us').value = data.ec_low_alarm_us;
-            }
-            if (data.ec_high_alarm_us !== undefined) {
-                document.getElementById('ec_high_alarm_us').value = data.ec_high_alarm_us;
-            }
-            if (!data.ec_low_alarm_us || !data.ec_high_alarm_us) {
-                suggestEcRange();
-            }
-        }
-
-        function populateAmbientSettings(ambient) {
-            const data = ambient || {};
-            const selectKeys = ['als_enabled', 'als_control_mode', 'als_fault_action'];
-            selectKeys.forEach((key) => {
-                const el = document.getElementById(key);
-                if (el && data[key] !== undefined) {
-                    el.value = String(data[key]);
-                }
-            });
-            const inputKeys = [
-                'als_threshold_on',
-                'als_threshold_dim',
-                'als_filter_window',
-                'als_sample_interval_ms',
-                'als_dim_level',
-                'als_ramp_rate_ms'
-            ];
-            inputKeys.forEach((key) => {
-                const el = document.getElementById(key);
-                if (el && data[key] !== undefined) {
-                    el.value = data[key];
-                }
-            });
-        }
-
-        function fetchNoStore(url, readBody = (res) => res.text()) {
-            const sep = url.indexOf('?') === -1 ? '?' : '&';
-            const controller = new AbortController();
-            let timer;
-            const timeout = new Promise((resolve, reject) => {
-                timer = setTimeout(() => {
-                    reject(new Error('Request timed out. Check your connection to the device.'));
-                    controller.abort();
-                }, 8000);
-            });
-            // Keep the timeout active until the whole response body is read.
-            const request = fetch(url + sep + '_cb=' + Date.now(), {
-                cache: 'no-store', signal: controller.signal
-            }).then((res) => {
-                if (!res.ok) {
-                    return res.text().then((text) => {
-                        throw new Error(text || ('HTTP ' + res.status));
-                    });
-                }
-                return readBody(res);
-            });
-            return Promise.race([request, timeout]).finally(() => clearTimeout(timer));
-        }
-
-        function fetchJsonWithRetry(url, attempts = 3) {
-            return fetchNoStore(url, (res) => res.json())
-                .catch((err) => {
-                    if (attempts <= 1) throw err;
-                    return new Promise((resolve) => setTimeout(resolve, 300))
-                        .then(() => fetchJsonWithRetry(url, attempts - 1));
-                });
-        }
-
-        function requestForm(form) {
-            const params = new URLSearchParams(new FormData(form));
-            const sep = form.action.indexOf('?') === -1 ? '?' : '&';
-            return fetchNoStore(form.action + sep + params.toString());
-        }
-
-        function submitSettingsForm(event) {
+        } catch (error) {
+            if (version === viewVersion && !pageLeaving && !document.hidden && !exitConfirmOpen && !saving && !portalClosed) connectionLost();
+        } finally { polling = false; }
+    })();
+    return liveStatusPromise;
+}
+async function saveSettings(event) {
+    event.preventDefault();
+    if (!settingsLoaded || saving) return;
+    if (!$('settings-form').reportValidity()) return;
+    const low = Number($('ec-low').value), high = Number($('ec-high').value);
+    if (!$('ec-low').value.toString().trim() || !$('ec-high').value.toString().trim() ||
+        !finite(low) || !finite(high) || low < 0 || high > ecMaxMs || low >= high || Math.round(low * 1000) >= Math.round(high * 1000)) {
+        $('settings-status').textContent = low >= high ? 'High EC alert must be greater than Low EC alert.' :
+            'Enter EC alerts from 0 to ' + ecMaxMs + ' mS/cm, at least 0.001 mS/cm apart.';
+        $('settings-status').dataset.state = 'error';
+        return;
+    }
+    const fields = {timezone: $('timezone').value,
+        ambient_enabled: $('ambient-enabled').checked ? '1' : '0', ec_alarm_low: $('ec-low').value, ec_alarm_high: $('ec-high').value};
+    ['morning', 'day', 'evening', 'night'].forEach(phase => {
+        fields[phase + '_start'] = $(phase + '-start').value;
+        if (phase !== 'night') fields[phase + '_brightness'] = $(phase + '-brightness').value;
+    });
+    saving = true;
+    $('save-button').disabled = true;
+    $('settings-fields').disabled = true;
+    $('settings-status').textContent = 'Saving your settings…';
+    try {
+        await liveStatusPromise;
+        const data = await request('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: Object.keys(fields).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(fields[key])).join('&')});
+        if (!data.settings || data.message !== 'Settings saved successfully.') throw new Error('The device did not confirm saving.');
+        populateSettings(data.settings);
+        dirty = false;
+        $('settings-status').textContent = 'Settings saved successfully.';
+        $('settings-status').dataset.state = 'good';
+    } catch (error) {
+        $('settings-status').textContent = 'Could not confirm saving: ' + error.message;
+        $('settings-status').dataset.state = 'error';
+    } finally {
+        saving = false;
+        $('save-button').disabled = false;
+        $('settings-fields').disabled = false;
+        await loadLiveStatus();
+    }
+}
+function startPolling() {
+    if (portalClosed || pageLeaving || exitConfirmOpen || document.hidden) return;
+    clearTimeout(pollTimer);
+    loadLiveStatus().finally(() => {
+        if (!portalClosed && !pageLeaving && !exitConfirmOpen && !document.hidden) pollTimer = setTimeout(startPolling, 5000);
+    });
+}
+function showPage(path) {
+    viewVersion++;
+    pageView = path === '/settings' ? 'settings' : path === '/grow-settings' ? 'grow-settings' : 'garden';
+    const menu = path === '/settings', settings = path === '/grow-settings';
+    $('garden').hidden = menu || settings;
+    $('settings').hidden = !settings;
+    $('settings-menu').hidden = !menu;
+    $('garden-nav').hidden = menu || settings;
+    $('settings-nav').hidden = !menu && !settings;
+    $('back-settings').hidden = menu;
+    document.title = 'Grow · ' + (menu ? 'Settings' : settings ? 'Grow Settings' : 'My Garden');
+}
+function confirmPortalExit() {
+    exitConfirmOpen = true;
+    clearTimeout(pollTimer);
+    $('exit-unsaved').hidden = !dirty;
+    $('exit-error').textContent = '';
+    $('exit-confirm').showModal();
+}
+function cancelPortalExit() {
+    if (saving) return;
+    $('exit-confirm').close();
+    exitConfirmOpen = false;
+    startPolling();
+}
+function pauseForVisibility() {
+    if (document.hidden) clearTimeout(pollTimer);
+    else if (!portalClosed && !pageLeaving) startPolling();
+}
+function navigatePage(path) {
+    clearTimeout(pollTimer);
+    window.history.pushState({}, '', path);
+    showPage(path);
+    liveStatusPromise.finally(startPolling);
+}
+async function exitPortal() {
+    $('exit-confirm-button').disabled = true;
+    $('exit-cancel').disabled = true;
+    saving = true;
+    clearTimeout(pollTimer);
+    try {
+        await liveStatusPromise;
+        const data = await request('/api/portal/exit', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: ''});
+        if (!data.closing) throw new Error('The device did not confirm portal shutdown.');
+        portalClosed = true;
+        $('exit-confirm').close();
+        $('portal-complete').hidden = false;
+        $('garden').hidden = $('settings').hidden = true;
+        $('exit-portal').disabled = true;
+        exitConfirmOpen = false;
+        $('connection').dataset.state = 'good';
+        $('connection-error').hidden = true;
+        $('connection-text').textContent = 'Portal closed';
+        $('portal-complete').scrollIntoView();
+    } catch (error) {
+        $('exit-error').textContent = 'Could not confirm shutdown: ' + error.message;
+    } finally {
+        saving = false;
+        $('exit-confirm-button').disabled = $('exit-cancel').disabled = false;
+        if (!portalClosed) startPolling();
+    }
+}
+document.addEventListener('DOMContentLoaded', () => {
+    showPage(window.location.pathname);
+    $('exit-portal').addEventListener('click', confirmPortalExit);
+    $('exit-cancel').addEventListener('click', cancelPortalExit);
+    $('exit-confirm').addEventListener('cancel', event => { event.preventDefault(); cancelPortalExit(); });
+    $('exit-confirm-button').addEventListener('click', exitPortal);
+    initPlantGuide();
+    $('settings-form').addEventListener('submit', saveSettings);
+    $('settings-form').addEventListener('input', event => {
+        if (event.target.id === 'plant-ec') return;
+        markUnsaved();
+        updateDuration();
+    });
+    document.addEventListener('click', event => {
+        const link = event.target.closest('a');
+        if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        const path = link.getAttribute('href');
+        if (['/', '/garden', '/settings', '/grow-settings'].includes(path)) {
             event.preventDefault();
-            if (settingsMutationInFlight) return;
-            const form = event.currentTarget;
-            const status = document.getElementById('settings-status');
-            status.textContent = 'Saving settings...';
-            settingsMutationInFlight = true;
-            liveStatusPromise
-                .then(() => requestForm(form))
-                .then(() => loadSettings(false))
-                .then(() => {
-                    status.textContent = 'Settings saved.';
-                })
-                .catch((err) => {
-                    console.error(err);
-                    status.textContent = 'Could not save settings: ' + err.message;
-                })
-                .then(() => {
-                    settingsMutationInFlight = false;
-                    loadLiveStatus();
-                });
+            navigatePage(path);
         }
-
-        function loadSettings(showStatus = true) {
-            const status = document.getElementById('settings-status');
-            if (showStatus) {
-                status.textContent = 'Loading current settings...';
-            }
-
-            return fetchJsonWithRetry('/current_settings')
-                .then((data) => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    populateSettingsForm(data);
-                    populateWaterSettings(data);
-                    displayLocalTime(data.clock);
-                    populateEcSettings(data.ec);
-                    populateAmbientSettings(data.ambient);
-                    if (showStatus) {
-                        status.textContent = 'Showing current saved settings.';
-                    }
-                    return data;
-                })
-                .catch((err) => {
-                    console.error(err);
-                    status.textContent = 'Could not load settings.';
-                    throw err;
-                });
-        }
-
-        function populateWaterSettings(data) {
-            document.getElementById('water-capacity').value = data.water_max_volume_l;
-            const container = document.getElementById('water-points');
-            container.textContent = '';
-            (data.water_calibration || []).forEach((point, index) => {
-                const row = document.createElement('div');
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'btn btn-secondary';
-                button.textContent = 'Record ' + Number(point.volume_l).toFixed(3) + ' L';
-                button.onclick = () => mutateWater('/update_cal_point?point=' + index);
-                const label = document.createElement('span');
-                label.textContent = point.raw_value === null ? ' Not recorded' : ' Saved ADC: ' + Number(point.raw_value).toFixed(1);
-                row.appendChild(button);
-                row.appendChild(label);
-                container.appendChild(row);
-            });
-        }
-
-        function startWaterCalibration() {
-            const input = document.getElementById('water-capacity');
-            if (!input.reportValidity()) return;
-            mutateWater('/configure_water_calibration?point_count=4&max_volume_l=' + encodeURIComponent(input.value));
-        }
-
-        function mutateWater(url) {
-            if (settingsMutationInFlight) return;
-            settingsMutationInFlight = true;
-            const status = document.getElementById('water-calibration-status');
-            status.textContent = 'Measuring / saving...';
-            return liveStatusPromise.then(() => fetchNoStore(url))
-                .then(() => loadSettings(false))
-                .then(() => { status.textContent = 'Calibration saved.'; })
-                .catch(err => { status.textContent = err.message; })
-                .then(() => {
-                    settingsMutationInFlight = false;
-                    return loadLiveStatus();
-                });
-        }
-
-        function displayLocalTime(clock) {
-            document.getElementById('local-time').textContent = clock && clock.local_time
-                ? clock.local_time + ' (' + clock.timezone + ')'
-                : 'Time unavailable — waiting for clock synchronization';
-        }
-
-        function loadLiveStatus() {
-            if (document.hidden || settingsMutationInFlight || liveStatusInFlight) {
-                return liveStatusPromise;
-            }
-            liveStatusInFlight = true;
-
-            const ecValueEl = document.getElementById('ec-value');
-            const ecStatus = document.getElementById('ec-status');
-            const alsStatus = document.getElementById('als-status');
-
-            // Display EC independently: a failed ambient read cannot hide it.
-            liveStatusPromise = fetchNoStore('/adc_value')
-                .then((text) => {
-                    const value = Number(text);
-                    if (!text.trim() || !Number.isFinite(value)) {
-                        throw new Error('Invalid EC response');
-                    }
-                    ecValueEl.textContent = Math.round(value);
-                    ecStatus.textContent = 'Live reading';
-                })
-                .catch((err) => {
-                    ecValueEl.textContent = '--';
-                    ecStatus.textContent = 'Could not read EC: ' + err.message + '. Check the device Wi-Fi connection; retrying automatically.';
-                })
-                .then(() => fetchNoStore('/ambient_status', (res) => res.json()))
-                .then((data) => {
-                    const ambient = data || {};
-                    displayLocalTime(ambient.clock);
-                    document.getElementById('als-raw').textContent = ambient.raw !== null && ambient.raw !== undefined ? ambient.raw : '--';
-                    document.getElementById('als-filtered').textContent = ambient.filtered !== null && ambient.filtered !== undefined ? ambient.filtered : '--';
-                    document.getElementById('als-mode').textContent = ambient.mode || '--';
-                    document.getElementById('als-fault').textContent = ambient.fault ? 'Yes' : 'No';
-                    alsStatus.textContent = ambient.error || 'Live reading';
-                })
-                .catch((err) => {
-                    console.error(err);
-                    document.getElementById('local-time').textContent = 'Time unavailable — connection lost';
-                    alsStatus.textContent = 'Could not read ambient light: ' + err.message + '. Check the device Wi-Fi connection; retrying automatically.';
-                })
-                .then(() => fetchNoStore('/water_level', res => res.json()))
-                .then(data => {
-                    document.getElementById('water-volume').textContent = data.volume_l == null ? '--' : Number(data.volume_l).toFixed(2);
-                    document.getElementById('water-depth').textContent = data.depth_mm == null ? '--' : Number(data.depth_mm).toFixed(1);
-                    document.getElementById('water-raw').textContent = data.raw == null ? '--' : Number(data.raw).toFixed(1);
-                    document.getElementById('water-status').textContent = data.message;
-                })
-                .catch(err => {
-                    ['water-volume', 'water-depth', 'water-raw'].forEach(id => { document.getElementById(id).textContent = '--'; });
-                    document.getElementById('water-status').textContent = 'Could not read water level: ' + err.message;
-                })
-                .then(() => {
-                    liveStatusInFlight = false;
-                });
-            return liveStatusPromise;
-        }
-
-        function exitSettings() {
-            fetchNoStore('/exit_settings')
-                .then(() => {
-                    // small delay before navigating away
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 500);
-                })
-                .catch(() => {
-                    // still try to refresh
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 500);
-                });
-        }
-
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) loadLiveStatus();
-        });
-        window.addEventListener('pageshow', () => loadLiveStatus());
-        window.addEventListener('online', () => loadLiveStatus());
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const settingsForm = document.querySelector('form[action="/update_lights"]');
-            if (settingsForm) {
-                settingsForm.addEventListener('submit', submitSettingsForm);
-            }
-            loadSettings().then(() => loadLiveStatus(), () => loadLiveStatus());
-            setInterval(() => {
-                loadLiveStatus();
-            }, 2000);
-        });
-    </script>
+    });
+    window.addEventListener('popstate', () => { showPage(window.location.pathname); liveStatusPromise.finally(startPolling); });
+    window.addEventListener('pagehide', () => { pageLeaving = true; clearTimeout(pollTimer); });
+    window.addEventListener('pageshow', () => { pageLeaving = false; startPolling(); });
+    document.addEventListener('visibilitychange', pauseForVisibility);
+    startPolling();
+});
+</script>
+<meta name="grow-ui-build" content="0a06689b67ec"></head>
+<body>
+    <a class="skip-link" href="#garden">Skip to My Garden</a>
+    <div class="page">
+        <header class="topbar">
+            <a class="brand" href="/garden" aria-label="Grow home"><span class="brand-mark" aria-hidden="true"></span>grow<span class="brand-dot">.</span></a>
+            <span class="connection" id="connection" role="status"><span class="dot" aria-hidden="true"></span><span id="connection-text">Connecting</span></span>
+        </header>
+        <main>
+            <nav class="portal-nav" id="garden-nav" aria-label="Garden navigation"><a class="suggestion-button" href="/settings">Settings</a><button type="button" class="suggestion-button" id="exit-portal">Exit Portal Mode</button></nav>
+            <nav class="portal-nav" id="settings-nav" aria-label="Settings navigation" hidden><a id="back-settings" href="/settings">Back to Settings</a><a href="/garden">Back to My Garden</a></nav>
+            <section id="settings-menu" aria-labelledby="menu-heading" hidden>
+                <div class="section-heading"><div><h1 id="menu-heading">Settings</h1><p class="subtitle">Choose what you would like to configure.</p></div></div>
+                <div class="settings-grid menu-grid"><a id="wifi-nav" class="setting-card menu-card" href="/wifi"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojNDc3QTVBO3N0cm9rZS1taXRlcmxpbWl0OjEwO3N0cm9rZS13aWR0aDoxLjkxcHg7fTwvc3R5bGU+PC9kZWZzPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTEzLjkxLDE1LjgyVjExLjA1SDEwLjA5djQuNzdMNi41OCwyMC4yYTEuNDQsMS40NCwwLDAsMC0uMzEuODloMEExLjQyLDEuNDIsMCwwLDAsNy42OSwyMi41aDguNjJhMS40MiwxLjQyLDAsMCwwLDEuNDItMS40MWgwYTEuNDQsMS40NCwwLDAsMC0uMzEtLjg5WiIvPjxsaW5lIGNsYXNzPSJjbHMtMSIgeDE9IjguMTgiIHkxPSIxMS4wNSIgeDI9IjE1LjgyIiB5Mj0iMTEuMDUiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNS44MiwxLjVoMS45MWEwLDAsMCwwLDEsMCwwdjFhMy44MiwzLjgyLDAsMCwxLTMuODIsMy44MkgxMmEwLDAsMCwwLDEsMCwwdi0xQTMuODIsMy44MiwwLDAsMSwxNS44MiwxLjVaIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNi4yNywyLjQ1SDguMThBMy44MiwzLjgyLDAsMCwxLDEyLDYuMjd2MWEwLDAsMCwwLDEsMCwwSDEwLjA5QTMuODIsMy44MiwwLDAsMSw2LjI3LDMuNDF2LTFBMCwwLDAsMCwxLDYuMjcsMi40NVoiLz48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIxMiIgeTE9IjExLjA1IiB4Mj0iMTIiIHkyPSI2LjI3Ii8+PC9zdmc+" alt="" width="28" height="28"><h2>Wi-Fi Settings</h2><p class="help">Connect your Grow to your Wi-Fi network.</p></a><a class="setting-card menu-card" href="/grow-settings"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTIgMTBWM00xMiAzTDkgNk0xMiAzTDE1IDZNNiAxMkw1IDExTTE4IDEyTDE5IDExTTMgMThIMjFNNSAyMUgxOU03IDE4QzcgMTUuMjM4NiA5LjIzODU4IDEzIDEyIDEzQzE0Ljc2MTQgMTMgMTcgMTUuMjM4NiAxNyAxOCIgc3Ryb2tlPSIjNDc3QTVBIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4=" alt="" width="28" height="28"><h2>Grow Settings</h2><p class="help">Lighting schedules, nutrient alerts and your garden routine.</p></a></div>
+            </section>
+            <section id="portal-complete" class="setting-card" role="status" hidden><h1>Portal closed</h1><p>Your Grow controller is running normally. Use the device's setup control to reopen the portal.</p></section>
+            <dialog id="exit-confirm" aria-labelledby="exit-heading"><h2 id="exit-heading">Exit Portal Mode?</h2><p>The configuration portal will close. Your Grow controller will continue operating normally.</p><p id="exit-unsaved" hidden>Your unsaved changes will be discarded.</p><div class="portal-nav"><button type="button" class="suggestion-button" id="exit-cancel">Cancel</button><button type="button" class="save-button" id="exit-confirm-button">Exit Portal</button></div><p id="exit-error" role="alert"></p></dialog>
+            <section id="garden" aria-labelledby="garden-heading">
+                <div class="section-heading"><div><p class="eyebrow">A little nature, closer to home</p><h1 id="garden-heading">My Garden</h1><p id="garden-summary" class="subtitle">Checking on your plants…</p></div><span class="live-label">LIVE OVERVIEW</span></div>
+                <p id="connection-error" class="notice error" role="alert" hidden>Connection lost. Check your device’s Wi-Fi connection. Retrying automatically.</p>
+                <div class="garden-grid">
+                    <article class="status-card lighting-card" id="lighting-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><img id="lighting-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGZpbGw9IiM0NzdBNUEiIGQ9Ik0xMi41IDUuOGMtLjE2OCAwLS4zMzQuMDEzLS41LjAyNVYyaDF2My44MzdjLS4xNjctLjAxMi0uMzMxLS4wMzctLjUtLjAzN3pNMTIgMTkuMTc1VjIzaDF2LTMuODM3Yy0uMTY3LjAxMi0uMzMxLjAzNy0uNS4wMzctLjE2OCAwLS4zMzQtLjAxMy0uNS0uMDI1em03LjItNi42NzVjMCAuMTY4LS4wMTMuMzM0LS4wMjUuNUgyM3YtMWgtMy44MzFjLjAxMi4xNjYuMDMuMzMyLjAzLjV6TTUuODM3IDEySDJ2MWgzLjg0NGMtLjAxMi0uMTY3LS4wNDQtLjMzLS4wNDQtLjUgMC0uMTcuMDI1LS4zMzMuMDM3LS41em0xMS43MzYtMy44NjZsMi43MDUtMi43MDUtLjcwNy0uNzA3LTIuNzAyIDIuNzAyYTYuNjg3IDYuNjg3IDAgMCAxIC43MDQuNzF6TTQuNzIyIDE5LjU3bC43MDcuNzA3IDIuNzI5LTIuNzI5YTYuNzQgNi43NCAwIDAgMS0uNzEzLS43em0xMi4xMjgtMi4wMTRsMi43MjEgMi43MjEuNzA3LS43MDctMi43Mi0yLjcyYTYuNjUzIDYuNjUzIDAgMCAxLS43MDguNzA2ek04LjEzMiA3LjQyNUw1LjQzIDQuNzIybC0uNzA3LjcwNyAyLjcwNCAyLjcwNGE2LjY3MiA2LjY3MiAwIDAgMSAuNzA2LS43MDh6TTE3LjggMTIuNWE1LjMgNS4zIDAgMSAxLTIuMzM3LTQuMzk1QTUuMjgyIDUuMjgyIDAgMCAxIDE3LjggMTIuNXptLS45ODUgMGE0LjMxNSA0LjMxNSAwIDEgMC00LjMxNSA0LjMxNSA0LjMyIDQuMzIgMCAwIDAgNC4zMTUtNC4zMTV6Ii8+PHBhdGggZmlsbD0ibm9uZSIgZD0iTTAgMGgyNHYyNEgweiIvPjwvc3ZnPg==" alt="" width="26" height="26"></span><h2>Lighting</h2></div>
+                        <div class="measurement" id="lighting-value">--</div>
+                        <p class="detail">Light brightness <span id="lighting-brightness">Unavailable</span></p><p class="detail">Fan PWM <span id="fan-pwm">Unavailable</span></p><p class="detail" id="lighting-next"></p><p class="state-text" id="lighting-status">Waiting for device</p><p class="detail" id="lighting-detail">Your daily light rhythm</p>
+                    </article>
+                    <article class="status-card" id="water-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><span class="water-icon" aria-hidden="true"><span id="water-icon-fill"></span></span></span><h2>Water</h2></div>
+                        <div class="measurement"><span id="water-value">--</span><span class="unit">%</span></div>
+                        <p class="state-text" id="water-status">Waiting for device</p><p class="detail" id="water-detail">Water for healthy roots</p>
+                        <div class="water-track" aria-hidden="true"><div id="water-fill"></div></div>
+                    </article>
+                    <article class="status-card" id="nutrients-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI0IDI0IiBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDpub25lO3N0cm9rZTojNDc3QTVBO3N0cm9rZS1taXRlcmxpbWl0OjEwO3N0cm9rZS13aWR0aDoxLjkxcHg7fTwvc3R5bGU+PC9kZWZzPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTEzLjkxLDE1LjgyVjExLjA1SDEwLjA5djQuNzdMNi41OCwyMC4yYTEuNDQsMS40NCwwLDAsMC0uMzEuODloMEExLjQyLDEuNDIsMCwwLDAsNy42OSwyMi41aDguNjJhMS40MiwxLjQyLDAsMCwwLDEuNDItMS40MWgwYTEuNDQsMS40NCwwLDAsMC0uMzEtLjg5WiIvPjxsaW5lIGNsYXNzPSJjbHMtMSIgeDE9IjguMTgiIHkxPSIxMS4wNSIgeDI9IjE1LjgyIiB5Mj0iMTEuMDUiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNS44MiwxLjVoMS45MWEwLDAsMCwwLDEsMCwwdjFhMy44MiwzLjgyLDAsMCwxLTMuODIsMy44MkgxMmEwLDAsMCwwLDEsMCwwdi0xQTMuODIsMy44MiwwLDAsMSwxNS44MiwxLjVaIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNi4yNywyLjQ1SDguMThBMy44MiwzLjgyLDAsMCwxLDEyLDYuMjd2MWEwLDAsMCwwLDEsMCwwSDEwLjA5QTMuODIsMy44MiwwLDAsMSw2LjI3LDMuNDF2LTFBMCwwLDAsMCwxLDYuMjcsMi40NVoiLz48bGluZSBjbGFzcz0iY2xzLTEiIHgxPSIxMiIgeTE9IjExLjA1IiB4Mj0iMTIiIHkyPSI2LjI3Ii8+PC9zdmc+" alt="" width="26" height="26"></span><h2>Nutrients</h2></div>
+                        <div class="measurement"><span id="nutrients-value">--</span><span class="unit">mS/cm</span></div>
+                        <p class="state-text" id="nutrients-status">Waiting for device</p><p class="detail" id="nutrients-detail">Your nutrient balance</p>
+                    </article>
+                    <article class="status-card" id="temperature-card" data-state="loading">
+                        <div class="card-heading"><span class="icon-tile"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KCjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+Cjxzdmcgd2lkdGg9IjgwMHB4IiBoZWlnaHQ9IjgwMHB4IiB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+Cgo8ZGVmcz4KCjxzdHlsZT4uY2xzLTEsLmNscy0ye2ZpbGw6bm9uZTtzdHJva2U6IzQ3N0E1QTtzdHJva2UtbGluZWNhcDpyb3VuZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLXdpZHRoOjEuNXB4O30uY2xzLTF7ZmlsbC1ydWxlOmV2ZW5vZGQ7fTwvc3R5bGU+Cgo8L2RlZnM+Cgo8ZyBpZD0iaWMtd2VhdGhlci10ZW1wZXJhdHVyZSI+Cgo8cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNSwxM1Y1QTMsMywwLDAsMCw5LDV2OGE1LDUsMCwxLDAsNiwwWiIvPgoKPGNpcmNsZSBjbGFzcz0iY2xzLTIiIGN4PSIxMiIgY3k9IjE3IiByPSIyIi8+Cgo8bGluZSBjbGFzcz0iY2xzLTIiIHgxPSIxMiIgeTE9IjkiIHgyPSIxMiIgeTI9IjE1Ii8+Cgo8L2c+Cgo8L3N2Zz4=" alt="" width="26" height="26"></span><h2>Temperature</h2></div>
+                        <div class="measurement"><span id="temperature-value">--</span><span class="unit">°C</span></div>
+                        <p class="state-text" id="temperature-status">Waiting for device</p><p class="detail">Measured at your garden</p>
+                    </article>
+                </div>
+                <p id="clock-warning" class="notice warning" hidden>Time unavailable. The lighting schedule is waiting for time synchronization.</p>
+                <div class="overview-footer"><span id="local-time">Waiting for local time</span><span>Refreshes every 5 seconds</span></div>
+            </section>
+            <section id="settings" class="settings-section" hidden aria-labelledby="settings-heading">
+                <div class="section-heading"><div><p class="eyebrow">Make it yours</p><h1 id="settings-heading" class="section-title">Grow Settings</h1><p class="subtitle">A routine that helps your garden thrive.</p></div></div>
+                <form id="settings-form">
+                    <fieldset id="settings-fields" disabled>
+                        <legend class="sr-only">Garden settings</legend>
+                        <div class="settings-grid">
+                            <section class="setting-card" aria-labelledby="timezone-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">01</span><h3 id="timezone-heading">Time zone</h3></div>
+                                <p class="help">Keep your garden in time with your day. Daylight saving changes are automatic.</p>
+                                <label for="timezone">Local time zone</label>
+                                <select id="timezone" name="timezone" required>
+                                    <option value="Europe/Stockholm">Europe/Stockholm</option>
+                                    <option value="Europe/Lisbon">Europe/Lisbon</option>
+                                    <option value="Europe/London">Europe/London</option>
+                                </select>
+                            </section>
+                            <section class="setting-card" aria-labelledby="schedule-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">02</span><h3 id="schedule-heading">Lighting schedule</h3></div>
+                                <p class="help">Give your plants a regular balance of light and rest.</p>
+                                <div class="time-grid">
+<div><h4>Morning</h4><label for="morning-start">Starts at</label><input id="morning-start" type="time" step="60" required>
+<label for="morning-brightness">Brightness <output id="morning-percent">0%</output></label><input id="morning-brightness" type="range" min="0" max="100" step="1">
+</div>
+<div><h4>Day</h4><label for="day-start">Starts at</label><input id="day-start" type="time" step="60" required>
+<label for="day-brightness">Brightness <output id="day-percent">0%</output></label><input id="day-brightness" type="range" min="0" max="100" step="1">
+</div>
+<div><h4>Evening</h4><label for="evening-start">Starts at</label><input id="evening-start" type="time" step="60" required>
+<label for="evening-brightness">Brightness <output id="evening-percent">0%</output></label><input id="evening-brightness" type="range" min="0" max="100" step="1">
+</div>
+<div><h4>Night</h4><label for="night-start">Starts at</label><input id="night-start" type="time" step="60" required>
+<p>Brightness OFF (0%)</p>
+</div></div>
+                                <p id="schedule-duration" class="duration">Enter times in 24-hour format (HH:MM).</p>
+                            </section>
+                            <section class="setting-card" aria-labelledby="ambient-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">03</span><h3 id="ambient-heading">Ambient light sensor</h3><img class="heading-icon" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KCjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+CjxzdmcgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiAgd2lkdGg9IjgwMHB4IgoJIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+CgkubGluZXNhbmRhbmdsZXNfZWVue2ZpbGw6IzQ3N0E1QTt9Cgkuc3Qwe2ZpbGw6IzQ3N0E1QTt9Cjwvc3R5bGU+CjxnIGlkPSJMQUJFTFMiPgo8L2c+CjxnIGlkPSJVcGxvYWRlZCB0byBzdmdyZXBvLmNvbSI+Cgk8cGF0aCBjbGFzcz0ibGluZXNhbmRhbmdsZXNfZWVuIiBkPSJNMjUuNjIzLDE2LjIyOEMyNS44NjEsMTUuNTI3LDI2LDE0Ljc4MSwyNiwxNGMwLTMuODYtMy4xNC03LTctNwoJCWMtMy4yMDIsMC01LjkwNCwyLjE2My02LjczMyw1LjEwM2MtMi43LDAuNDQzLTQuOTQ1LDIuMzE5LTUuODQ3LDQuOTNDMy45MzYsMTcuMzIxLDIsMTkuNDM5LDIsMjJjMCwyLjc1NywyLjI0Myw1LDUsNWgxNQoJCWMzLjMwOSwwLDYtMi42OTEsNi02QzI4LDE5LjA1MywyNy4wNjQsMTcuMzI1LDI1LjYyMywxNi4yMjh6IE0xOSw5YzIuNzU3LDAsNSwyLjI0Myw1LDVjMCwwLjQ0Ni0wLjA2OCwwLjg3NC0wLjE4LDEuMjg0CgkJQzIzLjI0NiwxNS4xMDEsMjIuNjM1LDE1LDIyLDE1Yy0wLjc1MywwLTEuNTAxLDAuMTQ4LTIuMjA3LDAuNDMyYy0xLjIwNS0xLjg1OS0zLjE4Ny0zLjEwMi01LjM4NS0zLjM3NAoJCUMxNS4xNjgsMTAuMjY2LDE2LjkzNCw5LDE5LDl6IE0yMiwyNUg3Yy0xLjY1NCwwLTMtMS4zNDYtMy0zczEuMzQ2LTMsMi45NTYtMy4wMDFsMS4wMDYsMC4wNTJsMC4xODgtMC44MDYKCQlDOC43MzQsMTUuNzQ2LDEwLjkzNCwxNCwxMy41LDE0YzIuMTIzLDAsNC4wNzgsMS4yNDgsNC45NzksMy4xNzlsMC40NzYsMS4wMThsMC45NTYtMC41OUMyMC41NjMsMTcuMjA0LDIxLjI2NiwxNywyMiwxNwoJCWMyLjIwNiwwLDQsMS43OTQsNCw0UzI0LjIwNiwyNSwyMiwyNXogTTIwLDVoLTJWM2gyVjV6IE0zMCwxM3YyaC0ydi0ySDMweiBNMjYuMDcxLDguMzQzbC0xLjQxNC0xLjQxNGwxLjQxNC0xLjQxNGwxLjQxNCwxLjQxNAoJCUwyNi4wNzEsOC4zNDN6IE0xMS45MjksOC4zNDNsLTEuNDE0LTEuNDE0bDEuNDE0LTEuNDE0bDEuNDE0LDEuNDE0TDExLjkyOSw4LjM0M3oiLz4KPC9nPgo8L3N2Zz4=" alt="" width="26" height="26"></div>
+                                <p class="help">Automatically adjust lighting based on room brightness, within your lighting schedule.</p>
+                                <label class="switch-row" for="ambient-enabled"><span id="ambient-label">Enabled</span><span class="switch"><input id="ambient-enabled" name="ambient_enabled" type="checkbox" role="switch"><span class="switch-track" aria-hidden="true"></span></span></label>
+                            </section>
+                            <section class="setting-card" aria-labelledby="alerts-heading">
+                                <div class="setting-title"><span class="section-number" aria-hidden="true">04</span><h3 id="alerts-heading">Nutrient alerts</h3></div>
+                                <p class="help">Set the nutrient concentration range for your plants.</p>
+                                <div class="plant-guide">
+                                    <label for="plant-ec">Plant EC guide</label>
+                                    <select id="plant-ec" aria-describedby="plant-guidance"><option value="">Choose a plant (optional)</option></select>
+                                    <div id="plant-suggestion" aria-live="polite" hidden>
+                                        <p id="plant-range-title"></p><p id="plant-range" class="plant-range"></p>
+                                    </div>
+                                    <button id="use-plant-range" class="suggestion-button" type="button" disabled>Use suggested range</button>
+                                    <p id="plant-guidance" class="help">Suggested ranges are starting points for established plants. You can set your own alerts, including for a mixed reservoir.</p>
+                                    <p id="plant-range-limit" class="help" hidden>This suggestion exceeds the device’s supported alert range. Adjust the values before saving.</p>
+                                </div>
+                                <div class="time-grid">
+                                    <div><label for="ec-low">Low EC alert</label><div class="input-unit"><input id="ec-low" name="ec_alarm_low" type="number" inputmode="decimal" min="0" max="2.72" step="0.001" required aria-describedby="ec-units"><span>mS/cm</span></div></div>
+                                    <div><label for="ec-high">High EC alert</label><div class="input-unit"><input id="ec-high" name="ec_alarm_high" type="number" inputmode="decimal" min="0" max="2.72" step="0.001" required aria-describedby="ec-units"><span>mS/cm</span></div></div>
+                                </div>
+                                <p class="help">EC measures the overall concentration of dissolved substances in your water. Recommended nutrient levels depend on plant type, growth stage and growing conditions.</p>
+                                <p id="ec-supported-range" class="help">Supported alert range: 0–2.72 mS/cm.</p>
+                                <span id="ec-units" class="sr-only">Nutrient concentration in millisiemens per centimetre. Low must be less than high.</span>
+                            </section>
+                        </div>
+                    </fieldset>
+                    <div class="save-row"><div><p id="settings-status" role="status" aria-live="polite">Loading saved settings…</p><p class="help">Changes take effect when you save.</p></div><button type="submit" class="save-button" id="save-button" disabled>Save settings<span aria-hidden="true">↗</span></button></div>
+                </form>
+            </section>
+        </main>
+        <footer class="page-footer"><span>grow<span class="brand-dot">.</span> <span class="footer-motto">Small garden. Everyday joy.</span></span><a id="wifi-link" href="/settings">Settings</a></footer>
+    </div>
 </body>
-
 </html>

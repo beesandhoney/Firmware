@@ -17,6 +17,9 @@ import shared_settings
 
 class CalibrationPortalTest(unittest.TestCase):
     def setUp(self):
+        hardware = patch("hardware_config.installed", return_value=True)
+        hardware.start()
+        self.addCleanup(hardware.stop)
         self.saved = shared_settings._build_settings_payload()
         self.directory = tempfile.TemporaryDirectory()
         self.old_cwd = os.getcwd()
@@ -35,7 +38,7 @@ class CalibrationPortalTest(unittest.TestCase):
         shared_settings.WaterCalibration.configure(10)
         aliases = {
             'uerrno': errno, 'uio': io, 'usocket': socket, 'uos': os,
-            'utime': types.SimpleNamespace(),
+            'utime': types.SimpleNamespace(ticks_ms=lambda: 0, ticks_diff=lambda a, b: a-b),
             'machine': types.SimpleNamespace(Pin=object, ADC=object),
             'status_led': types.SimpleNamespace(settings_saved=lambda: None),
             'gpio': types.SimpleNamespace(
@@ -99,23 +102,39 @@ class CalibrationPortalTest(unittest.TestCase):
         self.assertIn(b'400 Bad Request', headers)
         self.assertEqual(Path('settings.json').read_text(), before)
 
-    def test_pressure_calibration_persists_and_rejects_bad_order(self):
-        body, headers = self.request('/configure_water_calibration?max_volume_l=15&point_count=4')
-        self.assertIn(b'200 OK', headers)
-        for index, raw in enumerate((66, 200, 625, 1180)):
-            sys.modules['gpio'].read_water_raw = lambda samples, delay, raw=raw: raw
-            body, headers = self.request('/update_cal_point?point=' + str(index))
-            self.assertIn(b'200 OK', headers)
-        saved = json.loads(Path('settings.json').read_text())
-        self.assertEqual(saved['water_calibration'][3]['raw_value'], 1180)
-        body, headers = self.request('/update_cal_point?point=1')
-        self.assertIn(b'400 Bad Request', headers)
-        self.assertEqual(json.loads(Path('settings.json').read_text()), saved)
+    def test_calibration_routes_removed(self):
+        before = Path('settings.json').read_text()
+        for path in ('/configure_water_calibration?max_volume_l=15', '/update_cal_point?point=0'):
+            body, headers = self.request(path)
+            self.assertIn(b'404', headers)
+        self.assertEqual(Path('settings.json').read_text(), before)
+        self.portal.utime.ticks_ms = lambda: 0
         body, headers = self.request('/water_level')
-        data = json.loads(body)
-        self.assertTrue(data['enabled'])
-        self.assertEqual(data['volume_l'], 15)
-        self.assertAlmostEqual(data['depth_mm'], 199.34, places=2)
+        self.assertIn(b'200', headers)
+        self.assertEqual(json.loads(body)['status'], 'configuration_fault')
+
+    def test_water_endpoint_uses_version_two_volume_percentage_and_reports_faults(self):
+        import water_config
+        config = water_config.create(270, 315, 340, 190)
+        self.portal.utime.ticks_ms = lambda: 0
+        sys.modules['gpio'].read_water_raw = lambda samples, delay: 26.5
+        with patch.object(water_config, 'current', return_value=config):
+            body, headers = self.request('/water_level')
+            data = json.loads(body)
+            self.assertIn(b'200', headers)
+            self.assertTrue(data['valid'])
+            self.assertEqual(data['depth_mm'], 75)
+            self.assertLess(data['fill_percent'], 50)
+            self.assertAlmostEqual(data['fill_percent'], 100 * data['volume_l'] / data['max_volume_l'])
+            self.assertEqual(data['calibration_state'], 'complete')
+            config['water_level']['max_volume_liters'] = 999
+            body, headers = self.request('/water_level')
+            data = json.loads(body)
+            self.assertEqual(data['status'], 'configuration_fault')
+            self.assertEqual(data['calibration_state'], 'fault')
+            self.assertIsNone(data['volume_l'])
+            self.assertIsNone(data['fill_percent'])
+            self.assertIn('Inconsistent stored max_volume_liters', data['configuration_error'])
 
     def test_ec_endpoint_powers_and_settles_before_reading(self):
         events = []

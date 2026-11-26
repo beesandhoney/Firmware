@@ -13,7 +13,7 @@ class WaterTimingTest(unittest.TestCase):
         clock = types.SimpleNamespace(ticks_ms=lambda: now[0],
                                       ticks_diff=lambda a, b: a - b,
                                       ticks_add=lambda a, b: a + b)
-        ns = dict(utime=clock, WATER_DEBUG=True, print=Mock())
+        ns = dict(utime=clock, WATER_DEBUG=True, print=Mock(), ntp_attempt_index=0, next_ntp_retry_ms=None)
         tree = ast.parse((Path(__file__).resolve().parents[1] / 'app_main.py').read_text())
         functions = [node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
                      and node.name in ('sync_time_once', 'report_runtime_delay', 'main_logic')]
@@ -27,7 +27,8 @@ class WaterTimingTest(unittest.TestCase):
                 now[0] += 40000
                 if fails:
                     raise OSError('timeout')
-            ns.update(NTP_HOSTS=('test',), gc=types.SimpleNamespace(collect=lambda: None),
+            ns.update(NTP_HOSTS=('test',), NTP_FALLBACK_IPS=('192.0.2.1',),
+                      NTP_TIMEOUT_S=2, NTP_RETRY_INTERVAL_S=30, ntp_dns_failed=False, gc=types.SimpleNamespace(collect=lambda: None),
                       ntptime=types.SimpleNamespace(settime=settime))
             self.assertEqual(ns['sync_time_once'](0), not fails)
             ns['print'].assert_any_call('TIMING: NTP blocked runtime for 40000 ms')
@@ -60,7 +61,7 @@ class WaterTimingTest(unittest.TestCase):
                   portal=types.SimpleNamespace(sta_if=types.SimpleNamespace(isconnected=lambda: True)),
                   cosyLightControl=lambda: 20, ambient_controller=Mock(),
                   update_runtime_status_led=lambda: None, asyncio=types.SimpleNamespace(sleep=sleep))
-        with patch.dict('sys.modules', {'volume_http': types.SimpleNamespace(read_live=read_live)}):
+        with patch('hardware_config.installed', return_value=True), patch.dict('sys.modules', {'volume_http': types.SimpleNamespace(read_live=read_live)}):
             with self.assertRaises(Finished):
                 asyncio.run(ns['main_logic']())
         self.assertEqual(len(attempts), 2)

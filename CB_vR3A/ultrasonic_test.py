@@ -3,8 +3,8 @@
 Wiring (HC-SR04 -> ESP32):
     VCC  -> 5 V
     GND  -> GND
-    TRIG -> GPIO12
-    ECHO -> GPIO27 through a 5 V-to-3.3 V level shifter/voltage divider
+    TRIG -> GPIO27
+    ECHO -> GPIO33 through a 5 V-to-3.3 V level shifter/voltage divider
 
 Run this file directly from Thonny or with:
     mpremote run ultrasonic_test.py

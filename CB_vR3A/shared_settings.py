@@ -1,9 +1,9 @@
 import ujson
-from local_time import DEFAULT_TIMEZONE, normalize_timezone, valid_schedule_time
+from local_time import DEFAULT_TIMEZONE, normalize_timezone, valid_schedule_time, validate_lighting
 
 
 class WaterCalibration:
-    SENSOR_TYPE = "gzp6899a_adc12"
+    SENSOR_TYPE = "ultrasonic_distance_cm"
     DEFAULT_MAX_VOLUME_L = 10.0
     DEFAULT_POINT_COUNT = 4
     MIN_POINT_COUNT = 4
@@ -96,18 +96,18 @@ class WaterCalibration:
         except Exception as e:
             print("update_point: invalid data", e)
             return False
-        if not 0 <= raw_value <= 4095:
+        if not 2 <= raw_value <= 400:
             return False
         for other_idx, point in enumerate(cls.points):
             other = point["raw_value"]
-            if other is not None and ((other_idx < idx and other >= raw_value) or
-                                      (other_idx > idx and other <= raw_value)):
+            if other is not None and ((other_idx < idx and other <= raw_value) or
+                                      (other_idx > idx and other >= raw_value)):
                 return False
         cls.points[idx] = {
             "raw_value": raw_value,
             "volume_l": cls.points[idx]["volume_l"],
         }
-        print("WATER CALIBRATION: point {}, target={:.3f} L, ADC={:.2f}".format(
+        print("WATER CALIBRATION: point {}, target={:.3f} L, distance={:.2f} cm".format(
             idx + 1,
             cls.points[idx]["volume_l"],
             raw_value,
@@ -137,14 +137,14 @@ class WaterCalibration:
 
 
 def _load_water_calibration(data):
-    """Load only pressure ADC calibration; reset incompatible legacy data."""
+    """Load only ultrasonic distance calibration; reset incompatible legacy data."""
     if not isinstance(data, dict):
         return False
 
     max_volume_l = data.get("water_max_volume_l", WaterCalibration.DEFAULT_MAX_VOLUME_L)
     if data.get("water_sensor_type") != WaterCalibration.SENSOR_TYPE:
         # Preserve the configured tank capacity, but never interpret old
-        # distance values as pressure ADC counts.
+        # pressure ADC counts as distances.
         WaterCalibration.configure(max_volume_l, WaterCalibration.DEFAULT_POINT_COUNT)
         if "water_calibration" in data:
             print("Ignoring incompatible legacy water calibration")
@@ -201,6 +201,8 @@ class AmbientLightSettings:
 
 
 class ECSettings:
+    # Highest measured EC calibration reference (3977 uS/cm).
+    MAX_EC_MS = 3.977
     defaults = {
         "ec_low_alarm_us": 700,
         "ec_high_alarm_us": 2200,
@@ -256,27 +258,44 @@ class LightIntensities:
 
     @classmethod
     def save_settings_to_file(cls, filename='settings.json'):
-        try:
-            with open(filename, 'w') as f:
-                ujson.dump(_build_settings_payload(), f)
-            return True
-        except Exception as e:
-            print("Failed to save settings to file:", e)
-            return False
+        return save_all_settings_to_file(filename)
 
     @classmethod
     def load_settings_from_file(cls, filename='settings.json'):
         try:
             with open(filename, 'r') as f:
                 data = ujson.load(f)
-            # only update known keys
-            for k in cls.settings:
-                if k in data:
-                    cls.update_values(**{k: data[k]})
+            _load_lighting(data)
             _load_water_calibration(data)
             return True
         except OSError:
             return False
+
+
+def _load_lighting(data):
+    candidate = dict(LightIntensities.settings)
+    candidate.update({k: data[k] for k in candidate if k in data})
+    candidate['timezone'] = normalize_timezone(candidate['timezone'])
+    candidate['off'] = 0
+    # Migrate the former ON/OFF UI's coincident daytime boundaries.
+    if candidate['t_morning_start'] == candidate['t_day_start'] == candidate['t_evening_start']:
+        try:
+            start = candidate['t_morning_start']
+            end = candidate['t_lights_off']
+            start = int(start[:2]) * 60 + int(start[3:])
+            end = int(end[:2]) * 60 + int(end[3:])
+            duration = (end - start) % 1440
+            for i, key in ((1, 't_day_start'), (2, 't_evening_start')):
+                minute = (start + duration * i // 3) % 1440
+                candidate[key] = '%02d:%02d' % (minute // 60, minute % 60)
+        except (TypeError, ValueError):
+            pass
+    try:
+        validate_lighting(candidate)
+    except (TypeError, ValueError) as error:
+        print('Ignoring invalid saved lighting:', error)
+        return
+    LightIntensities.settings.update(candidate)
 
 
 def _build_settings_payload():
@@ -293,8 +312,18 @@ def _build_settings_payload():
 
 def save_all_settings_to_file(filename='settings.json'):
     try:
-        with open(filename, 'w') as f:
-            ujson.dump(_build_settings_payload(), f)
+        import os
+        temporary = filename + '.tmp'
+        payload = _build_settings_payload()
+        with open(temporary, 'w') as f:
+            ujson.dump(payload, f)
+            f.flush()
+        with open(temporary) as f:
+            if ujson.load(f) != payload:
+                raise ValueError('Settings write verification failed')
+        if hasattr(os, 'sync'):
+            os.sync()
+        os.rename(temporary, filename)
         try:
             import status_led
             status_led.settings_saved()
@@ -311,14 +340,12 @@ def load_all_settings_from_file(filename='settings.json'):
     try:
         with open(filename, 'r') as f:
             data = ujson.load(f)
-    except OSError:
+    except (OSError, ValueError):
         return False
 
     if isinstance(data, dict):
         # Backward compatibility: flat structure
-        for k in LightIntensities.settings:
-            if k in data:
-                LightIntensities.update_values(**{k: data[k]})
+        _load_lighting(data)
         _load_water_calibration(data)
         if "ambient" in data and isinstance(data["ambient"], dict):
             AmbientLightSettings.update_values(**data["ambient"])
@@ -328,55 +355,12 @@ def load_all_settings_from_file(filename='settings.json'):
 
 
 def raw_to_liters(raw_value, points=None):
-    """Interpolate volume from four pressure ADC calibration points."""
-    if raw_value is None:
+    """Convert ultrasonic cm using the factory configuration."""
+    import hardware_config
+    if hardware_config.installed() is not True:
         return None
-
-    pts = points or WaterCalibration.points
-    try:
-        calibrated = [
-            (float(point["raw_value"]), float(point["volume_l"]))
-            for point in pts
-            if point.get("raw_value") is not None
-        ]
-    except Exception as e:
-        print("Invalid calibration points:", e)
-        return None
-
-    # Do not report a volume from a partially completed procedure.
-    if len(calibrated) != 4 or len(calibrated) != len(pts):
-        return None
-
-    # Both pressure ADC and volume must increase consistently.
-    raw_deltas = [
-        calibrated[idx + 1][0] - calibrated[idx][0]
-        for idx in range(len(calibrated) - 1)
-    ]
-    if not all(delta > 0 for delta in raw_deltas):
-        return None
-
-    if not all(0 <= raw <= 4095 and 0 <= volume <= 10000 for raw, volume in calibrated):
-        return None
-    if not all(calibrated[i + 1][1] > calibrated[i][1] for i in range(3)):
-        return None
-    calibrated.sort(key=lambda pair: pair[0])
-
-    raw_value = float(raw_value)
-    if not 0 <= raw_value <= 4095:
-        return None
-    if raw_value <= calibrated[0][0]:
-        return round(calibrated[0][1], 3)
-    if raw_value >= calibrated[-1][0]:
-        return round(calibrated[-1][1], 3)
-
-    for idx in range(len(calibrated) - 1):
-        raw0, volume0 = calibrated[idx]
-        raw1, volume1 = calibrated[idx + 1]
-        if raw0 <= raw_value <= raw1:
-            ratio = (raw_value - raw0) / (raw1 - raw0)
-            return round(volume0 + ratio * (volume1 - volume0), 3)
-
-    return None
+    import water_config
+    return water_config.calculate(raw_value)['volume_l']
 
 
 # Runtime ambient-light status (used for diagnostics / UI)
@@ -401,3 +385,12 @@ def update_ambient_status(raw=None, filtered=None, mode=None, fault=False):
     except Exception as e:
         print("Failed to update ambient status:", e)
     return ambient_status
+
+
+def raw_to_depth_mm(distance_cm):
+    """Convert ultrasonic cm into calibrated water height."""
+    import hardware_config
+    if hardware_config.installed() is not True:
+        return None
+    import water_config
+    return water_config.calculate(distance_cm)['depth_mm']

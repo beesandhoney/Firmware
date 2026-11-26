@@ -56,3 +56,17 @@ coverage.xml
 # MPY Workbench
 .mpy-workbench/
 /.mpy-workbench
+
+# Unit-specific factory data must survive firmware updates.
+factory_hardware.json*
+factory_water.json*
+
+# Host-only firmware build, measurement tools and private device recovery data.
+.firmware-build/
+.device-backups/
+tools/
+tests/
+firmware/
+
+# Serial captures and checkpoint JSON are host-only.
+diagnostics/

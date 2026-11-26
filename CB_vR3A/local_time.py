@@ -63,3 +63,27 @@ def schedule_phase(settings, minute):
         if elapsed <= nearest:
             selected, nearest = phase, elapsed
     return selected
+
+
+LIGHT_PHASES = (('morning', 't_morning_start', 'morning'),
+                ('day', 't_day_start', 'daylight'),
+                ('evening', 't_evening_start', 'evening'),
+                ('night', 't_lights_off', 'off'))
+
+
+def validate_lighting(settings):
+    starts = []
+    for name, key, level in LIGHT_PHASES:
+        value = settings.get(key)
+        if not valid_schedule_time(value):
+            raise ValueError('Enter phase start times in 24-hour HH:MM format.')
+        starts.append(int(value[:2]) * 60 + int(value[3:]))
+        value = settings.get(level)
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 100:
+            raise ValueError('Brightness must be a whole percentage from 0 to 100.')
+    if settings['off'] != 0:
+        raise ValueError('Night brightness must be 0%.')
+    durations = [(starts[(i + 1) % 4] - starts[i]) % 1440 for i in range(4)]
+    if 0 in durations or sum(durations) != 1440:
+        raise ValueError('Use distinct start times in Morning, Day, Evening, Night order over one 24-hour cycle.')
+    return settings
